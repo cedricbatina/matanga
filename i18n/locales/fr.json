@@ -1,0 +1,154 @@
+{
+  "auth": {
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Rejoignez Matanga pour publier des annonces de décès et de veillées en toute dignité.",
+      "account_type": {
+        "label": "Type de compte",
+        "individual": "Particulier",
+        "pro": "Professionnel"
+      },
+      "fields": {
+        "email": "Email",
+        "password": "Mot de passe",
+        "confirm_password": "Confirmation",
+        "first_name": "Prénom",
+        "last_name": "Nom",
+        "organization_name": "Nom de la structure",
+        "organization_type": "Type de structure",
+        "city": "Ville",
+        "country": "Pays",
+        "phone": "Téléphone",
+        "address": "Adresse de la structure",
+        "website_url": "Site web (optionnel)",
+        "preferred_locale": "Langue préférée"
+      },
+      "organization_types": {
+        "funeral_home": "Pompes funèbres",
+        "church": "Église",
+        "mosque": "Mosquée",
+        "association": "Association",
+        "other": "Autre"
+      },
+      "placeholders": {
+        "email": "vous.exemple.com",
+        "password": "Minimum 8 caractères",
+        "confirm_password": "Répétez le mot de passe",
+        "first_name": "Votre prénom",
+        "last_name": "Votre nom",
+        "organization_name": "Ex : Pompes funèbres Lumière",
+        "city": "Ex : Brazzaville",
+        "country": "Ex : Congo, France…",
+        "phone": "+242 …",
+        "address": "Adresse complète",
+        "website_url": "https://..."
+      },
+      "actions": {
+        "submit": "Créer mon compte",
+        "submitting": "Création du compte...",
+        "already_have_account": "Vous avez déjà un compte ?",
+        "login_link": "Se connecter",
+        "show_password": "Voir",
+        "hide_password": "Cacher"
+      },
+      "messages": {
+        "check_email": "Compte créé. Vérifiez votre email pour activer votre compte."
+      },
+      "errors": {
+        "email_invalid": "Email invalide",
+        "password_short": "Mot de passe trop court (min 8 caractères).",
+        "confirm_mismatch": "La confirmation ne correspond pas au mot de passe.",
+        "city_required": "La ville est obligatoire.",
+        "first_name_required": "Le prénom est obligatoire.",
+        "last_name_required": "Le nom est obligatoire.",
+        "org_name_required": "Le nom de la structure est obligatoire.",
+        "org_type_invalid": "Type de structure invalide.",
+        "fix_fields": "Merci de corriger les erreurs indiquées.",
+        "generic": "Impossible de créer le compte pour le moment."
+      },
+      "hints": {
+        "phone": "Utilisé uniquement pour la vérification ou en cas de besoin lié à vos annonces.",
+        "terms": "En créant un compte, vous confirmez fournir des informations exactes et accepter nos conditions d’utilisation. Matanga est un espace privé et modéré, dédié aux annonces de décès et veillées."
+      },
+      "resend": {
+        "help": "Vous n'avez pas reçu l'email de confirmation ? Vérifiez vos spams ou renvoyez un email.",
+        "actions": {
+          "cta": "Renvoyer l'email de confirmation",
+          "loading": "Envoi en cours..."
+        },
+        "messages": {
+          "sent": "Si un compte existe et n'est pas encore vérifié, un nouvel email a été envoyé."
+        },
+        "errors": {
+          "email_missing": "Veuillez indiquer votre email pour renvoyer l'email de confirmation.",
+          "generic": "Impossible de renvoyer l'email de confirmation pour le moment."
+        }
+      }
+    },
+    "login": {
+  "title": "Connexion",
+  "subtitle": "Accédez à votre espace Matanga pour gérer vos annonces et veillées.",
+  "fields": {
+    "email": "Email",
+    "password": "Mot de passe"
+  },
+  "placeholders": {
+    "email": "votre.email.exemple",
+    "password": "Votre mot de passe"
+  },
+  "actions": {
+    "submit": "Se connecter",
+    "submitting": "Connexion...",
+    "forgot_prefix": "Mot de passe oublié ?",
+    "forgot_link": "Réinitialiser",
+    "no_account_prefix": "Pas encore de compte ?",
+    "register_link": "Créer un compte",
+    "show_password": "Voir",
+    "hide_password": "Cacher"
+  },
+  "errors": {
+    "email_invalid": "Email invalide",
+    "password_required": "Le mot de passe est obligatoire.",
+    "fix_fields": "Merci de corriger les champs indiqués.",
+    "generic": "Impossible de vous connecter pour le moment."
+  },
+  "resend": {
+    "help": "Vous n'avez pas reçu l'email de confirmation ou votre lien a expiré ?",
+    "actions": {
+      "cta": "Renvoyer l'email de confirmation",
+      "loading": "Envoi en cours..."
+    },
+    "messages": {
+      "sent": "Si un compte existe et n'est pas encore vérifié, un nouvel email a été envoyé."
+    },
+    "errors": {
+      "email_missing": "Veuillez renseigner votre email avant de renvoyer le lien.",
+      "generic": "Impossible de renvoyer l'email de confirmation pour le moment."
+    }
+  }
+}
+,
+"verify": {
+  "title": "Vérification de l’email",
+  "subtitle": "Nous vérifions votre lien de confirmation pour activer votre compte Matanga.",
+  "loading": "Vérification en cours... Merci de patienter quelques instants.",
+  "messages": {
+    "success": "Votre email a été vérifié avec succès. Votre compte est maintenant actif."
+  },
+  "errors": {
+    "missing_token": "Le lien de vérification est incomplet ou invalide.",
+    "invalid_or_expired": "Ce lien de vérification est invalide ou a expiré.",
+    "generic": "Une erreur est survenue lors de la vérification de votre email."
+  },
+  "actions": {
+    "go_login": "Se connecter",
+    "go_home": "Retour à l’accueil"
+  },
+  "hints": {
+    "contact": "Si le problème persiste, vous pouvez demander un nouveau lien de confirmation depuis la page de connexion ou contacter le support Matanga."
+  },
+  "footer_info": "Pour votre sécurité, les liens de vérification expirent après un certain délai."
+}
+
+  }
+}

@@ -1,0 +1,322 @@
+Journal de dev – Matanga
+Date : 2025-12-02
+
+Contexte général
+
+Projet : Matanga, plateforme d’annonces nécrologiques (décès, veillées, obsèques, hommages) pour l’Afrique, la diaspora et les Caraïbes.
+
+Tech : Nuxt 4 (SSR), MySQL, backend en JS avec requêtes SQL, JWT en cookies HttpOnly, Brevo (SMTP) pour l’email.
+
+Vision : mobile-first, thème clair/sombre, design haut de gamme, très bonne accessibilité et SEO fort.
+
+Backend – Authentification (API)
+
+Table SQL ajoutée : refresh_tokens (gestion des refresh JWT, révocation, sécurité).
+
+Variables d’environnement ajoutées :
+
+JWT_ACCESS_SECRET, JWT_REFRESH_SECRET
+
+JWT_ACCESS_EXPIRES_IN (15 min), JWT_REFRESH_EXPIRES_IN (14 jours)
+
+Utilitaires JWT : server/utils/jwt.js
+
+signAccessToken / signRefreshToken
+
+verifyAccessToken / verifyRefreshToken
+
+constantes de durée (accessTokenMaxAge, refreshTokenMaxAge)
+
+Utilitaires cookies auth : server/utils/authCookies.js
+
+setAuthCookies(event, accessToken, refreshToken, …)
+
+clearAuthCookies(event)
+
+noms de cookies : matanga_at (access) et matanga_rt (refresh), HttpOnly + SameSite=Lax + Secure en prod.
+
+Routes API auth implémentées :
+
+POST /api/auth/register
+
+Création user (table users), profil individuel ou pro, attribution de rôle par défaut (user_individual ou user_pro), insertion d’un token de vérification email (table email_verification_tokens).
+
+Envoi d’un email de vérif via Brevo (SMTP) avec lien /verify-email?token=...
+
+Validation de base côté serveur : email, mot de passe, ville, type de compte, champs spécifiques individual/pro.
+
+POST /api/auth/login
+
+Récupération de l’utilisateur par email avec ses rôles (JOIN user_roles/roles).
+
+Vérification du statut (pending_email_verification, suspended, etc.).
+
+Vérification du mot de passe avec bcrypt.
+
+Génération d’un access token et d’un refresh token (JWT).
+
+Insertion du refresh token en base (table refresh_tokens).
+
+Pose des cookies HttpOnly.
+
+Retour d’un objet user “safe” pour le front.
+
+POST /api/auth/logout
+
+Lecture du refresh token depuis le cookie.
+
+Révocation du refresh token en DB (revoked_at = NOW()).
+
+Nettoyage systématique des cookies d’auth.
+
+POST /api/auth/forgot-password
+
+Input : email.
+
+Si l’utilisateur existe : création d’un token dans password_reset_tokens avec TTL d’1h + envoi d’un email avec lien /reset-password?token=...
+
+Réponse toujours neutre (“Si un compte existe avec cet email…”) pour ne pas exposer si l’email est connu ou non.
+
+POST /api/auth/reset-password
+
+Input : token + newPassword.
+
+Vérification du token en DB (existe, pas expiré, pas déjà utilisé, user non suspendu).
+
+Hash du nouveau mot de passe et mise à jour dans la table users.
+
+Marquage du token comme utilisé.
+
+Révocation de tous les refresh tokens pour ce user.
+
+Nettoyage des cookies d’auth.
+
+GET /api/auth/me
+
+Retourne la session courante (userId, email, accountType, roles, city, country, locale) ou null.
+
+Email utilitaire : server/utils/email.js
+
+Mise en place de l’envoi d’emails via Nodemailer + SMTP Brevo (host, port, user, pass).
+
+Fonctions :
+
+sendEmail
+
+sendEmailVerification (lien verify-email)
+
+sendPasswordResetEmail (lien reset-password)
+
+Backend – Session & middleware
+
+Utilitaire server/utils/authSession.js
+
+getAuthSession(event) :
+
+Lit les cookies access/refresh.
+
+Valide l’access token → construit une session minimale à partir du payload JWT.
+
+Si access invalide mais refresh valide : vérifie le refresh JWT + la présence du token en DB (non révoqué, non expiré), recharge l’utilisateur depuis la DB, régénère un nouveau pair access/refresh, fait la rotation en DB et met à jour les cookies.
+
+Hydrate event.context.auth (null ou objet session).
+
+requireAuth(event, options) :
+
+Vérifie qu’une session est présente, sinon 401.
+
+Peut vérifier des rôles (ex : roles: ['admin']) et renvoyer 403 si absent.
+
+Middleware global : server/middleware/auth.global.js
+
+Appelle getAuthSession(event) sur chaque requête pour avoir event.context.auth dispo partout (API, SSR).
+
+Front – Store & composables
+
+Store Pinia : stores/auth.js
+
+state : user, loading, error, initialized.
+
+getters : isAuthenticated, roles, isAdmin, isPro.
+
+actions :
+
+login({ email, password }) → POST /api/auth/login, met à jour user.
+
+logout() → POST /api/auth/logout, nettoie le state.
+
+fetchMe() → GET /api/auth/me, hydrate user.
+
+ensureAuthLoaded() pour éviter de re-fetch plusieurs fois.
+
+Composable useAuth : composables/useAuth.js
+
+Wrap du store auth pour exposer : user, isAuthenticated, roles, isAdmin, isPro, loading, error.
+
+Hydratation automatique via /api/auth/me côté serveur (onServerPrefetch) et côté client (onMounted), sauf si fetchUser: false.
+
+Design system global (CSS)
+
+Fichier assets/css/main.css créé comme “design system Matanga” :
+
+Variables CSS pour :
+
+couleurs (bg, surface, text-main, text-muted, accent, etc.),
+
+thème clair et thème sombre (via :root),
+
+typographie (font-body, font-title),
+
+rayons, ombres, espacements, transitions, largeurs.
+
+Styles globaux : body, titres, paragraphes, liens.
+
+Layout : app-shell, app-header, app-main, container, container-narrow, section, grid responsive (grid-2-cols, grid-3-cols).
+
+Composants :
+
+.card (+ variantes elevated, muted, header/body/footer)
+
+Formulaires (.form, .form-field, .form-control, labels, erreurs, hints, textarea, select)
+
+Boutons (.btn, .btn-primary, .btn-secondary, .btn-accent, .btn-ghost, .btn-danger, tailles sm/lg)
+
+Chips & badges (.chip, .chip-accent, .badge-success, .badge-danger, etc.)
+
+Tables (.table-wrapper, .table, styles pour th/td, hover).
+
+Utilitaires : marges (mt-, mb-), paddings, flex (flex, flex-col, flex-row, items-center, justify-between), gap-*.
+
+Animation légère .fade-in pour apparitions douces.
+
+Skip-link .skip-link pour accessibilité (visible au focus).
+
+Thème clair/sombre – useTheme + layout
+
+Composable useTheme :
+
+Stocke le thème dans useState('matanga-theme').
+
+Applique data-theme="light|dark" sur document.documentElement.
+
+Persistance en localStorage.
+
+Prend en compte prefers-color-scheme si aucune préférence stockée.
+
+Layout par défaut : layouts/default.vue
+
+Layout global Matanga : header sticky avec logo, tagline et bouton de switch thème.
+
+Bouton accessible : aria-pressed, aria-label dynamique.
+
+Skip-link “Passer au contenu principal”.
+
+main avec id="main-content" et role="main".
+
+app.vue
+
+Contient <NuxtLayout><NuxtPage/></NuxtLayout.
+
+Définit le titre global via useHead avec titleTemplate.
+
+Initialise useTheme pour s’assurer que le thème est appliqué dès le départ.
+
+Pages front créées
+
+Home : pages/index.vue
+
+Landing page structurée en sections :
+
+Hero : titre principal, description, CTA “Créer un compte gratuitement”, “Se connecter”.
+
+Section “Pour qui est fait Matanga ?” (familles / pros).
+
+Section “Comment fonctionne Matanga ?” (3 étapes).
+
+CTA final avec mise en avant des cas d’usage (Brazzaville, Kinshasa, Abidjan, Paris, etc.).
+
+SEO : useSeoMeta avec title, description, ogTitle, ogDescription, ogType, ogUrl, twitterCard.
+
+Accessibilité : sections avec aria-labelledby reliées à leurs h1/h2 (ids dédiés).
+
+Register : pages/register/index.vue
+
+Formulaire complet de création de compte :
+
+Switch type de compte : particulier / professionnel.
+
+Champs communs : email, mot de passe, confirmation, ville, pays, téléphone, langue préférée.
+
+Champs particuliers : prénom, nom.
+
+Champs pros : nom de la structure, type de structure (pompes funèbres, église, mosquée, association, autre), adresse, site web.
+
+Validation côté client (email, mot de passe, confirmPassword, champs obligatoires selon type).
+
+Appel API POST /api/auth/register avec payload adapté.
+
+Gestion des messages de succès (vérifier l’email) et des erreurs.
+
+Redirection vers “/” si l’utilisateur est déjà connecté.
+
+Login : pages/login/index.vue
+
+Formulaire de connexion email + mot de passe.
+
+Validation simple côté client.
+
+Appel auth.login → /api/auth/login via le store.
+
+Support d’un paramètre ?redirect=/chemin dans l’URL pour rediriger après login.
+
+Liens vers “Mot de passe oublié” et “Créer un compte”.
+
+Redirection vers “/” si déjà connecté.
+
+Forgot password : pages/forgot-password/index.vue
+
+Formulaire minimal : email.
+
+Validation email côté client.
+
+Appel POST /api/auth/forgot-password.
+
+Affichage d’un message neutre de succès.
+
+Accessibilité : aria-invalid, aria-describedby pour le champ email + role="status"/"alert" sur les messages.
+
+Reset password : pages/reset-password/index.vue
+
+Lecture du token dans la query (reset-password?token=...).
+
+Si pas de token → affichage d’un message explicite + lien vers forgot-password.
+
+Formulaire : nouveau mot de passe + confirmation.
+
+Validation côté client (longueur, correspondance).
+
+Appel POST /api/auth/reset-password avec token + newPassword.
+
+Messages de succès/erreur, possibilité de rediriger vers /login ensuite.
+
+État actuel
+
+Authentification back + front : cycle complet en place (register, verify, login, logout, forgot, reset, me, session).
+
+Design system global CSS : prêt, avec thèmes clair/sombre, layout, composants, utilitaires.
+
+Pages publiques essentielles : home, register, login, forgot-password, reset-password.
+
+Accessibilité : header avec skip-link, rôles ARIA principaux, formulaires déjà partiellement accessibles.
+
+Prochaines étapes envisagées
+
+Compléter l’accessibilité sur toutes les pages (aria-invalid systématique, aria-describedby pour chaque message d’erreur).
+
+Commencer la modélisation métier : tables annonces nécrologiques, durées de publication, options (anniversaire, prolongation), tarifs, promotions, villes/pays, notifications.
+
+APIs CRUD pour les annonces, avec filtrage par pays/ville, visibilité publique, statut (brouillon, publié, expiré).
+
+Gestion des rôles avancés : moderator/admin pour validation d’annonces, modération, signalements.
+
+SEO encore plus poussé : sitemap, balisage schema.org (event/obituary), meta langue, etc.
