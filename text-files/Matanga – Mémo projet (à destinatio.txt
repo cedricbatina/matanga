@@ -1,0 +1,117 @@
+Matanga – Mémo projet (à destination de l’IA)
+
+Projet : Matanga, plateforme d’annonces nécrologiques et veillées pour Afrique, diaspora et Caraïbes, orientation premium, mobile-first, SEO puissant, multilingue (fr, en, pt, es).
+
+Stack :
+
+Nuxt 4 (SSR), JavaScript (pas de TypeScript).
+
+Backend Nuxt (server routes) + MySQL.
+
+Auth :
+
+JWT + cookies HttpOnly/Secure (login/logout),
+
+Email/password,
+
+Vérification d’email obligatoire avant activation du compte.
+
+Email :
+
+SMTP via Brevo / Sendinblue.
+
+Utilitaires sendEmailVerification() et sendPasswordResetEmail() déjà en place.
+
+i18n :
+
+Module @nuxtjs/i18n configuré avec :
+
+locales: fr, en, pt, es (JSON dans locales/),
+
+defaultLocale = 'fr',
+
+strategy = 'prefix_except_default',
+
+vueI18n via i18n.config.js (legacy: false).
+
+fr.json contient toutes les clés pour les écrans d’auth (ex: auth.register.*).
+
+Auth backend déjà fait :
+
+POST /api/auth/register : création user (individual/pro), profils séparés, rôle user_individual / user_pro, token de vérification email.
+
+POST /api/auth/login : login avec création cookies JWT/refresh.
+
+POST /api/auth/logout : clear des cookies.
+
+POST /api/auth/forgot-password : envoi email reset.
+
+POST /api/auth/reset-password : reset du mot de passe.
+
+GET /api/auth/verify-email : validation email + activation user.
+
+POST /api/auth/resend-verification : renvoi de l’email de vérification.
+
+Auth front déjà entamée :
+
+Store auth (Pinia) + composable useAuth() (login, logout, fetchUser, isAuthenticated).
+
+Page register/index.vue :
+
+UI premium, mobile-first,
+
+type de compte individual / pro,
+
+validations front,
+
+show/hide password + confirmation,
+
+i18n complet (t('auth.register.…')),
+
+bouton renvoi email de confirmation (API /api/auth/resend-verification).
+
+Thème & layout :
+
+Composable useTheme() (light/dark, stockage dans localStorage, data-theme sur <html>).
+
+layouts/default.vue :
+
+header Matanga (logo + tagline),
+
+bouton toggle thème accessible,
+
+skip link pour accessibilité,
+
+<NuxtPage /> dans <main>.
+
+Socle CSS commun : .page-centered, .container-narrow, .card, .btn, .form-*, etc.
+
+Modèle de données nécrologie (déjà en base) :
+
+users + user_roles.
+
+obituaries : annonce principale (infos défunt, texte, localisation, statut, publication, monétisation).
+
+obituary_events : événements liés (veillées, obsèques, inhumation, etc.) multi-pays/multi-fuseaux (event_type, starts_at, venue, stream_url, is_main_event).
+
+obituary_media : images/vidéos (upload / youtube / etc.), liés à l’obituary et/ou à un event.
+
+obituary_contacts : contacts famille / organisation (téléphone, WhatsApp, email, par région).
+
+Données de test déjà injectées :
+
+3 obituaries réalistes :
+
+NDINGA (Congo, Brazzaville + Paris + village),
+
+KOUADIO (Côte d’Ivoire, Abidjan + Paris),
+
+DESIR (Martinique + Montréal, messe de 40 jours).
+
+Avec events, médias, contacts pour tester listing & pages détail.
+
+Vision UX à garder :
+
+Site mobile-first, visuel, très lisible, respectueux, sans commentaires publics libres (seulement peut-être dans un espace mémorial privé plus tard et uniquement pour comptes identifiés).
+
+Plus tard : plans payants (durée d’annonce, mise en avant, anniversaires de décès, messes programmées), intégration mobile money / PayPal / Stripe / virement.

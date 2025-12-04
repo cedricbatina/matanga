@@ -30,7 +30,7 @@ function mapSummaryRow(row) {
     updatedAt: row.updated_at,
     publishedAt: row.published_at,
     expiresAt: row.expires_at,
-
+    coverImageUrl: row.cover_image_url || null, // 👈 NOUVEAU
     announcementType: row.announcement_type,
     deceased: {
       fullName: row.deceased_full_name,
@@ -238,6 +238,7 @@ export default defineEventHandler(async (event) => {
         o.deceased_gender,
         o.date_of_death,
         o.age_at_death,
+          o.cover_image_url,      -- 👈 AJOUT ICI
         o.age_display,
         o.title,
         o.body,

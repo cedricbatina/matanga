@@ -1,260 +1,29 @@
+<!-- pages/obituaries/index.vue -->
 <template>
   <main class="app-main fade-in">
-    <!-- HERO / INTRO -->
+    <!-- EN-TÊTE -->
+<PageNavBar
+  aria-label="Navigation principale des annonces"
+  :show-back-home="true"
+  :show-back-list="false"
+  :show-create="true"
+  create-to="/obituaries/create"
+/>
+
+
     <section class="section">
       <div class="section-header">
         <h1 class="section-title">
-          {{ t('home.hero.title') }}
-        </h1>
-        <p class="section-subtitle">
-          {{ t('home.hero.subtitle') }}
-        </p>
-      </div>
-
-      <div class="grid grid-2-cols">
-        <!-- Bloc texte + CTA -->
-        <article class="card card-elevated">
-          <div class="card-body">
-            <p class="text-md mb-4">
-              {{ t('home.hero.body') }}
-            </p>
-
-            <div class="flex flex-row items-center gap-3 mt-4">
-              <NuxtLink
-                to="/obituaries/create"
-                class="btn btn-primary btn-lg"
-              >
-                {{ t('home.hero.primaryCta') }}
-              </NuxtLink>
-
-              <NuxtLink
-                to="/obituaries"
-                class="btn btn-secondary btn-lg"
-              >
-                {{ t('home.hero.secondaryCta') }}
-              </NuxtLink>
-            </div>
-
-            <p class="text-xs text-soft mt-3">
-              {{ t('home.hero.helperText') }}
-            </p>
-          </div>
-        </article>
-
-        <!-- Bloc "Comment ça marche ?" -->
-        <article class="card card-muted">
-          <header class="card-header">
-            <h2 class="card-title">
-              {{ t('home.howItWorks.title') }}
-            </h2>
-            <p class="card-subtitle">
-              {{ t('home.howItWorks.subtitle') }}
-            </p>
-          </header>
-
-          <div class="card-body">
-            <ol class="text-sm" style="padding-left: 18px;">
-              <li class="mb-2">
-                {{ t('home.howItWorks.step1') }}
-              </li>
-              <li class="mb-2">
-                {{ t('home.howItWorks.step2') }}
-              </li>
-              <li class="mb-2">
-                {{ t('home.howItWorks.step3') }}
-              </li>
-            </ol>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- LISTE DES ANNONCES RÉCENTES (avec miniatures) -->
-    <section class="section">
-      <div class="section-header">
-        <h2 class="section-title">
           {{ t('home.list.title') }}
-        </h2>
+        </h1>
         <p class="section-subtitle">
           {{ t('home.list.subtitle') }}
         </p>
       </div>
-
-      <!-- Erreur -->
-      <div v-if="obituaries.error" class="card card-muted">
-        <p class="text-sm text-danger">
-          {{ t('home.list.error') }}
-        </p>
-      </div>
-
-      <!-- Loading -->
-      <div v-else-if="obituaries.loading" class="card card-muted">
-        <p class="text-sm">
-          {{ t('home.list.loading') }}
-        </p>
-      </div>
-
-      <!-- Liste -->
-      <div v-else>
-        <!-- Vide -->
-        <div v-if="!obituaries.items.length" class="card card-muted">
-          <p class="text-sm">
-            {{ t('home.list.empty') }}
-          </p>
-        </div>
-
-        <!-- Cards -->
-        <div v-else class="grid grid-3-cols">
-          <article
-            v-for="item in obituaries.items"
-            :key="item.id"
-            class="card obituary-card"
-          >
-            <!-- Miniature -->
-            <div
-              v-if="thumbnailUrlFor(item)"
-              class="obituary-card__media"
-            >
-              <img
-                class="obituary-card__image"
-                :src="thumbnailUrlFor(item)"
-                :alt="item.content.title || item.deceased.fullName"
-                loading="lazy"
-              />
-            </div>
-
-            <div class="obituary-card__content">
-              <header class="card-header">
-                <h3 class="card-title">
-                  {{ item.content.title || item.deceased.fullName }}
-                </h3>
-
-                <p class="card-subtitle text-xs text-soft">
-                  <span v-if="item.deceased.dateOfDeath">
-                    {{
-                      t('home.list.card.dateOfDeath', {
-                        date: formatDate(item.deceased.dateOfDeath),
-                      })
-                    }}
-                  </span>
-
-                  <span v-if="item.deceased.ageDisplay">
-                    • {{ item.deceased.ageDisplay }}
-                  </span>
-
-                  <span v-if="item.publishedAt">
-                    • {{ timeAgo(item.publishedAt) }}
-                  </span>
-                </p>
-              </header>
-
-              <div class="card-body">
-                <!-- Extrait -->
-                <p class="text-sm mb-2">
-                  {{ item.content.excerpt }}
-                </p>
-
-                <!-- Localisation -->
-                <p class="text-xs text-soft">
-                  <span v-if="item.location.city">
-                    {{ item.location.city }}
-                  </span>
-                  <span v-if="item.location.region">
-                    • {{ item.location.region }}
-                  </span>
-                  <span v-if="item.location.country">
-                    • {{ item.location.country }}
-                  </span>
-                </p>
-
-                <!-- Badges monétisation / stats -->
-                <div class="mt-2">
-                  <span
-                    v-if="item.monetization.isFree"
-                    class="badge badge-success"
-                  >
-                    {{ t('home.list.card.badgeFree') }}
-                  </span>
-                  <span
-                    v-else
-                    class="badge badge-neutral"
-                  >
-                    {{
-                      t('home.list.card.badgePaid', {
-                        tier: item.monetization.pricingTier || 'pro',
-                      })
-                    }}
-                  </span>
-
-                  <span
-                    v-if="item.stats.viewCount != null"
-                    class="badge badge-soft"
-                    style="margin-left: 4px;"
-                  >
-                    {{
-                      t('home.list.card.views', {
-                        count: item.stats.viewCount,
-                      })
-                    }}
-                  </span>
-                </div>
-
-                <!-- Événement principal -->
-                <p
-                  v-if="item.mainEvent && item.mainEvent.startsAt"
-                  class="text-xs text-soft mt-3"
-                >
-                  {{
-                    t('home.list.card.mainEvent', {
-                      type: t(
-                        'home.eventTypes.' +
-                          (item.mainEvent.eventType || 'other')
-                      ),
-                      date: formattedDate(item.mainEvent.startsAt),
-                    })
-                  }}
-                </p>
-              </div>
-
-              <footer class="card-footer">
-                <NuxtLink
-                  :to="obituaryPath(item)"
-                  class="btn btn-secondary btn-sm"
-                >
-                  {{ t('home.list.card.viewDetails') }}
-                </NuxtLink>
-              </footer>
-            </div>
-          </article>
-        </div>
-
-        <!-- Pagination -->
-        <Pagination
-          v-if="obituaries.pagination.totalPages > 1"
-          class="mt-4"
-          :current-page="obituaries.pagination.page"
-          :total-pages="obituaries.pagination.totalPages"
-          :total-items="obituaries.pagination.total"
-          :page-size="obituaries.pagination.pageSize"
-          :aria-label="t('pagination.ariaLabel')"
-          :label-prev="t('pagination.prev')"
-          :label-next="t('pagination.next')"
-          @pageChange="onPageChange"
-        />
-      </div>
     </section>
 
-    <!-- FILTRES / RECHERCHE (zone de tri sous la liste) -->
+    <!-- FILTRES / RECHERCHE -->
     <section class="section">
-      <div class="section-header">
-        <h2 class="section-title">
-          {{ t('home.search.title') }}
-        </h2>
-        <p class="section-subtitle">
-          {{ t('home.search.subtitle') }}
-        </p>
-      </div>
-
       <form class="card form" @submit.prevent="onSubmitFilters">
         <!-- Ligne pays + ville -->
         <div class="form-row form-row-inline">
@@ -352,6 +121,172 @@
         </div>
       </form>
     </section>
+
+    <!-- LISTE DES ANNONCES -->
+    <section class="section">
+      <!-- Erreur -->
+      <div v-if="obituaries.error" class="card card-muted">
+        <p class="text-sm text-danger">
+          {{ t('home.list.error') }}
+        </p>
+      </div>
+
+      <!-- Loading -->
+      <div v-else-if="obituaries.loading" class="card card-muted">
+        <p class="text-sm">
+          {{ t('home.list.loading') }}
+        </p>
+      </div>
+
+      <!-- Résultats -->
+      <div v-else>
+        <!-- Vide -->
+        <div v-if="!obituaries.items.length" class="card card-muted">
+          <p class="text-sm">
+            {{ t('home.list.empty') }}
+          </p>
+        </div>
+
+        <!-- Cards -->
+        <div v-else class="grid grid-3-cols">
+          <article
+            v-for="item in obituaries.items"
+            :key="item.id"
+            class="card obituary-card"
+          >
+            <!-- Miniature -->
+            <div
+              v-if="thumbnailUrlFor(item)"
+              class="obituary-card__media"
+            >
+              <img
+                class="obituary-card__image"
+                :src="thumbnailUrlFor(item)"
+                :alt="item.content.title || item.deceased.fullName"
+                loading="lazy"
+              />
+            </div>
+
+            <div class="obituary-card__content">
+              <header class="card-header">
+                <h2 class="card-title">
+                  {{ item.content.title || item.deceased.fullName }}
+                </h2>
+
+                <p class="card-subtitle text-xs text-soft">
+                  <span v-if="item.deceased.dateOfDeath">
+                    {{
+                      t('home.list.card.dateOfDeath', {
+                        date: formatDate(item.deceased.dateOfDeath),
+                      })
+                    }}
+                  </span>
+
+                  <span v-if="item.deceased.ageDisplay">
+                    • {{ item.deceased.ageDisplay }}
+                  </span>
+
+                  <span v-if="item.publishedAt">
+                    • {{ timeAgo(item.publishedAt) }}
+                  </span>
+                </p>
+              </header>
+
+              <div class="card-body">
+                <!-- Extrait -->
+                <p class="text-sm mb-2">
+                  {{ item.content.excerpt }}
+                </p>
+
+                <!-- Localisation -->
+                <p class="text-xs text-soft">
+                  <span v-if="item.location.city">
+                    {{ item.location.city }}
+                  </span>
+                  <span v-if="item.location.region">
+                    • {{ item.location.region }}
+                  </span>
+                  <span v-if="item.location.country">
+                    • {{ item.location.country }}
+                  </span>
+                </p>
+
+                <!-- Badges -->
+                <div class="mt-2">
+                  <span
+                    v-if="item.monetization.isFree"
+                    class="badge badge-success"
+                  >
+                    {{ t('home.list.card.badgeFree') }}
+                  </span>
+                  <span
+                    v-else
+                    class="badge badge-neutral"
+                  >
+                    {{
+                      t('home.list.card.badgePaid', {
+                        tier: item.monetization.pricingTier || 'pro',
+                      })
+                    }}
+                  </span>
+
+                  <span
+                    v-if="item.stats.viewCount != null"
+                    class="badge badge-soft"
+                    style="margin-left: 4px;"
+                  >
+                    {{
+                      t('home.list.card.views', {
+                        count: item.stats.viewCount,
+                      })
+                    }}
+                  </span>
+                </div>
+
+                <!-- Événement principal -->
+                <p
+                  v-if="item.mainEvent && item.mainEvent.startsAt"
+                  class="text-xs text-soft mt-3"
+                >
+                  {{
+                    t('home.list.card.mainEvent', {
+                      type: t(
+                        'home.eventTypes.' +
+                          (item.mainEvent.eventType || 'other')
+                      ),
+                      date: formattedDate(item.mainEvent.startsAt),
+                    })
+                  }}
+                </p>
+              </div>
+
+              <footer class="card-footer">
+                <NuxtLink
+                  :to="obituaryPath(item)"
+                  class="btn btn-secondary btn-sm"
+                >
+                  {{ t('home.list.card.viewDetails') }}
+                </NuxtLink>
+              </footer>
+            </div>
+          </article>
+        </div>
+
+        <!-- Pagination -->
+        <Pagination
+          v-if="obituaries.pagination.totalPages > 1"
+          class="mt-4"
+          :current-page="obituaries.pagination.page"
+          :total-pages="obituaries.pagination.totalPages"
+          :total-items="obituaries.pagination.total"
+          :page-size="obituaries.pagination.pageSize"
+          :aria-label="t('pagination.ariaLabel')"
+          :label-prev="t('pagination.prev')"
+          :label-next="t('pagination.next')"
+          @pageChange="onPageChange"
+        />
+      </div>
+    </section>
   </main>
 </template>
 
@@ -362,12 +297,13 @@ import { useI18n } from 'vue-i18n';
 import { useObituariesStore } from '~/stores/obituaries';
 import { useDateUtils } from '~/composables/useDateUtils';
 import Pagination from '~/components/Pagination.vue';
+import PageNavBar from '~/components/PageNavBar.vue';
 
 const { t, locale } = useI18n();
 const obituaries = useObituariesStore();
 const { formatDate, formattedDate, timeAgo } = useDateUtils();
 
-// SEO localisé
+// SEO
 const seoTitle = computed(() => t('home.meta.title'));
 const seoDescription = computed(() => t('home.meta.description'));
 
@@ -378,7 +314,7 @@ useSeoMeta({
   ogDescription: seoDescription,
 });
 
-// Filtres locaux (UI)
+// Filtres (UI)
 const localFilters = reactive({
   countryCode: obituaries.filters.countryCode || '',
   city: obituaries.filters.city || '',
@@ -388,27 +324,16 @@ const localFilters = reactive({
 
 const obituaryPath = (item) => `/obituary/${item.slug}`;
 
-// Miniature : on anticipe un champ future "thumbnailUrl" ou similaire.
-// Fallback sur une image de placeholder (à adapter dans ton projet).
+// Miniature : coverImageUrl puis fallback éventuels.
 const thumbnailUrlFor = (item) => {
-  // 1) ce que renvoie l'API aujourd'hui
-  if (item.coverImageUrl) {
-    return item.coverImageUrl;
-  }
-
-  // 2) si plus tard tu ajoutes d'autres champs côté API
+  if (item.coverImageUrl) return item.coverImageUrl;
   if (item.thumbnailUrl) return item.thumbnailUrl;
   if (item.media?.thumbnailUrl) return item.media.thumbnailUrl;
   if (item.media?.coverUrl) return item.media.coverUrl;
-
-  // 3) éventuellement un placeholder local (à créer dans /public)
-  // si tu n'as pas encore de fichier à cette URL, mets plutôt "null"
-  // pour ne pas avoir d'image cassée.
   return null;
-  // return '/images/placeholders/obituary-card.svg';
 };
 
-// Appliquer les filtres locaux → store
+// Appliquer les filtres au store
 const applyFiltersToStore = () => {
   obituaries.setFilters({
     countryCode: localFilters.countryCode,
@@ -437,7 +362,7 @@ const onPageChange = (page) => {
   obituaries.fetchList();
 };
 
-// Langue & premier chargement
+// Filtre langue + premier chargement
 obituaries.setFilters({ language: locale.value });
 await obituaries.fetchList();
 
@@ -454,7 +379,7 @@ watch(
 .obituary-card {
   display: flex;
   flex-direction: column;
-  padding: 0; /* on gère les padding à l’intérieur */
+  padding: 0;
   overflow: hidden;
 }
 
@@ -475,4 +400,32 @@ watch(
 .obituary-card__content {
   padding: var(--space-4);
 }
+.link-back {
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+  text-decoration: none;
+}
+.link-back:hover {
+  color: var(--color-accent-strong);
+  text-decoration: underline;
+}
+
+.section-header--nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.section-header__left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.section-header__right {
+  display: flex;
+  flex-shrink: 0;
+}
+
 </style>

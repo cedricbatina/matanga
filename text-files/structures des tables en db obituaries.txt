@@ -1,0 +1,521 @@
+
+Afficher la zone SQL
+La requête SQL a été exécutée avec succès.
+DESCRIBE obituary_media
+[Éditer en ligne] [ Éditer ] [ Créer le code source PHP ]
++ Options
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+bigint(20) unsigned
+NO
+PRI
+NULL
+auto_increment
+obituary_id
+bigint(20) unsigned
+NO
+MUL
+NULL
+event_id
+bigint(20) unsigned
+YES
+MUL
+NULL
+media_type
+enum('image','video')
+NO
+image
+provider
+enum('upload','youtube','vimeo','facebook','tiktok...
+NO
+upload
+url
+varchar(500)
+NO
+NULL
+thumbnail_url
+varchar(500)
+YES
+NULL
+title
+varchar(255)
+YES
+NULL
+description
+text
+YES
+NULL
+duration_seconds
+int(10) unsigned
+YES
+NULL
+is_main
+tinyint(1)
+NO
+0
+sort_order
+int(11)
+NO
+0
+created_at
+datetime
+NO
+current_timestamp()
+updated_at
+datetime
+NO
+current_timestamp()
+on update current_timestamp()
+
+
+Opérations sur les résultats de la requête
+Imprimer ImprimerCopier dans le presse-papiers Copier dans le presse-papiersCréer une vue Créer une vue
+
+Conserver cette requête SQL dans les signets Conserver cette requête SQL dans les signets
+Intitulé : 
+
+La requête SQL a été exécutée avec succès.
+DESCRIBE obituary_events
+[Éditer en ligne] [ Éditer ] [ Créer le code source PHP ]
++ Options
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+bigint(20) unsigned
+NO
+PRI
+NULL
+auto_increment
+obituary_id
+bigint(20) unsigned
+NO
+MUL
+NULL
+event_type
+enum('wake','funeral','burial','cremation','memori...
+NO
+wake
+title
+varchar(255)
+NO
+NULL
+description
+text
+YES
+NULL
+starts_at
+datetime
+NO
+MUL
+NULL
+ends_at
+datetime
+YES
+NULL
+timezone
+varchar(50)
+YES
+NULL
+venue_name
+varchar(255)
+YES
+NULL
+venue_address
+varchar(255)
+YES
+NULL
+stream_url
+varchar(500)
+YES
+NULL
+stream_provider
+enum('zoom','youtube_live','facebook_live','teams'...
+YES
+NULL
+replay_url
+varchar(500)
+YES
+NULL
+access_code
+varchar(100)
+YES
+NULL
+is_online_only
+tinyint(1)
+NO
+0
+city
+varchar(120)
+YES
+NULL
+region
+varchar(120)
+YES
+NULL
+country
+varchar(120)
+YES
+NULL
+country_code
+char(2)
+YES
+NULL
+is_main_event
+tinyint(1)
+NO
+0
+created_at
+datetime
+NO
+current_timestamp()
+updated_at
+datetime
+NO
+current_timestamp()
+on update current_timestamp()
+
+
+Opérations sur les résultats de la requête
+Imprimer ImprimerCopier dans le presse-papiers Copier dans le presse-papiersCréer une vue Créer une vue
+
+Conserver cette requête SQL dans les signets Conserver cette requête SQL dans les signets
+Intitulé : 
+
+La requête SQL a été exécutée avec succès.
+DESCRIBE obituary_contacts
+[Éditer en ligne] [ Éditer ] [ Créer le code source PHP ]
++ Options
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+bigint(20) unsigned
+NO
+PRI
+NULL
+auto_increment
+obituary_id
+bigint(20) unsigned
+NO
+MUL
+NULL
+label
+varchar(100)
+YES
+NULL
+name
+varchar(120)
+YES
+NULL
+phone
+varchar(50)
+YES
+NULL
+whatsapp_number
+varchar(50)
+YES
+NULL
+email
+varchar(190)
+YES
+NULL
+is_public
+tinyint(1)
+NO
+1
+is_primary
+tinyint(1)
+NO
+0
+created_at
+datetime
+NO
+current_timestamp()
+updated_at
+datetime
+NO
+current_timestamp()
+on update current_timestamp()
+
+
+Opérations sur les résultats de la requête
+Imprimer ImprimerCopier dans le presse-papiers Copier dans le presse-papiersCréer une vue Créer une vue
+
+Conserver cette requête SQL dans les signets Conserver cette requête SQL dans les signets
+Intitulé : 
+
+La requête SQL a été exécutée avec succès.
+DESCRIBE obituaries
+[Éditer en ligne] [ Éditer ] [ Créer le code source PHP ]
++ Options
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+bigint(20) unsigned
+NO
+PRI
+NULL
+auto_increment
+user_id
+bigint(20) unsigned
+NO
+MUL
+NULL
+account_type
+enum('individual','pro')
+NO
+NULL
+deceased_full_name
+varchar(255)
+NO
+NULL
+deceased_given_names
+varchar(255)
+YES
+NULL
+deceased_family_names
+varchar(255)
+YES
+NULL
+identity_status
+enum('known','partial','unknown')
+NO
+known
+deceased_gender
+enum('male','female')
+YES
+NULL
+date_of_birth
+date
+YES
+NULL
+date_of_death
+date
+YES
+NULL
+age_at_death
+smallint(5) unsigned
+YES
+NULL
+age_display
+varchar(50)
+YES
+NULL
+religion
+enum('christian','muslim','other')
+YES
+NULL
+denomination
+varchar(120)
+YES
+NULL
+title
+varchar(255)
+NO
+NULL
+body
+text
+NO
+NULL
+main_language
+char(2)
+NO
+fr
+slug
+varchar(255)
+NO
+UNI
+NULL
+visibility
+enum('public','unlisted','private')
+NO
+public
+status
+enum('draft','pending_review','published','rejecte...
+NO
+MUL
+draft
+verification_status
+enum('not_required','pending','verified','rejected...
+NO
+not_required
+verification_note
+varchar(500)
+YES
+NULL
+moderation_status
+enum('clean','reported','under_review','removed')
+NO
+clean
+moderation_note
+varchar(500)
+YES
+NULL
+publish_at
+datetime
+YES
+NULL
+published_at
+datetime
+YES
+NULL
+expires_at
+datetime
+YES
+NULL
+archived_at
+datetime
+YES
+NULL
+announcement_type
+enum('death','anniversary','memorial','other')
+NO
+death
+related_obituary_id
+bigint(20) unsigned
+YES
+MUL
+NULL
+city
+varchar(120)
+YES
+NULL
+region
+varchar(120)
+YES
+NULL
+country
+varchar(120)
+YES
+NULL
+country_code
+char(2)
+YES
+MUL
+NULL
+is_rural_area
+tinyint(1)
+NO
+0
+family_contact_name
+varchar(120)
+YES
+NULL
+family_contact_phone
+varchar(50)
+YES
+NULL
+family_contact_whatsapp
+varchar(50)
+YES
+NULL
+family_contact_email
+varchar(190)
+YES
+NULL
+is_free
+tinyint(1)
+NO
+1
+pricing_tier
+varchar(50)
+NO
+free_basic
+currency
+char(3)
+YES
+NULL
+amount_paid
+decimal(10,2)
+YES
+NULL
+publish_duration_days
+int(10) unsigned
+YES
+NULL
+payment_provider
+enum('mobile_money','paypal','stripe','bank_transf...
+YES
+NULL
+payment_reference
+varchar(100)
+YES
+NULL
+cover_image_url
+varchar(500)
+YES
+NULL
+view_count
+int(10) unsigned
+NO
+0
+last_view_at
+datetime
+YES
+NULL
+created_at
+datetime
+NO
+current_timestamp()
+updated_at
+datetime
+NO
+current_timestamp()
+on update current_timestamp()
+
+
+Opérations sur les résultats de la requête
+Imprimer ImprimerCopier dans le presse-papiers Copier dans le presse-papiersCréer une vue Créer une vue
+
+Conserver cette requête SQL dans les signets Conserver cette requête SQL dans les signets
+Intitulé : 
+
+La requête SQL a été exécutée avec succès.
+DESCRIBE roles
+[Éditer en ligne] [ Éditer ] [ Créer le code source PHP ]
++ Options
+Field
+Type
+Null
+Key
+Default
+Extra
+id
+int(11)
+NO
+PRI
+NULL
+auto_increment
+name
+varchar(50)
+NO
+UNI
+NULL
+description
+varchar(255)
+YES
+NULL
+
+
+Opérations sur les résultats de la requête
+Imprimer ImprimerCopier dans le presse-papiers Copier dans le presse-papiersCréer une vue Créer une vue
+
+Conserver cette requête SQL dans les signets Conserver cette requête SQL dans les signets
+Intitulé : 
+

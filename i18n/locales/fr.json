@@ -150,5 +150,177 @@
   "footer_info": "Pour votre sécurité, les liens de vérification expirent après un certain délai."
 }
 
-  }
+  },
+   "home": {
+    "meta": {
+      "title": "Matanga – Annonces nécrologiques & avis de décès en ligne",
+      "description": "Publiez une annonce nécrologique en quelques minutes, partagez les programmes de veillées et d’obsèques avec la famille, les proches et la diaspora."
+    },
+    "hero": {
+      "title": "Annoncer un décès, informer sans oublier personne.",
+      "subtitle": "Matanga aide les familles et la diaspora à partager une information claire et fiable.",
+      "body": "Créez une annonce nécrologique structurée, ajoutez les veillées, la messe, l’inhumation, et partagez facilement le lien par WhatsApp, SMS ou réseaux sociaux.",
+      "primaryCta": "Créer une annonce",
+      "secondaryCta": "Voir les annonces publiées",
+      "helperText": "Service pensé pour l’Afrique et sa diaspora, avec prise en compte des fuseaux horaires et des événements en ligne."
+    },
+    "howItWorks": {
+      "title": "Comment ça marche ?",
+      "subtitle": "3 étapes simples pour informer tout le monde.",
+      "step1": "Vous complétez les informations sur la personne défunte (nom, dates, ville, pays…).",
+      "step2": "Vous ajoutez les événements : veillées, messe, inhumation, y compris en ligne (Zoom, Facebook Live…).",
+      "step3": "Vous partagez le lien unique de l’annonce avec la famille, les amis et la communauté."
+    },
+    "search": {
+      "title": "Rechercher une annonce",
+      "subtitle": "Filtrez par pays, ville ou nom pour retrouver une annonce.",
+      "country": {
+        "label": "Pays (code)",
+        "placeholder": "Ex. CD, FR, GN…",
+        "hint": "Utilisez le code pays ISO à 2 lettres (CD, FR, GN, GA…)."
+      },
+      "city": {
+        "label": "Ville",
+        "placeholder": "Ex. Kinshasa, Paris, Conakry…"
+      },
+      "q": {
+        "label": "Nom ou titre",
+        "placeholder": "Rechercher par nom ou titre d’annonce…",
+        "hint": "Ex. Papa Jean-Baptiste, Tantie Béatrice, Sœur Aïssatou…"
+      },
+      "sort": {
+        "label": "Trier par",
+        "options": {
+          "recent": "Plus récentes",
+          "oldest": "Plus anciennes",
+          "popular": "Plus vues"
+        }
+      },
+      "reset": "Réinitialiser",
+      "submit": "Appliquer les filtres",
+      "loading": "Chargement des annonces…"
+    },
+    "list": {
+      "title": "Annonces récentes",
+      "subtitle": "Quelques annonces publiées récemment sur la plateforme.",
+      "loading": "Chargement des annonces…",
+      "error": "Une erreur est survenue lors du chargement des annonces.",
+      "empty": "Aucune annonce ne correspond à ces critères pour le moment.",
+      "card": {
+        "dateOfDeath": "Décédé(e) le {date}",
+        "badgeFree": "Annonce gratuite",
+        "badgePaid": "Formule {tier}",
+        "views": "{count} vue(s)",
+        "mainEvent": "{type} le {date}",
+        "viewDetails": "Voir le détail"
+      }
+    },
+    "eventTypes": {
+      "wake": "Veillée",
+      "funeral": "Obsèques",
+      "burial": "Inhumation",
+      "cremation": "Crémation",
+      "memorial": "Messe souvenir",
+      "memorial_mass": "Messe souvenir",
+      "other": "Événement"
+    }
+  },
+    "pagination": {
+    "ariaLabel": "Pagination des annonces",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "summaryOne": "{start}–{end} sur {total} résultat",
+    "summaryMany": "{start}–{end} sur {total} résultats",
+    "gotoLabel": "Page",
+    "gotoTotal": "/ {totalPages}",
+    "gotoAria": "Aller à la page (1 à {totalPages})"
+  },
+   "obituary": {
+    "meta": {
+     "titlePattern": "{name} – Avis de décès",
+    "descriptionPattern": "Annonce nécrologique de {name}{locationSuffix}."
+    },
+    "backToList": "Retour aux annonces",
+    "notFound": "Cette annonce n’est plus disponible ou n’existe pas.",
+
+    "summary": {
+      "title": "Résumé",
+      "deathDate": "Décédé(e) le {date}",
+      "deathDateLabel": "Date du décès",
+      "age": "Âgé(e) de {age}",
+      "ageLabel": "Âge",
+      "location": "Ville principale",
+      "announcementType": "Type d’annonce",
+      "plan": "Formule",
+      "freePlan": "Annonce gratuite",
+      "paidPlan": "Formule {tier}",
+      "views": "{count} vue(s)",
+      "viewsLabel": "Consultations",
+      "publishedAt": "Annonce publiée le {date}"
+    },
+
+    "sections": {
+      "about": {
+        "title": "À propos",
+        "noBody": "Le texte détaillé de l’annonce n’est pas disponible pour le moment."
+      },
+      "timeline": {
+        "title": "Programme des cérémonies",
+        "empty": "Aucun événement n’a encore été renseigné pour cette annonce."
+      },
+      "contacts": {
+        "title": "Contacts famille / organisation",
+        "empty": "Aucun contact n’a encore été renseigné.",
+        "phone": "Téléphone",
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "region": "Région"
+      },
+      "media": {
+        "title": "Souvenirs & documents",
+        "empty": "Aucun média n’a encore été ajouté.",
+        "open": "Ouvrir"
+      }
+    },
+
+    "event": {
+      "online": "En ligne",
+      "venue": "Lieu",
+      "address": "Adresse",
+      "stream": "Lien de diffusion",
+      "notes": "Détails",
+      "at": "à {time}"
+    },
+
+    "announcementTypes": {
+      "death": "Avis de décès",
+      "anniversary": "Anniversaire de décès",
+      "memorial": "Messe / souvenir",
+      "other": "Annonce"
+    }
+  },
+  "share": {
+    "obituary": {
+      "defaultName": "la personne défunte",
+      "titlePattern": "Annonce de décès – {name}",
+      "textPattern": "La famille partage cette annonce nécrologique pour {name}. Retrouvez les informations sur les cérémonies et les contacts sur Matanga.",
+      "shareButton": "Partager l’annonce",
+      "clipboardSuccess": "Le lien de l’annonce a été copié dans le presse-papiers.",
+      "clipboardError": "Impossible de copier le lien. Vous pouvez le copier manuellement depuis la barre d’adresse.",
+      "nativeError": "Le partage n’a pas pu être effectué sur cet appareil."
+    },
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "email": "E-mail",
+      "facebook": "Facebook",
+      "x": "X (ex-Twitter)",
+      "linkedin": "LinkedIn",
+      "telegram": "Telegram",
+      "link": "Copier le lien"
+    }
+  },
+  "common": {
+  "backToHome": "Retour à l’accueil"
+}
+
 }

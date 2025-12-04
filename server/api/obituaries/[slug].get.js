@@ -20,6 +20,9 @@ function mapObituaryRow(row) {
     publishedAt: row.published_at,
     expiresAt: row.expires_at,
 
+    // 👇 important pour le hero / les cartes
+    coverImageUrl: row.cover_image_url || null,
+
     announcementType: row.announcement_type,
     relatedObituaryId: row.related_obituary_id,
 
@@ -100,7 +103,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Session facultative (public route)
   const session = await getAuthSession(event);
 
   logInfo("Get obituary by slug", {
@@ -110,7 +112,7 @@ export default defineEventHandler(async (event) => {
   });
 
   try {
-    // 1. Récupérer l’obituary
+    // 1. Obituary
     const rows = await query(
       `
       SELECT *
@@ -132,7 +134,7 @@ export default defineEventHandler(async (event) => {
     const obituaryRow = rows[0];
     const obituary = mapObituaryRow(obituaryRow);
 
-    // 2. Règles d’accès
+    // 2. Accès
     const isOwnerOrAdmin = canViewPrivateOrUnpublished(obituary, session);
 
     const isPublished = obituary.status === "published";
@@ -140,7 +142,6 @@ export default defineEventHandler(async (event) => {
     const isPrivate = obituary.visibility === "private";
 
     if (isRemoved && !isOwnerOrAdmin) {
-      // On masque les contenus supprimés aux publics
       throw createError({
         statusCode: 404,
         statusMessage: "Obituary not found.",
@@ -149,7 +150,6 @@ export default defineEventHandler(async (event) => {
 
     if (!isPublished || isPrivate) {
       if (!isOwnerOrAdmin) {
-        // On ne révèle même pas que ça existe
         throw createError({
           statusCode: 404,
           statusMessage: "Obituary not found.",
@@ -157,7 +157,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 3. Charger les events
+    // 3. Events
     const eventsRows = await query(
       `
       SELECT
@@ -170,6 +170,11 @@ export default defineEventHandler(async (event) => {
         timezone,
         venue_name,
         venue_address,
+        stream_url,
+        stream_provider,
+        replay_url,
+        access_code,
+        is_online_only,
         city,
         region,
         country,
@@ -197,6 +202,11 @@ export default defineEventHandler(async (event) => {
       timezone: ev.timezone,
       venueName: ev.venue_name,
       venueAddress: ev.venue_address,
+      streamUrl: ev.stream_url,
+      streamProvider: ev.stream_provider,
+      replayUrl: ev.replay_url,
+      accessCode: ev.access_code,
+      isOnlineOnly: !!ev.is_online_only,
       city: ev.city,
       region: ev.region,
       country: ev.country,
@@ -206,7 +216,7 @@ export default defineEventHandler(async (event) => {
       updatedAt: ev.updated_at,
     }));
 
-    // 4. Charger les contacts publics
+    // 4. Contacts publics
     const contactsRows = await query(
       `
       SELECT
@@ -244,8 +254,53 @@ export default defineEventHandler(async (event) => {
       updatedAt: c.updated_at,
     }));
 
-    // 5. Mettre à jour les vues (optionnel, mais utile)
-    // On ne compte que les vues d’annonces publiées et non supprimées
+    // 5. Médias (images / vidéos)
+    const mediaRows = await query(
+      `
+      SELECT
+        id,
+        obituary_id,
+        event_id,
+        media_type,
+        provider,
+        url,
+        thumbnail_url,
+        title,
+        description,
+        duration_seconds,
+        is_main,
+        sort_order,
+        created_at,
+        updated_at
+      FROM obituary_media
+      WHERE obituary_id = ?
+      ORDER BY
+        is_main DESC,
+        sort_order ASC,
+        id ASC
+    `,
+      [obituary.id],
+      { requestId }
+    );
+
+    const media = mediaRows.map((m) => ({
+      id: m.id,
+      obituaryId: m.obituary_id,
+      eventId: m.event_id,
+      mediaType: m.media_type, // image | video
+      provider: m.provider, // upload, youtube, ...
+      url: m.url,
+      thumbnailUrl: m.thumbnail_url,
+      title: m.title,
+      description: m.description,
+      durationSeconds: m.duration_seconds,
+      isMain: !!m.is_main,
+      sortOrder: m.sort_order,
+      createdAt: m.created_at,
+      updatedAt: m.updated_at,
+    }));
+
+    // 6. Stats de vue
     if (isPublished && !isRemoved) {
       try {
         await query(
@@ -264,7 +319,6 @@ export default defineEventHandler(async (event) => {
           requestId,
         });
       } catch (updateErr) {
-        // On log mais on ne casse pas la réponse
         logError("Failed to increment obituary view_count", {
           error: updateErr.message,
           obituaryId: obituary.id,
@@ -278,6 +332,7 @@ export default defineEventHandler(async (event) => {
       obituary,
       events,
       contacts,
+      media,
     };
   } catch (err) {
     if (err.statusCode) {

@@ -319,4 +319,473 @@ APIs CRUD pour les annonces, avec filtrage par pays/ville, visibilité publique,
 
 Gestion des rôles avancés : moderator/admin pour validation d’annonces, modération, signalements.
 
-SEO encore plus poussé : sitemap, balisage schema.org (event/obituary), meta langue, etc.
+SEO encore plus poussé : sitemap, balisage schema.org (event/obituary), meta langue, etc. 
+
+////
+1. Journal de dev – Matanga (session du jour)
+1) Contexte général
+
+Projet : Matanga – plateforme d’annonces nécrologiques & veillées pour Afrique / diaspora / Caraïbes, mobile-first, premium, SEO fort, multi-langues.
+
+Stack :
+
+Nuxt 4 (SSR), JavaScript only.
+
+MySQL comme base principale.
+
+Auth JWT côté backend, cookies HttpOnly/Secure (déjà posé conceptuellement).
+
+Brevo (Sendinblue) pour l’email (SMTP).
+
+2) Backend – Authentification & emails
+
+Variables d’environnement
+
+Mise en place (ou rappel) des variables .env pour l’email & URLs :
+
+SMTP_HOST=smtp-relay.brevo.com
+
+SMTP_PORT=587
+
+SMTP_USER=…
+
+SMTP_PASS=…
+
+EMAIL_FROM=…
+
+APP_URL=https://www.matanga.net
+
+BASE_URL=https://www.matanga.net (ou http://localhost:3000 en dev)
+
+Utilitaires backend
+
+server/utils/db.js
+
+Client MySQL solide avec :
+
+gestion de pool,
+
+fonction query() avec options (ex: requestId) pour logging,
+
+fonction transaction() avec gestion commit/rollback et logs.
+
+server/utils/logger.js
+
+Fonctions logInfo et logError structurées (message + meta : email, requestId…).
+
+server/utils/email.js
+
+Envoi d’emails via SMTP Brevo :
+
+sendEmailVerification({ toEmail, toName, token })
+
+sendPasswordResetEmail({ toEmail, toName, token })
+
+Construction des liens à partir de APP_URL (ex : /verify-email?token=..., /reset-password?token=...).
+
+Routes API d’auth
+
+server/api/auth/register.post.js
+
+Inscription avec :
+
+email, password, accountType (individual | pro),
+
+city, country, preferredLocale,
+
+profil particulier : firstName, lastName, phone,
+
+profil pro : organizationName, organizationType, address, phone, websiteUrl.
+
+Validations :
+
+email valide,
+
+mot de passe ≥ 8 caractères,
+
+ville obligatoire,
+
+champs spécifiques selon accountType.
+
+Logique :
+
+vérif email unique,
+
+hash password (bcrypt),
+
+création user (status = pending_email_verification),
+
+création profil individuel ou pro dans les tables spécialisées,
+
+affectation rôle (user_individual ou user_pro) via user_roles,
+
+génération token de vérif email (TTL 24h) dans email_verification_tokens,
+
+envoi email de vérification.
+
+server/api/auth/login.post.js (on l’a déjà posé plus tôt dans la journée)
+
+Authentification par email/password,
+
+vérification status user (active, pending_email_verification, etc.),
+
+création du JWT + refresh token,
+
+écriture des cookies HttpOnly/Secure côté SSR.
+
+server/api/auth/logout.post.js
+
+Suppression / invalidation des cookies d’auth (clear token côté client).
+
+server/api/auth/forgot-password.post.js
+
+Génération d’un token de reset dans une table dédiée (ex: password_reset_tokens),
+
+envoi d’un email avec lien de reset.
+
+server/api/auth/reset-password.post.js
+
+Vérification du token,
+
+mise à jour du password_hash,
+
+invalidation du token.
+
+server/api/auth/verify-email.get.js
+
+Vérification du token d’email,
+
+mise à jour du status user -> active,
+
+clean des tokens utilisés/expirés.
+
+server/api/auth/resend-verification.post.js
+
+Reçois un email,
+
+si user existe et n’est pas vérifié :
+
+régénère un token,
+
+renvoie un email de vérification,
+
+renvoie un message “si un compte existe…” pour ne pas leak l’existence d’un compte.
+
+3) Front – Auth / stores / composables
+
+Store d’auth & composable
+
+stores/auth.js (Pinia)
+
+State : user, isAuthenticated, pending, error.
+
+Actions :
+
+login(credentials),
+
+logout(),
+
+fetchMe() / fetchUser(),
+
+gestion des erreurs globales.
+
+composables/useAuth.js
+
+Wrapper pour centraliser la logique dans les pages :
+
+retour de isAuthenticated, user, login(), logout(), fetchUser().
+
+option fetchUser: true pour précharger l’utilisateur quand nécessaire.
+
+4) Front – Thème, layout, styles globaux
+
+Thème (clair/sombre)
+
+composables/useTheme.js
+
+Gestion du thème :
+
+theme = 'light' | 'dark',
+
+toggleTheme(),
+
+lecture/écriture dans localStorage,
+
+synchronisation avec <html data-theme="light|dark"> pour tout le CSS.
+
+layouts/default.vue
+
+Layout général avec :
+
+structure “shell” :
+
+header avec logo “Matanga – Annonces & veillées`,
+
+skip-link pour accessibilité,
+
+bouton toggle thème (clair/sombre) accessible (aria-pressed, aria-label),
+
+zone nav (future : login / profil),
+
+<main id="main-content"><NuxtPage /></main>.
+
+Mobile-first, centré sur un contenu clean pour l’instant.
+
+Styles globaux
+
+Mise en place d’un socle de classes CSS (dans un global CSS ou dans app.vue) :
+
+Layout :
+
+.page-centered, .container-narrow, .app-shell, .app-header, .app-main…
+
+Cards :
+
+.card, .card-elevated, .card-header.
+
+Typo :
+
+.text-muted, .text-soft, .text-xs, .text-sm…
+
+Boutons :
+
+.btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-sm.
+
+Formulaires :
+
+.form, .form-field, .form-label, .form-control, .form-error, .form-error-input, .form-hint, .form-row, .form-row-inline.
+
+Chips / badges :
+
+.chip, .chip-accent, .badge-danger.
+
+Animations simples :
+
+.fade-in pour l’apparition des cartes.
+
+C’est la base d’un design système premium Matanga, à raffiner plus tard.
+
+5) i18n – Multi-langues
+
+Module Nuxt i18n
+
+Installation de @nuxtjs/i18n.
+
+Config dans nuxt.config.js :
+
+modules: ['@nuxtjs/i18n', ...]
+
+i18n :
+
+locales: fr, en, pt, es (fichiers JSON),
+
+defaultLocale: 'fr',
+
+strategy: 'prefix_except_default' ( / = FR, /en, /pt, /es pour le reste),
+
+lazy: true,
+
+langDir: 'locales',
+
+vueI18n: './i18n.config.js' (chemin vers la config vue-i18n).
+
+Config vue-i18n
+
+Fichier i18n.config.js à la racine :
+
+export default defineI18nConfig(() => ({
+  legacy: false,
+  locale: 'fr',
+  fallbackLocale: 'fr',
+  availableLocales: ['fr', 'en', 'pt', 'es']
+}));
+
+
+Fichiers de langues
+
+Dossier locales/ avec au moins :
+
+locales/fr.json :
+
+Définit toutes les clés utilisées pour la page register :
+
+auth.register.title, subtitle,
+
+account_type.*,
+
+fields.*, placeholders.*, actions.*,
+
+errors.*, hints.*,
+
+bloc resend pour renvoi email vérification.
+
+en.json, pt.json, es.json à faire plus tard (copie/traduction de fr.json).
+
+6) Page Register – UX premium + i18n
+
+pages/register/index.vue réécrite :
+
+Utilise useI18n() → t('auth.register.…') pour tous les textes.
+
+Champs :
+
+email, password, confirmPassword,
+
+city, country, preferredLocale,
+
+champs individuels : firstName, lastName, phone,
+
+champs pro : organizationName, organizationType, address, phone, websiteUrl.
+
+Switch type de compte (individual / pro) avec deux boutons stylés.
+
+Validation côté front :
+
+email valide,
+
+mot de passe min 8,
+
+confirmation identique,
+
+ville obligatoire,
+
+champs spécifiques par type.
+
+Gestion erreurs :
+
+fieldErrors par champ,
+
+globalError pour message global.
+
+Boutons voir/cacher mot de passe + confirmation :
+
+showPassword, showConfirmPassword.
+
+Intégration renvoi email de confirmation :
+
+bouton qui appelle /api/auth/resend-verification avec l’email saisi,
+
+resendLoading, resendMessage, resendError + textes i18n.
+
+Redirection si déjà connecté :
+
+useAuth(fetchUser: true),
+
+si isAuthenticated → router.push('/').
+
+7) Données de test – Nécrologies & événements
+
+Tables déjà en place
+
+users, user_roles
+
+obituaries
+
+obituary_events
+
+obituary_media
+
+obituary_contacts
+
+Jeu de données inséré aujourd’hui (pour user_id = 1) :
+
+Annonce 1 – Maman Marie NDINGA (Congo, Brazzaville ↔ Paris)
+
+obituaries :
+
+slug = 'maman-marie-ndinga-2025-brazzaville'
+
+ville principale : Brazzaville (CG), annonce de décès.
+
+obituary_events :
+
+veillée principale à Brazzaville (domicile),
+
+veillée secondaire à Paris (salle paroissiale + stream YouTube Live),
+
+obsèques + inhumation au village (Congo, région Plateaux).
+
+obituary_media :
+
+portrait principal (image),
+
+photos symboliques veillée Brazzaville / Paris,
+
+vidéo YouTube (replay live Paris).
+
+obituary_contacts :
+
+contact famille Congo,
+
+contact famille France.
+
+Annonce 2 – Monsieur KOUADIO Koffi (Côte d’Ivoire, Abidjan ↔ Paris)
+
+slug = 'monsieur-kouadio-koffi-2025-abidjan'
+
+payant (premium_30d), mobile money (CI).
+
+Événements :
+
+veillée principale à Abidjan,
+
+veillée diaspora à Paris (Zoom),
+
+obsèques + inhumation à Abidjan (cimetière de Williamsville).
+
+Médias :
+
+visuel portrait + image veillée Abidjan.
+
+Contacts :
+
+contact CI,
+
+contact diaspora France.
+
+Annonce 3 – Gran Mè Rose DESIR (Martinique ↔ Montréal, messe de 40 jours)
+
+slug = 'gran-me-rose-desir-2025-martinique'
+
+Événements :
+
+veillée à Fort-de-France (tradition antillaise),
+
+veillée diaspora à Montréal (Facebook Live),
+
+“messe de 40 jours” modélisée comme event_type = 'funeral' avec un titre spécifique.
+
+Médias :
+
+visuel principal,
+
+images symboliques pour veillées Martinique et Montréal.
+
+Contacts :
+
+famille en Martinique,
+
+contact diaspora au Canada.
+
+Ces données vont servir à tester :
+
+listing d’annonces,
+
+filtrage par ville/pays,
+
+affichage détaillé d’une annonce (timeline d’événements, médias, contacts),
+
+SEO (title, description par annonce).
+2025-12-03 – Données de test nécrologies (suite)
+
+Ajout de 3 nouvelles annonces de test (MUKENDI – Kinshasa/Johannesburg, DIALLO – Conakry/Lyon, MBOUMA – Libreville/Paris).
+
+Variation des cas d’usage :
+
+multi-veillées avec live Zoom,
+
+prière à la mosquée + inhumation au village,
+
+cas simple avec veillée unique + messe souvenir à 40 jours.
+
+Objectif : tester la page de détail nécrologique (timeline d’événements, affichage des contacts, supports médias) et, plus tard, le listing/filtrage par ville/pays.
