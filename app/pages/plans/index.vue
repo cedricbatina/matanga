@@ -1,0 +1,645 @@
+<!-- pages/plans.vue -->
+<template>
+  <main class="app-main fade-in">
+    <!-- Barre de nav générique Matanga -->
+    <PageNavBar
+      aria-label="Navigation choix de plan"
+      :show-back-home="true"
+      :show-back-list="false"
+      :show-create="false"
+    />
+
+    <section class="section">
+      <!-- Header -->
+      <header class="section-header plans-header">
+        <div class="plans-header__text">
+          <h1 class="section-title">
+            {{ t('plans.title') }}
+          </h1>
+          <p class="section-subtitle">
+            {{ t('plans.subtitle') }}
+          </p>
+
+          <p class="plans-header__hint">
+            {{ t('plans.helper') }}
+          </p>
+        </div>
+
+        <!-- Switch Particulier / Pro -->
+        <div class="plans-toggle" role="tablist" aria-label="Type de client">
+          <button
+            type="button"
+            class="plans-toggle__btn"
+            :class="{ 'plans-toggle__btn--active': selectedAudience === 'individual' }"
+            role="tab"
+            :aria-selected="selectedAudience === 'individual'"
+            @click="selectedAudience = 'individual'"
+          >
+            <i class="fas fa-user" aria-hidden="true"></i>
+            <span>{{ t('plans.audience.individual') }}</span>
+          </button>
+          <button
+            type="button"
+            class="plans-toggle__btn"
+            :class="{ 'plans-toggle__btn--active': selectedAudience === 'pro' }"
+            role="tab"
+            :aria-selected="selectedAudience === 'pro'"
+            @click="selectedAudience = 'pro'"
+          >
+            <i class="fas fa-briefcase" aria-hidden="true"></i>
+            <span>{{ t('plans.audience.pro') }}</span>
+            <span class="plans-toggle__badge">
+              {{ t('plans.audience.proSoon') }}
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <!-- État chargement / erreur -->
+      <div v-if="pending" class="plans-loading">
+        <div class="plans-skeleton" v-for="n in 3" :key="n">
+          <div class="plans-skeleton__header"></div>
+          <div class="plans-skeleton__line plans-skeleton__line--wide"></div>
+          <div class="plans-skeleton__line"></div>
+          <div class="plans-skeleton__line"></div>
+        </div>
+      </div>
+
+      <div v-else-if="error" class="plans-error">
+        <p class="plans-error__text">
+          {{ t('plans.error') }}
+        </p>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          @click="refresh"
+        >
+          {{ t('plans.retry') }}
+        </button>
+      </div>
+
+      <!-- Grille de plans -->
+      <div
+        v-else
+        class="plans-grid"
+      >
+        <!-- Particulier -->
+        <template v-if="selectedAudience === 'individual'">
+          <article
+            v-for="plan in individualPlans"
+            :key="plan.code"
+            class="card plan-card"
+            :class="{
+              'plan-card--highlight': plan.code === recommendedIndividualCode,
+              'plan-card--free': plan.isFree
+            }"
+          >
+            <div class="card-body plan-card__body">
+              <header class="plan-card__header">
+                <div class="plan-card__titles">
+                  <p class="plan-card__eyebrow" v-if="plan.isFree">
+                    {{ t('plans.badges.free') }}
+                  </p>
+                  <p
+                    class="plan-card__eyebrow plan-card__eyebrow--accent"
+                    v-else-if="plan.code === recommendedIndividualCode"
+                  >
+                    {{ t('plans.badges.recommended') }}
+                  </p>
+
+                  <h2 class="plan-card__title">
+                    {{ plan.label }}
+                  </h2>
+                  <p class="plan-card__subtitle">
+                    {{ plan.description }}
+                  </p>
+                </div>
+
+                <div class="plan-card__price">
+                  <span
+                    v-if="plan.isFree"
+                    class="plan-card__price-main"
+                  >
+                    {{ t('plans.price.free') }}
+                  </span>
+                  <span
+                    v-else
+                    class="plan-card__price-main"
+                  >
+                    {{ formatPrice(plan.basePriceCents) }}
+                  </span>
+                  <span
+                    v-if="!plan.isFree"
+                    class="plan-card__price-helper"
+                  >
+                    {{ t('plans.price.onetime') }}
+                  </span>
+                </div>
+              </header>
+
+              <ul class="plan-card__features" aria-label="Caractéristiques du plan">
+                <li class="plan-card__feature">
+                  <i class="fas fa-clock plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>
+                    <strong>{{ t('plans.features.duration.label') }}</strong>
+                    <span class="plan-card__feature-text">
+                      {{ t('plans.features.duration.value', { days: plan.publishDurationDays }) }}
+                    </span>
+                  </span>
+                </li>
+
+                <li
+                  v-if="plan.features?.primaryVisibilityDays && plan.features?.secondaryVisibilityDays"
+                  class="plan-card__feature"
+                >
+                  <i class="fas fa-bullhorn plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>
+                    <strong>{{ t('plans.features.visibility.label') }}</strong>
+                    <span class="plan-card__feature-text">
+                      {{ t('plans.features.visibility.value', {
+                        primary: plan.features.primaryVisibilityDays,
+                        secondary: plan.features.secondaryVisibilityDays
+                      }) }}
+                    </span>
+                  </span>
+                </li>
+
+                <li class="plan-card__feature">
+                  <i class="fas fa-calendar-alt plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>
+                    <strong>{{ t('plans.features.events.label') }}</strong>
+                    <span class="plan-card__feature-text">
+                      {{ t('plans.features.events.value', { count: plan.features?.maxEvents || 0 }) }}
+                    </span>
+                  </span>
+                </li>
+
+                <li class="plan-card__feature">
+                  <i class="fas fa-image plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>
+                    <strong>{{ t('plans.features.media.label') }}</strong>
+                    <span class="plan-card__feature-text">
+                      {{ t('plans.features.media.value', {
+                        photos: plan.features?.maxPhotos || 0,
+                        videos: plan.features?.maxVideos || 0
+                      }) }}
+                    </span>
+                  </span>
+                </li>
+
+                <li class="plan-card__feature">
+                  <i class="fas fa-user-friends plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>
+                    <strong>{{ t('plans.features.contacts.label') }}</strong>
+                    <span class="plan-card__feature-text">
+                      {{ t('plans.features.contacts.value', {
+                        count: plan.features?.maxContacts || 0
+                      }) }}
+                    </span>
+                  </span>
+                </li>
+
+                <li
+                  v-if="plan.features?.maxOnlineEvents"
+                  class="plan-card__feature"
+                >
+                  <i class="fas fa-video plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>
+                    <strong>{{ t('plans.features.online.label') }}</strong>
+                    <span class="plan-card__feature-text">
+                      {{ t('plans.features.online.value', {
+                        count: plan.features?.maxOnlineEvents || 0
+                      }) }}
+                    </span>
+                  </span>
+                </li>
+              </ul>
+
+              <p
+                v-if="plan.code === 'indiv_free_7'"
+                class="plan-card__note"
+              >
+                {{ t('plans.notes.free') }}
+              </p>
+              <p
+                v-else-if="plan.code === recommendedIndividualCode"
+                class="plan-card__note plan-card__note--accent"
+              >
+                {{ t('plans.notes.essentiel') }}
+              </p>
+            </div>
+
+            <footer class="card-footer plan-card__footer">
+              <NuxtLink
+                class="btn btn-primary btn-sm plan-card__cta"
+                :class="{ 'btn-outline': !plan.isFree && plan.code !== recommendedIndividualCode }"
+                :to="{
+                  path: '/obituary/create',
+                  query: { plan: plan.code },
+                }"
+              >
+                <span v-if="plan.isFree">
+                  {{ t('plans.cta.startFree') }}
+                </span>
+                <span v-else-if="plan.code === recommendedIndividualCode">
+                  {{ t('plans.cta.startRecommended') }}
+                </span>
+                <span v-else>
+                  {{ t('plans.cta.startPaid') }}
+                </span>
+              </NuxtLink>
+
+              <p class="plan-card__legal">
+                {{ t('plans.legal.reminder') }}
+              </p>
+            </footer>
+          </article>
+        </template>
+
+        <!-- Professionnel (teasing / bientôt) -->
+        <template v-else>
+          <article class="card plan-card plan-card--pro">
+            <div class="card-body plan-card__body">
+              <header class="plan-card__header">
+                <div class="plan-card__titles">
+                  <p class="plan-card__eyebrow plan-card__eyebrow--accent">
+                    {{ t('plans.pro.badgeSoon') }}
+                  </p>
+                  <h2 class="plan-card__title">
+                    {{ t('plans.pro.title') }}
+                  </h2>
+                  <p class="plan-card__subtitle">
+                    {{ t('plans.pro.subtitle') }}
+                  </p>
+                </div>
+              </header>
+
+              <ul class="plan-card__features">
+                <li class="plan-card__feature">
+                  <i class="fas fa-layer-group plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>{{ t('plans.pro.features.bundle') }}</span>
+                </li>
+                <li class="plan-card__feature">
+                  <i class="fas fa-bullseye plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>{{ t('plans.pro.features.visibility') }}</span>
+                </li>
+                <li class="plan-card__feature">
+                  <i class="fas fa-file-invoice-dollar plan-card__feature-icon" aria-hidden="true"></i>
+                  <span>{{ t('plans.pro.features.billing') }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <footer class="card-footer plan-card__footer">
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                disabled
+              >
+                {{ t('plans.pro.ctaDisabled') }}
+              </button>
+              <p class="plan-card__legal">
+                {{ t('plans.pro.helper') }}
+              </p>
+            </footer>
+          </article>
+        </template>
+      </div>
+    </section>
+  </main>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import { useFetch, useSeoMeta } from '#imports';
+import { useI18n } from 'vue-i18n';
+import PageNavBar from '~/components/PageNavBar.vue';
+
+const { t } = useI18n();
+
+// SEO
+useSeoMeta({
+  title: () => t('plans.meta.title'),
+  description: () => t('plans.meta.description'),
+  ogTitle: () => t('plans.meta.title'),
+  ogDescription: () => t('plans.meta.description'),
+});
+
+// Audience sélectionnée : particulier par défaut
+const selectedAudience = ref('individual');
+
+// Chargement des plans depuis l'API
+const {
+  data,
+  pending,
+  error,
+  refresh,
+} = await useFetch('/api/plans', {
+  // en SSR + client
+  default: () => ({ individual: [], pro: [] }),
+});
+
+const individualPlans = computed(() => data.value?.individual || []);
+const proPlans = computed(() => data.value?.pro || []);
+
+// Plan individuel recommandé (Essentiel)
+const recommendedIndividualCode = 'indiv_essentiel_30';
+
+// format prix en € à partir des cents
+const formatPrice = (cents) => {
+  if (!cents || cents <= 0) return t('plans.price.free');
+  const euros = (cents / 100).toFixed(2);
+  return t('plans.price.paid', { amount: euros });
+};
+</script>
+
+<style scoped>
+.plans-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.plans-header__text {
+  max-width: 720px;
+}
+
+.plans-header__hint {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+}
+
+/* Toggle Particulier / Pro */
+.plans-toggle {
+  display: inline-flex;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--color-surface-elevated, #0f172a);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
+  gap: 0.25rem;
+}
+
+.plans-toggle__btn {
+  border: none;
+  background: transparent;
+  color: #e5e7eb;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.plans-toggle__btn i {
+  font-size: 0.9rem;
+}
+
+.plans-toggle__btn--active {
+  background: #ffffff;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.plans-toggle__badge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #bfdbfe;
+}
+
+/* Loading skeleton */
+.plans-loading {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.plans-skeleton {
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: var(--color-surface, #020617);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.5);
+}
+
+.plans-skeleton__header,
+.plans-skeleton__line {
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.15),
+    rgba(148, 163, 184, 0.35),
+    rgba(148, 163, 184, 0.15)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.plans-skeleton__header {
+  height: 1.2rem;
+  width: 40%;
+  margin-bottom: 0.9rem;
+}
+
+.plans-skeleton__line {
+  height: 0.85rem;
+  width: 65%;
+  margin-bottom: 0.4rem;
+}
+
+.plans-skeleton__line--wide {
+  width: 90%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Error */
+.plans-error {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.plans-error__text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Grid & cards */
+.plans-grid {
+  margin-top: var(--space-3);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.plan-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: var(--color-surface, #020617);
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.plan-card--highlight {
+  border-color: rgba(56, 189, 248, 0.9);
+  box-shadow: 0 28px 70px rgba(8, 47, 73, 0.9);
+}
+
+.plan-card--free {
+  border-style: dashed;
+}
+
+.plan-card--pro {
+  opacity: 0.95;
+}
+
+.plan-card__body {
+  padding: 1.4rem 1.4rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.plan-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.plan-card__titles {
+  max-width: 70%;
+}
+
+.plan-card__eyebrow {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.plan-card__eyebrow--accent {
+  color: #22d3ee;
+}
+
+.plan-card__title {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.plan-card__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+}
+
+.plan-card__price {
+  text-align: right;
+}
+
+.plan-card__price-main {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.plan-card__price-helper {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-soft);
+}
+
+/* Features */
+.plan-card__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.plan-card__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+}
+
+.plan-card__feature-icon {
+  margin-top: 0.12rem;
+  font-size: 0.9rem;
+  color: #38bdf8;
+}
+
+.plan-card__feature-text {
+  display: block;
+  color: var(--color-text-soft);
+  font-weight: 400;
+}
+
+/* Notes */
+.plan-card__note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-soft);
+}
+
+.plan-card__note--accent {
+  color: #38bdf8;
+}
+
+/* Footer */
+.plan-card__footer {
+  padding: 0.9rem 1.4rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.plan-card__cta {
+  align-self: flex-start;
+}
+
+.plan-card__legal {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-soft);
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .plans-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .plans-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+</style>

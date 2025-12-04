@@ -555,15 +555,29 @@
 </template>
 
 <script setup>
+definePageMeta({
+  middleware: ['auth'], // 👈 nécessite middleware/auth.js
+});
 import { reactive, ref, computed, watch } from 'vue';
-import { useRouter, useSeoMeta } from '#imports';
+import { useRouter, useRoute, useSeoMeta } from '#imports';
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
 
-const FREE_PLAN_DURATION_DAYS = 5;
+// Plan gratuit : 7 jours
+const FREE_PLAN_DURATION_DAYS = 7;
 
 const { t, locale } = useI18n();
 const router = useRouter();
+const route = useRoute();
+
+// plan sélectionné via /plans ou fallback sur le gratuit
+const selectedPlanCode = computed(() => {
+  const fromQuery = route.query.plan;
+  if (typeof fromQuery === 'string' && fromQuery.trim().length > 0) {
+    return fromQuery;
+  }
+  return 'indiv_free_7';
+});
 
 const form = reactive({
   deceasedFullName: '',
@@ -699,9 +713,9 @@ const buildPayload = () => {
     familyContactWhatsapp: form.familyContact.whatsapp || null,
     familyContactEmail: form.familyContact.email || null,
 
-    // monétisation : pour l’instant, uniquement gratuit
+    // monétisation : le backend va forcer selon le plan (pricingPlans.js)
     isFree: true,
-    pricingTier: 'free_basic',
+    pricingTier: null,
     currency: null,
     amountPaid: null,
     publishDurationDays: FREE_PLAN_DURATION_DAYS,
@@ -745,6 +759,9 @@ const buildPayload = () => {
             },
           ]
         : [],
+
+    // 👇 nouveau : on envoie le plan choisi (free / simple20 / essentiel, etc.)
+    planCode: selectedPlanCode.value,
   };
 };
 

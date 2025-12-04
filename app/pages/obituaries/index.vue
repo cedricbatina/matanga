@@ -7,7 +7,7 @@
   :show-back-home="true"
   :show-back-list="false"
   :show-create="true"
-  create-to="/obituaries/create"
+  create-to="/obituary/create"
 />
 
 

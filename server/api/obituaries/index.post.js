@@ -7,6 +7,10 @@ import {
   buildObituaryBaseSlug,
   ensureUniqueSlugForObituary,
 } from "../../utils/ensureUniqueSlugForObituary.js";
+import {
+  findPlanByCode,
+  getDefaultIndividualFreePlan,
+} from "../../utils/pricingPlans.js";
 
 const MIN_TITLE_LENGTH = 8;
 const MIN_BODY_LENGTH = 30;
@@ -58,7 +62,10 @@ export default defineEventHandler(async (event) => {
     familyContactWhatsapp,
     familyContactEmail,
 
-    // monétisation
+    // choix de plan (nouveau)
+    planCode,
+
+    // monétisation (peuvent être surchargés par le plan)
     isFree,
     pricingTier,
     currency,
@@ -123,21 +130,110 @@ export default defineEventHandler(async (event) => {
     fieldErrors.events = "Events must be an array.";
   }
 
-  // monétisation basique
-  const isFreeValue = typeof isFree === "boolean" ? isFree : true;
+  // contacts optionnels, mais si fournis doivent être un tableau
+  if (contacts != null && !Array.isArray(contacts)) {
+    fieldErrors.contacts = "Contacts must be an array.";
+  }
+
+  // ---------- PLAN & MONÉTISATION ----------
+
+  // 1) Résolution du plan (en fonction du planCode + account_type)
+  let selectedPlan = null;
+
+  if (planCode) {
+    selectedPlan = findPlanByCode(planCode);
+    if (!selectedPlan) {
+      fieldErrors.planCode = "Unknown plan code.";
+    } else {
+      const accountType = session.accountType || "individual";
+      if (
+        selectedPlan.accountType &&
+        selectedPlan.accountType !== accountType
+      ) {
+        fieldErrors.planCode =
+          "This plan is not available for your account type.";
+      }
+    }
+  } else {
+    // Pas de plan explicite → par défaut, plan gratuit pour les particuliers
+    const accountType = session.accountType || "individual";
+    if (accountType === "individual") {
+      selectedPlan = getDefaultIndividualFreePlan();
+    }
+  }
+
+  // 2) Valeurs monétisation / durée dérivées du plan
+  let isFreeValue = typeof isFree === "boolean" ? isFree : true;
+  let pricingTierValue = pricingTier || null;
+  let currencyValue = currency || null;
+  let amountPaidValue =
+    amountPaid != null && amountPaid !== "" ? Number(amountPaid) : null;
+  let publishDurationDaysValue =
+    publishDurationDays != null && publishDurationDays !== ""
+      ? Number(publishDurationDays)
+      : null;
+
+  if (selectedPlan) {
+    isFreeValue = selectedPlan.isFree;
+    pricingTierValue = selectedPlan.pricingTier;
+    currencyValue = selectedPlan.currency;
+    publishDurationDaysValue = selectedPlan.publishDurationDays;
+  }
 
   if (!isFreeValue) {
-    if (!currency) {
+    if (!currencyValue) {
       fieldErrors.currency = "Currency is required for paid announcements.";
     }
-    if (amountPaid == null || Number(amountPaid) <= 0) {
+    if (amountPaidValue == null || amountPaidValue <= 0) {
       fieldErrors.amountPaid =
         "Amount paid must be greater than 0 for paid announcements.";
     }
   }
 
-  if (publishDurationDays != null && Number(publishDurationDays) <= 0) {
+  if (
+    publishDurationDaysValue != null &&
+    Number(publishDurationDaysValue) <= 0
+  ) {
     fieldErrors.publishDurationDays = "Publish duration must be positive.";
+  }
+
+  // 3) Caps de plan (events / event types / contacts)
+  if (selectedPlan && selectedPlan.features) {
+    const f = selectedPlan.features;
+
+    // maxEvents
+    if (Array.isArray(events) && typeof f.maxEvents === "number") {
+      if (events.length > f.maxEvents) {
+        fieldErrors.events = `This plan allows up to ${f.maxEvents} event(s).`;
+      }
+    }
+
+    // allowedEventTypes
+    if (Array.isArray(events) && Array.isArray(f.allowedEventTypes)) {
+      const invalidEvent = events.find((ev) => {
+        if (!ev) return false;
+        const evType = String(
+          ev.eventType || ev.event_type || ""
+        ).toLowerCase();
+        return evType && !f.allowedEventTypes.includes(evType);
+      });
+      if (invalidEvent) {
+        fieldErrors.events =
+          "One or more events use an event_type not allowed for this plan.";
+      }
+    }
+
+    // maxContacts
+    if (Array.isArray(contacts) && typeof f.maxContacts === "number") {
+      if (contacts.length > f.maxContacts) {
+        fieldErrors.contacts = `This plan allows up to ${f.maxContacts} contact(s).`;
+      }
+    }
+
+    // TODO plus tard :
+    // - contrôler les médias (obituary_media) contre maxPhotos, maxVideos,
+    //   maxExternalVideoLinks quand on exposera ces champs dans le payload.
+    // - contrôler les événements online (stream_url, is_online_only) contre maxOnlineEvents.
   }
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -198,9 +294,12 @@ export default defineEventHandler(async (event) => {
   const publishAtValue = publishDirect ? now : null;
   let expiresAtValue = null;
 
-  if (publishDurationDays != null && Number(publishDurationDays) > 0) {
+  if (
+    publishDurationDaysValue != null &&
+    Number(publishDurationDaysValue) > 0
+  ) {
     const d = new Date(publishAtValue || now);
-    d.setDate(d.getDate() + Number(publishDurationDays));
+    d.setDate(d.getDate() + Number(publishDurationDaysValue));
     expiresAtValue = d;
   }
 
@@ -306,11 +405,17 @@ export default defineEventHandler(async (event) => {
           familyContactEmailClean,
 
           isFreeValue ? 1 : 0,
-          pricingTier || (isFreeValue ? "free_basic" : "paid"),
-          isFreeValue ? null : currency,
-          isFreeValue ? null : Number(amountPaid),
+          pricingTierValue || (isFreeValue ? "free_basic" : "paid"),
+          isFreeValue ? null : currencyValue,
+          isFreeValue
+            ? null
+            : amountPaidValue != null
+            ? Number(amountPaidValue)
+            : null,
 
-          publishDurationDays != null ? Number(publishDurationDays) : null,
+          publishDurationDaysValue != null
+            ? Number(publishDurationDaysValue)
+            : null,
           isFreeValue ? null : paymentProvider || null,
           isFreeValue ? null : paymentReference || null,
           coverImageUrlClean,
