@@ -321,6 +321,91 @@
   },
   "common": {
   "backToHome": "Retour à l’accueil"
-}
+},
+ "createObituary": {
+    "meta": {
+      "title": "Créer une annonce de décès",
+      "description": "Renseignez les informations sur la personne défunte, la ville et le texte de l’annonce pour publier une annonce de décès en ligne."
+    },
+    "title": "Créer une annonce",
+    "subtitle": "Quelques informations suffisent pour publier une annonce simple et claire.",
+
+    "sections": {
+      "deceased": {
+        "title": "Informations sur la personne défunte",
+        "subtitle": "Ces informations apparaîtront en haut de l’annonce."
+      },
+      "content": {
+        "title": "Texte de l’annonce",
+        "subtitle": "Vous pouvez adapter le ton, la longueur et mentionner les familles, communautés, paroisses…"
+      },
+      "publish": {
+        "title": "Photo & publication",
+        "subtitleFree": "Formule gratuite : annonce publique visible {days} jour(s) avec une seule photo principale.",
+        "legal": "En publiant cette annonce, vous confirmez avoir l’autorisation de la famille et des proches pour partager ces informations."
+      }
+    },
+
+    "fields": {
+      "deceasedFullName": {
+        "label": "Nom complet du défunt / de la défunte",
+        "placeholder": "Ex. Papa Jean-Baptiste MUKENDI"
+      },
+      "dateOfDeath": {
+        "label": "Date du décès",
+        "hint": "Laissez vide si la date est approximative ou inconnue."
+      },
+      "ageDisplay": {
+        "label": "Âge affiché",
+        "placeholder": "Ex. 76 ans, 87 ans révolus…",
+        "hint": "Texte libre, tel qu’il doit apparaître (ex. « 45 ans »)."
+      },
+      "city": {
+        "label": "Ville principale",
+        "placeholder": "Ex. Kinshasa, Paris, Dakar…"
+      },
+      "region": {
+        "label": "Région / Province",
+        "placeholder": "Ex. Île-de-France, Kongo Central…"
+      },
+      "country": {
+        "label": "Pays",
+        "placeholder": "Ex. République Démocratique du Congo, France…"
+      },
+      "countryCode": {
+        "label": "Code pays (2 lettres)",
+        "placeholder": "Ex. CD, FR, SN…",
+        "hint": "Code ISO 3166-1 alpha-2, ex. CD pour RDC, FR pour France."
+      },
+      "title": {
+        "label": "Titre de l’annonce",
+        "placeholder": "Ex. Annonce de décès – Papa Jean-Baptiste MUKENDI",
+        "hint": "Ce titre sera visible dans les listes et sur les réseaux sociaux."
+      },
+      "body": {
+        "label": "Texte détaillé de l’annonce",
+        "placeholder": "Famille, parents et amis ont la profonde tristesse de vous faire part du décès de…",
+        "hint": "Vous pouvez préciser les liens familiaux, un court hommage, etc."
+      },
+      "coverImageUrl": {
+        "label": "Photo principale (URL)",
+        "placeholder": "Coller ici le lien de la photo (portrait du défunt)…",
+        "hint": "Pour la formule gratuite, une seule photo principale sera affichée. Vous pourrez plus tard ajouter une vraie gestion d’upload."
+      }
+    },
+
+    "actions": {
+      "cancel": "Annuler",
+      "submit": "Publier l’annonce",
+      "submitting": "Publication en cours…"
+    },
+
+    "errors": {
+      "deceasedFullNameRequired": "Merci d’indiquer le nom complet de la personne défunte.",
+      "titleRequired": "Merci de saisir un titre d’annonce.",
+      "bodyTooShort": "Le texte de l’annonce est trop court. Ajoutez quelques détails supplémentaires (au moins 40 caractères).",
+      "submitFailed": "Impossible de créer l’annonce pour le moment. Veuillez réessayer plus tard."
+    }
+  }
 
 }

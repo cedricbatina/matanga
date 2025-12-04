@@ -21,7 +21,7 @@
 
             <div class="flex flex-row items-center gap-3 mt-4">
               <NuxtLink
-                to="/obituaries/create"
+                to="/obituary/create"
                 class="btn btn-primary btn-lg"
               >
                 {{ t('home.hero.primaryCta') }}

@@ -1,7 +1,7 @@
 // server/api/obituaries/index.post.js
 import { defineEventHandler, readBody, createError } from "h3";
 import { requireAuth } from "../../utils/authSession.js";
-import { query, transaction } from "../../utils/db.js";
+import { transaction } from "../../utils/db.js";
 import { logInfo, logError } from "../../utils/logger.js";
 import {
   buildObituaryBaseSlug,
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event);
 
-  // On récupère les champs attendus
+  // Champs attendus
   const {
     deceasedFullName,
     deceasedGivenNames,
@@ -39,6 +39,9 @@ export default defineEventHandler(async (event) => {
     religion, // 'christian' | 'muslim' | 'other'
     denomination,
 
+    // photo principale
+    coverImageUrl,
+
     title,
     content, // texte de l'annonce (body)
     mainLanguage, // 'fr', 'en', 'pt', 'es'...
@@ -49,7 +52,7 @@ export default defineEventHandler(async (event) => {
     countryCode,
     isRuralArea,
 
-    // contact principal
+    // contact principal (optionnel)
     familyContactName,
     familyContactPhone,
     familyContactWhatsapp,
@@ -64,10 +67,10 @@ export default defineEventHandler(async (event) => {
     paymentProvider,
     paymentReference,
 
-    // événements associés (table obituary_events)
+    // événements associés (table obituary_events) – optionnels
     events,
 
-    // contacts détaillés (table obituary_contacts)
+    // contacts détaillés (table obituary_contacts) – optionnels
     contacts,
   } = body || {};
 
@@ -115,13 +118,14 @@ export default defineEventHandler(async (event) => {
     fieldErrors.mainLanguage = "Invalid language.";
   }
 
-  // events: on veut au moins un événement (veillée / obsèques / autre)
-  if (!Array.isArray(events) || events.length === 0) {
-    fieldErrors.events = "At least one event (wake/funeral) is required.";
+  // events optionnels, mais si fournis doivent être un tableau
+  if (events != null && !Array.isArray(events)) {
+    fieldErrors.events = "Events must be an array.";
   }
 
   // monétisation basique
   const isFreeValue = typeof isFree === "boolean" ? isFree : true;
+
   if (!isFreeValue) {
     if (!currency) {
       fieldErrors.currency = "Currency is required for paid announcements.";
@@ -151,18 +155,22 @@ export default defineEventHandler(async (event) => {
   const deceasedFamilyNamesClean = sanitizeString(deceasedFamilyNames);
   const titleClean = sanitizeString(title);
   const bodyClean = sanitizeString(content);
+
   const cityClean = sanitizeString(city);
   const regionClean = sanitizeString(region);
   const countryClean = sanitizeString(country);
   const countryCodeClean = sanitizeString(countryCode);
+
   const familyContactNameClean = sanitizeString(familyContactName);
   const familyContactPhoneClean = sanitizeString(familyContactPhone);
   const familyContactWhatsappClean = sanitizeString(familyContactWhatsapp);
   const familyContactEmailClean = sanitizeString(familyContactEmail);
+
   const denominationClean = sanitizeString(denomination);
   const ageDisplayClean = sanitizeString(ageDisplay);
+  const coverImageUrlClean = sanitizeString(coverImageUrl);
 
-  // Calcul possible de age_at_death si dateOfBirth & dateOfDeath fournis
+  // Calcul de age_at_death si dateOfBirth & dateOfDeath fournis
   let ageAtDeathValue = null;
   if (dateOfBirth && dateOfDeath) {
     try {
@@ -178,15 +186,16 @@ export default defineEventHandler(async (event) => {
           ageAtDeathValue = age;
         }
       }
-    } catch (_) {
-      // ignore
+    } catch {
+      // on ignore si dates invalides
     }
   }
 
-  // publish_at / expires_at
+  // publish_at / published_at / expires_at
   const now = new Date();
-  const accessIsPublishedDirect = true; // pour l’instant, on publie directement après création
-  let publishAtValue = accessIsPublishedDirect ? now : null;
+  const publishDirect = true; // pour l’instant : publication directe
+
+  const publishAtValue = publishDirect ? now : null;
   let expiresAtValue = null;
 
   if (publishDurationDays != null && Number(publishDurationDays) > 0) {
@@ -195,7 +204,10 @@ export default defineEventHandler(async (event) => {
     expiresAtValue = d;
   }
 
-  const statusValue = accessIsPublishedDirect ? "published" : "draft";
+  const statusValue = publishDirect ? "published" : "draft";
+
+  const formatDateTime = (d) =>
+    d ? d.toISOString().slice(0, 19).replace("T", " ") : null;
 
   // ---------- GÉNÉRATION DU SLUG ----------
 
@@ -209,43 +221,42 @@ export default defineEventHandler(async (event) => {
     requestId,
   });
 
-  // ---------- TRANSACTION : INSERT obituary + events + contacts ----------
+  // ---------- TRANSACTION : obituary + events + contacts ----------
 
   try {
     const result = await transaction(
       async (tx) => {
         // 1. INSERT dans obituaries
         const insertSql = `
-        INSERT INTO obituaries (
-          user_id, account_type,
-          deceased_full_name, deceased_given_names, deceased_family_names,
-          identity_status, deceased_gender, date_of_birth, date_of_death,
-          age_at_death, age_display,
-          religion, denomination,
-          title, body, main_language,
-          slug, visibility, status,
-          verification_status, moderation_status,
-          publish_at, published_at, expires_at,
-          announcement_type, related_obituary_id,
-          city, region, country, country_code, is_rural_area,
-          family_contact_name, family_contact_phone, family_contact_whatsapp, family_contact_email,
-          is_free, pricing_tier, currency, amount_paid,
-          publish_duration_days, payment_provider, payment_reference,
-          view_count, created_at, updated_at
-        )
-        VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, 'public', ?,
-          'not_required', 'clean',
-          ?, ?, ?,
-          'death', NULL,
-          ?, ?, ?, ?, ?,
-          ?, ?, ?, ?,
-          ?, ?, ?, ?,
-          ?, ?, ?,
-          0, NOW(), NOW()
-        )
-      `;
+          INSERT INTO obituaries (
+            user_id, account_type,
+            deceased_full_name, deceased_given_names, deceased_family_names,
+            identity_status, deceased_gender, date_of_birth, date_of_death,
+            age_at_death, age_display,
+            religion, denomination,
+            title, body, main_language,
+            slug, visibility, status,
+            verification_status, moderation_status,
+            publish_at, published_at, expires_at,
+            announcement_type, related_obituary_id,
+            city, region, country, country_code, is_rural_area,
+            family_contact_name, family_contact_phone, family_contact_whatsapp, family_contact_email,
+            is_free, pricing_tier, currency, amount_paid,
+            publish_duration_days, payment_provider, payment_reference, cover_image_url,
+            view_count, created_at, updated_at
+          )
+          VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            0, NOW(), NOW()
+          )
+        `;
 
         const isRuralVal = isRuralArea ? 1 : 0;
 
@@ -262,7 +273,6 @@ export default defineEventHandler(async (event) => {
           dateOfDeath || null,
           ageAtDeathValue,
           ageDisplayClean,
-
           religion || null,
           denominationClean,
 
@@ -271,17 +281,18 @@ export default defineEventHandler(async (event) => {
           languageValue,
 
           slug,
+          "public",
           statusValue,
 
-          publishAtValue
-            ? publishAtValue.toISOString().slice(0, 19).replace("T", " ")
-            : null,
-          accessIsPublishedDirect
-            ? now.toISOString().slice(0, 19).replace("T", " ")
-            : null,
-          expiresAtValue
-            ? expiresAtValue.toISOString().slice(0, 19).replace("T", " ")
-            : null,
+          "not_required",
+          "clean",
+
+          formatDateTime(publishAtValue),
+          publishDirect ? formatDateTime(now) : null,
+          formatDateTime(expiresAtValue),
+
+          "death",
+          null,
 
           cityClean,
           regionClean,
@@ -302,53 +313,56 @@ export default defineEventHandler(async (event) => {
           publishDurationDays != null ? Number(publishDurationDays) : null,
           isFreeValue ? null : paymentProvider || null,
           isFreeValue ? null : paymentReference || null,
+          coverImageUrlClean,
         ];
 
         const obituaryRes = await tx.query(insertSql, insertParams);
         const obituaryId = obituaryRes.insertId;
 
-        // 2. INSERT des events
-        if (Array.isArray(events)) {
+        // 2. INSERT des events (optionnels)
+        if (Array.isArray(events) && events.length > 0) {
           const insertEventSql = `
-          INSERT INTO obituary_events (
-            obituary_id, event_type, title, description,
-            starts_at, ends_at, timezone,
-            venue_name, venue_address,
-            city, region, country, country_code,
-            is_main_event, created_at, updated_at
-          )
-          VALUES (
-            ?, ?, ?, ?,
-            ?, ?, ?,
-            ?, ?,
-            ?, ?, ?, ?,
-            ?, NOW(), NOW()
-          )
-        `;
+            INSERT INTO obituary_events (
+              obituary_id, event_type, title, description,
+              starts_at, ends_at, timezone,
+              venue_name, venue_address,
+              city, region, country, country_code,
+              is_main_event, created_at, updated_at
+            )
+            VALUES (
+              ?, ?, ?, ?,
+              ?, ?, ?,
+              ?, ?,
+              ?, ?, ?, ?,
+              ?, NOW(), NOW()
+            )
+          `;
 
-          for (const [index, ev] of events.entries()) {
+          for (let index = 0; index < events.length; index++) {
+            const ev = events[index];
             if (!ev) continue;
 
-            const evType = ev.eventType || "wake";
+            const evType = ev.eventType || ev.event_type || "wake";
             const evTitle = sanitizeString(ev.title) || "Event";
             const evDescription = sanitizeString(ev.description);
-            const evStartsAt = ev.startsAt;
-            const evEndsAt = ev.endsAt || null;
+            const evStartsAt = ev.startsAt || ev.starts_at;
+            const evEndsAt = ev.endsAt || ev.ends_at || null;
             const evTimezone = sanitizeString(ev.timezone) || null;
-            const evVenueName = sanitizeString(ev.venueName);
-            const evVenueAddress = sanitizeString(ev.venueAddress);
+            const evVenueName = sanitizeString(ev.venueName || ev.venue_name);
+            const evVenueAddress = sanitizeString(
+              ev.venueAddress || ev.venue_address
+            );
             const evCity = sanitizeString(ev.city || cityClean);
             const evRegion = sanitizeString(ev.region || regionClean);
             const evCountry = sanitizeString(ev.country || countryClean);
             const evCountryCode = sanitizeString(
-              ev.countryCode || countryCodeClean
+              ev.countryCode || ev.country_code || countryCodeClean
             );
-            const isMain = ev.isMainEvent || index === 0 ? 1 : 0;
+            const isMain =
+              ev.isMainEvent || ev.is_main_event || index === 0 ? 1 : 0;
 
-            if (!evStartsAt) {
-              // on peut décider de throw, mais pour l'instant on ignore les events sans date
-              continue;
-            }
+            // on ignore les événements sans date
+            if (!evStartsAt) continue;
 
             await tx.query(insertEventSql, [
               obituaryId,
@@ -369,21 +383,22 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        // 3. INSERT des contacts détaillés (facultatif)
+        // 3. INSERT des contacts détaillés (optionnels)
         if (Array.isArray(contacts) && contacts.length > 0) {
           const insertContactSql = `
-          INSERT INTO obituary_contacts (
-            obituary_id, label, name, phone, whatsapp_number, email,
-            is_public, is_primary, created_at, updated_at
-          )
-          VALUES (
-            ?, ?, ?, ?, ?, ?,
-            ?, ?, NOW(), NOW()
-          )
-        `;
+            INSERT INTO obituary_contacts (
+              obituary_id, label, name, phone, whatsapp_number, email,
+              is_public, is_primary, created_at, updated_at
+            )
+            VALUES (
+              ?, ?, ?, ?, ?, ?,
+              ?, ?, NOW(), NOW()
+            )
+          `;
 
           for (const c of contacts) {
             if (!c) continue;
+
             const label = sanitizeString(c.label);
             const name = sanitizeString(c.name);
             const phone = sanitizeString(c.phone);

@@ -1,4 +1,4 @@
-<!-- pages/obituaries/[slug].vue -->
+<!-- pages/obituary/[slug].vue -->
 <template>
   <main class="app-main fade-in">
     <!-- Fil d’Ariane / retour -->
@@ -8,7 +8,7 @@
   :show-back-list="true"
   back-list-to="/obituaries"
   :show-create="true"
-  create-to="/obituaries/create"
+  create-to="/obituary/create"
 />
 
 
