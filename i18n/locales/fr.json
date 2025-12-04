@@ -322,89 +322,168 @@
   "common": {
   "backToHome": "Retour à l’accueil"
 },
- "createObituary": {
+  "createObituary": {
     "meta": {
-      "title": "Créer une annonce de décès",
-      "description": "Renseignez les informations sur la personne défunte, la ville et le texte de l’annonce pour publier une annonce de décès en ligne."
+      "title": "Créer une annonce nécrologique",
+      "description": "Renseignez les informations principales, le texte de l’annonce et le programme des cérémonies pour publier un avis de décès en ligne."
     },
     "title": "Créer une annonce",
-    "subtitle": "Quelques informations suffisent pour publier une annonce simple et claire.",
-
+    "subtitle": "Remplissez les informations principales sur la personne défunte, le texte de l’annonce et la première cérémonie.",
     "sections": {
       "deceased": {
-        "title": "Informations sur la personne défunte",
-        "subtitle": "Ces informations apparaîtront en haut de l’annonce."
+        "title": "Informations sur le défunt",
+        "subtitle": "Nom, dates, ville principale, religion…"
       },
       "content": {
         "title": "Texte de l’annonce",
-        "subtitle": "Vous pouvez adapter le ton, la longueur et mentionner les familles, communautés, paroisses…"
+        "subtitle": "Texte qui sera affiché en haut de la page, visible par tous."
+      },
+      "mainEvent": {
+        "title": "Événement",
+        "subtitle": "Veillée, messe, obsèques… vous pourrez ajouter d’autres événements plus tard."
+      },
+      "familyContact": {
+        "title": "Contact famille / organisation",
+        "subtitle": "Personne à joindre pour les questions pratiques."
       },
       "publish": {
         "title": "Photo & publication",
-        "subtitleFree": "Formule gratuite : annonce publique visible {days} jour(s) avec une seule photo principale.",
-        "legal": "En publiant cette annonce, vous confirmez avoir l’autorisation de la famille et des proches pour partager ces informations."
+        "subtitleFree": "Votre annonce gratuite sera publiée pendant {days} jours.",
+        "legal": "En envoyant cette annonce, vous confirmez disposer des droits nécessaires pour publier ces informations."
       }
     },
-
     "fields": {
       "deceasedFullName": {
-        "label": "Nom complet du défunt / de la défunte",
-        "placeholder": "Ex. Papa Jean-Baptiste MUKENDI"
+        "label": "Nom complet du défunt",
+        "placeholder": "Ex. Père André MABIALA"
+      },
+      "gender": {
+        "label": "Genre",
+        "hint": "Optionnel, mais permet d’adapter certains textes.",
+        "options": {
+          "male": "Homme",
+          "female": "Femme"
+        }
+      },
+      "identityStatus": {
+        "label": "Niveau d’identification",
+        "hint": "Utile si l’identité n’est pas complètement connue.",
+        "options": {
+          "known": "Identité complète connue",
+          "partial": "Identité partiellement connue",
+          "unknown": "Identité inconnue"
+        }
+      },
+      "dateOfBirth": {
+        "label": "Date de naissance",
+        "hint": "Optionnel, permet de calculer l’âge au décès."
       },
       "dateOfDeath": {
         "label": "Date du décès",
-        "hint": "Laissez vide si la date est approximative ou inconnue."
+        "hint": "La date exacte du décès, si connue."
       },
       "ageDisplay": {
         "label": "Âge affiché",
-        "placeholder": "Ex. 76 ans, 87 ans révolus…",
-        "hint": "Texte libre, tel qu’il doit apparaître (ex. « 45 ans »)."
+        "placeholder": "Ex. 76 ans, 54 ans révolus…",
+        "hint": "Texte libre pour l’âge (facultatif)."
+      },
+      "religion": {
+        "label": "Religion",
+        "hint": "Utile pour adapter le vocabulaire (messe, culte, etc.).",
+        "options": {
+          "none": "Ne pas préciser",
+          "christian": "Chrétien(ne)",
+          "muslim": "Musulman(e)",
+          "other": "Autre / traditionnel"
+        }
+      },
+      "denomination": {
+        "label": "Dénomination / paroisse",
+        "placeholder": "Ex. Catholique, Église de réveil, Mosquée centrale…",
+        "hint": "Optionnel, pour préciser l’église, la communauté ou la mosquée."
       },
       "city": {
         "label": "Ville principale",
-        "placeholder": "Ex. Kinshasa, Paris, Dakar…"
+        "placeholder": "Ex. Kinshasa, Paris, Abidjan…"
       },
       "region": {
-        "label": "Région / Province",
-        "placeholder": "Ex. Île-de-France, Kongo Central…"
+        "label": "Région / province",
+        "placeholder": "Ex. Île-de-France, Haut-Katanga…"
       },
       "country": {
         "label": "Pays",
-        "placeholder": "Ex. République Démocratique du Congo, France…"
+        "placeholder": "Ex. République Démocratique du Congo"
       },
       "countryCode": {
         "label": "Code pays (2 lettres)",
-        "placeholder": "Ex. CD, FR, SN…",
-        "hint": "Code ISO 3166-1 alpha-2, ex. CD pour RDC, FR pour France."
+        "placeholder": "Ex. CD, FR, CI…",
+        "hint": "Code ISO à 2 lettres (CD, FR, CI, SN…)."
+      },
+      "isRuralArea": {
+        "label": "Annonce pour une zone rurale ou village",
+        "hint": "Permet d’adapter certains textes et filtres."
       },
       "title": {
         "label": "Titre de l’annonce",
-        "placeholder": "Ex. Annonce de décès – Papa Jean-Baptiste MUKENDI",
-        "hint": "Ce titre sera visible dans les listes et sur les réseaux sociaux."
+        "placeholder": "Ex. Annonce de décès – Père André MABIALA",
+        "hint": "S’affiche dans la liste et en haut de la page."
       },
       "body": {
-        "label": "Texte détaillé de l’annonce",
-        "placeholder": "Famille, parents et amis ont la profonde tristesse de vous faire part du décès de…",
-        "hint": "Vous pouvez préciser les liens familiaux, un court hommage, etc."
+        "label": "Texte de l’annonce",
+        "placeholder": "Ex. La famille MABIALA a la profonde douleur de vous annoncer le rappel à Dieu de Père André MABIALA, survenu le...",
+        "hint": "Minimum 40 caractères. Vous pouvez garder un ton formel ou plus familier selon la famille."
+      },
+      "eventType": {
+        "label": "Type d’événement principal"
+      },
+      "eventStartsAt": {
+        "label": "Date & heure de l’événement principal",
+        "hint": "Heure locale de la cérémonie (veillée, messe, obsèques…)."
+      },
+      "eventVenueName": {
+        "label": "Lieu / église / mosquée",
+        "placeholder": "Ex. Paroisse Saint-Paul, Mosquée centrale…"
+      },
+      "eventVenueAddress": {
+        "label": "Adresse du lieu",
+        "placeholder": "Rue, quartier, commune…"
+      },
+      "familyContactName": {
+        "label": "Nom de la personne de contact",
+        "placeholder": "Ex. Mme MABIALA Chantal"
+      },
+      "familyContactPhone": {
+        "label": "Téléphone principal",
+        "placeholder": "Numéro local ou international"
+      },
+      "familyContactWhatsapp": {
+        "label": "Numéro WhatsApp",
+        "placeholder": "Numéro WhatsApp avec indicatif"
+      },
+      "familyContactEmail": {
+        "label": "E-mail",
+        "placeholder": "Votre email"
       },
       "coverImageUrl": {
         "label": "Photo principale (URL)",
-        "placeholder": "Coller ici le lien de la photo (portrait du défunt)…",
-        "hint": "Pour la formule gratuite, une seule photo principale sera affichée. Vous pourrez plus tard ajouter une vraie gestion d’upload."
+        "placeholder": "https://…",
+        "hint": "Collez un lien vers une photo déjà hébergée (Google Drive, site, etc.)."
       }
     },
-
+    "defaults": {
+      "familyContactLabel": "Famille"
+    },
     "actions": {
       "cancel": "Annuler",
       "submit": "Publier l’annonce",
       "submitting": "Publication en cours…"
     },
-
     "errors": {
-      "deceasedFullNameRequired": "Merci d’indiquer le nom complet de la personne défunte.",
-      "titleRequired": "Merci de saisir un titre d’annonce.",
-      "bodyTooShort": "Le texte de l’annonce est trop court. Ajoutez quelques détails supplémentaires (au moins 40 caractères).",
-      "submitFailed": "Impossible de créer l’annonce pour le moment. Veuillez réessayer plus tard."
+      "deceasedFullNameRequired": "Le nom complet du défunt est obligatoire.",
+      "titleRequired": "Le titre de l’annonce est obligatoire (au moins 8 caractères).",
+      "bodyTooShort": "Le texte de l’annonce est trop court (au moins 40 caractères).",
+      "eventStartsAtRequired": "La date et l’heure de l’événement principal sont obligatoires.",
+      "submitFailed": "Impossible de créer l’annonce pour le moment. Merci de réessayer plus tard."
     }
   }
 

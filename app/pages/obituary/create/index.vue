@@ -1,4 +1,4 @@
-<!-- pages/obituaries/create/index.vue -->
+<!-- pages/obituary/create/index.vue -->
 <template>
   <main class="app-main fade-in">
     <!-- Barre de nav réutilisable -->
@@ -31,6 +31,7 @@
               {{ t('createObituary.sections.deceased.subtitle') }}
             </p>
 
+            <!-- Nom complet -->
             <div class="form-row">
               <div class="form-field">
                 <label class="form-label" for="fullName">
@@ -50,7 +51,77 @@
               </div>
             </div>
 
+            <!-- Identité : genre + statut -->
             <div class="form-row form-row-inline">
+              <div class="form-field">
+                <span class="form-label">
+                  {{ t('createObituary.fields.gender.label') }}
+                </span>
+                <div class="form-radio-group">
+                  <label class="form-radio">
+                    <input
+                      v-model="form.gender"
+                      type="radio"
+                      value="male"
+                    />
+                    <span>{{ t('createObituary.fields.gender.options.male') }}</span>
+                  </label>
+                  <label class="form-radio">
+                    <input
+                      v-model="form.gender"
+                      type="radio"
+                      value="female"
+                    />
+                    <span>{{ t('createObituary.fields.gender.options.female') }}</span>
+                  </label>
+                </div>
+                <p class="form-hint">
+                  {{ t('createObituary.fields.gender.hint') }}
+                </p>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label" for="identityStatus">
+                  {{ t('createObituary.fields.identityStatus.label') }}
+                </label>
+                <select
+                  id="identityStatus"
+                  v-model="form.identityStatus"
+                  class="form-control"
+                >
+                  <option value="known">
+                    {{ t('createObituary.fields.identityStatus.options.known') }}
+                  </option>
+                  <option value="partial">
+                    {{ t('createObituary.fields.identityStatus.options.partial') }}
+                  </option>
+                  <option value="unknown">
+                    {{ t('createObituary.fields.identityStatus.options.unknown') }}
+                  </option>
+                </select>
+                <p class="form-hint">
+                  {{ t('createObituary.fields.identityStatus.hint') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Dates & âge -->
+            <div class="form-row form-row-inline">
+              <div class="form-field">
+                <label class="form-label" for="dateOfBirth">
+                  {{ t('createObituary.fields.dateOfBirth.label') }}
+                </label>
+                <input
+                  id="dateOfBirth"
+                  v-model="form.dateOfBirth"
+                  class="form-control"
+                  type="date"
+                />
+                <p class="form-hint">
+                  {{ t('createObituary.fields.dateOfBirth.hint') }}
+                </p>
+              </div>
+
               <div class="form-field">
                 <label class="form-label" for="dateOfDeath">
                   {{ t('createObituary.fields.dateOfDeath.label') }}
@@ -65,7 +136,9 @@
                   {{ t('createObituary.fields.dateOfDeath.hint') }}
                 </p>
               </div>
+            </div>
 
+            <div class="form-row form-row-inline">
               <div class="form-field">
                 <label class="form-label" for="ageDisplay">
                   {{ t('createObituary.fields.ageDisplay.label') }}
@@ -81,8 +154,54 @@
                   {{ t('createObituary.fields.ageDisplay.hint') }}
                 </p>
               </div>
+
+              <div class="form-field">
+                <label class="form-label" for="religion">
+                  {{ t('createObituary.fields.religion.label') }}
+                </label>
+                <select
+                  id="religion"
+                  v-model="form.religion"
+                  class="form-control"
+                >
+                  <option value="">
+                    {{ t('createObituary.fields.religion.options.none') }}
+                  </option>
+                  <option value="christian">
+                    {{ t('createObituary.fields.religion.options.christian') }}
+                  </option>
+                  <option value="muslim">
+                    {{ t('createObituary.fields.religion.options.muslim') }}
+                  </option>
+                  <option value="other">
+                    {{ t('createObituary.fields.religion.options.other') }}
+                  </option>
+                </select>
+                <p class="form-hint">
+                  {{ t('createObituary.fields.religion.hint') }}
+                </p>
+              </div>
             </div>
 
+            <div class="form-row">
+              <div class="form-field">
+                <label class="form-label" for="denomination">
+                  {{ t('createObituary.fields.denomination.label') }}
+                </label>
+                <input
+                  id="denomination"
+                  v-model.trim="form.denomination"
+                  class="form-control"
+                  type="text"
+                  :placeholder="t('createObituary.fields.denomination.placeholder')"
+                />
+                <p class="form-hint">
+                  {{ t('createObituary.fields.denomination.hint') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Localisation -->
             <div class="form-row form-row-inline">
               <div class="form-field">
                 <label class="form-label" for="city">
@@ -142,6 +261,19 @@
                 </p>
               </div>
             </div>
+
+            <div class="form-row">
+              <label class="form-checkbox">
+                <input
+                  v-model="form.isRuralArea"
+                  type="checkbox"
+                />
+                <span>{{ t('createObituary.fields.isRuralArea.label') }}</span>
+              </label>
+              <p class="form-hint">
+                {{ t('createObituary.fields.isRuralArea.hint') }}
+              </p>
+            </div>
           </section>
 
           <!-- Bloc 2 : Texte de l'annonce -->
@@ -198,7 +330,7 @@
             </div>
           </section>
 
-          <!-- Bloc 3 : Événement principal (obligatoire pour l'API) -->
+          <!-- Bloc 3 : Événement principal -->
           <section class="form-section">
             <h2 class="form-section__title">
               {{ t('createObituary.sections.mainEvent.title') }}
@@ -246,6 +378,9 @@
                 <p v-if="errors.eventStartsAt" class="form-error">
                   {{ errors.eventStartsAt }}
                 </p>
+                <p class="form-hint">
+                  {{ t('createObituary.fields.eventStartsAt.hint') }}
+                </p>
               </div>
             </div>
 
@@ -280,7 +415,75 @@
             </div>
           </section>
 
-          <!-- Bloc 4 : Photo & publication (gratuit) -->
+          <!-- Bloc 4 : Contact famille -->
+          <section class="form-section">
+            <h2 class="form-section__title">
+              {{ t('createObituary.sections.familyContact.title') }}
+            </h2>
+            <p class="form-section__subtitle">
+              {{ t('createObituary.sections.familyContact.subtitle') }}
+            </p>
+
+            <div class="form-row">
+              <div class="form-field">
+                <label class="form-label" for="familyName">
+                  {{ t('createObituary.fields.familyContactName.label') }}
+                </label>
+                <input
+                  id="familyName"
+                  v-model.trim="form.familyContact.name"
+                  class="form-control"
+                  type="text"
+                  :placeholder="t('createObituary.fields.familyContactName.placeholder')"
+                />
+              </div>
+            </div>
+
+            <div class="form-row form-row-inline">
+              <div class="form-field">
+                <label class="form-label" for="familyPhone">
+                  {{ t('createObituary.fields.familyContactPhone.label') }}
+                </label>
+                <input
+                  id="familyPhone"
+                  v-model.trim="form.familyContact.phone"
+                  class="form-control"
+                  type="tel"
+                  :placeholder="t('createObituary.fields.familyContactPhone.placeholder')"
+                />
+              </div>
+
+              <div class="form-field">
+                <label class="form-label" for="familyWhatsapp">
+                  {{ t('createObituary.fields.familyContactWhatsapp.label') }}
+                </label>
+                <input
+                  id="familyWhatsapp"
+                  v-model.trim="form.familyContact.whatsapp"
+                  class="form-control"
+                  type="tel"
+                  :placeholder="t('createObituary.fields.familyContactWhatsapp.placeholder')"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-field">
+                <label class="form-label" for="familyEmail">
+                  {{ t('createObituary.fields.familyContactEmail.label') }}
+                </label>
+                <input
+                  id="familyEmail"
+                  v-model.trim="form.familyContact.email"
+                  class="form-control"
+                  type="email"
+                  :placeholder="t('createObituary.fields.familyContactEmail.placeholder')"
+                />
+              </div>
+            </div>
+          </section>
+
+          <!-- Bloc 5 : Photo & publication (gratuit) -->
           <section class="form-section">
             <h2 class="form-section__title">
               {{ t('createObituary.sections.publish.title') }}
@@ -364,20 +567,35 @@ const router = useRouter();
 
 const form = reactive({
   deceasedFullName: '',
+  dateOfBirth: '',
   dateOfDeath: '',
   ageDisplay: '',
+  gender: '',
+  identityStatus: 'known',
+  religion: '',
+  denomination: '',
   city: '',
   region: '',
   country: '',
   countryCode: '',
+  isRuralArea: false,
+
   title: '',
   body: '',
   coverImageUrl: '',
+
   event: {
     eventType: 'funeral',
     startsAt: '',
     venueName: '',
     venueAddress: '',
+  },
+
+  familyContact: {
+    name: '',
+    phone: '',
+    whatsapp: '',
+    email: '',
   },
 });
 
@@ -402,6 +620,17 @@ useSeoMeta({
   ogDescription: seoDescription,
 });
 
+// helper pour normaliser le datetime-local vers "YYYY-MM-DD HH:mm:ss"
+const normalizeDateTimeLocal = (value) => {
+  if (!value) return null;
+  // value attendu: "2025-03-05T10:30"
+  const [date, time] = value.split('T');
+  if (!date || !time) return value;
+  // on ajoute les secondes si absentes
+  const t = time.length === 5 ? `${time}:00` : time;
+  return `${date} ${t}`;
+};
+
 // Auto-suggérer le titre à partir du nom si vide
 watch(
   () => form.deceasedFullName,
@@ -423,7 +652,7 @@ const validate = () => {
   if (!form.deceasedFullName) {
     errors.deceasedFullName = t('createObituary.errors.deceasedFullNameRequired');
   }
-  if (!form.title) {
+  if (!form.title || form.title.length < 8) {
     errors.title = t('createObituary.errors.titleRequired');
   }
   if (!form.body || form.body.length < 40) {
@@ -437,18 +666,22 @@ const validate = () => {
 };
 
 const buildPayload = () => {
-  // On envoie exactement ce que l'API attend (index.post.js)
+  // Payload aligné sur /api/obituaries/index.post.js
   return {
     deceasedFullName: form.deceasedFullName,
     deceasedGivenNames: null,
     deceasedFamilyNames: null,
-    identityStatus: 'known',
-    deceasedGender: null,
-    dateOfBirth: null,
+
+    identityStatus: form.identityStatus || 'known',
+    deceasedGender: form.gender || null,
+    dateOfBirth: form.dateOfBirth || null,
     dateOfDeath: form.dateOfDeath || null,
     ageDisplay: form.ageDisplay || null,
-    religion: null,
-    denomination: null,
+    religion: form.religion || null,
+    denomination: form.denomination || null,
+
+    // photo principale
+    coverImageUrl: form.coverImageUrl || null,
 
     title: form.title,
     content: form.body,
@@ -458,13 +691,15 @@ const buildPayload = () => {
     region: form.region || null,
     country: form.country || null,
     countryCode: form.countryCode || null,
-    isRuralArea: false,
+    isRuralArea: !!form.isRuralArea,
 
-    familyContactName: null,
-    familyContactPhone: null,
-    familyContactWhatsapp: null,
-    familyContactEmail: null,
+    // contact principal
+    familyContactName: form.familyContact.name || null,
+    familyContactPhone: form.familyContact.phone || null,
+    familyContactWhatsapp: form.familyContact.whatsapp || null,
+    familyContactEmail: form.familyContact.email || null,
 
+    // monétisation : pour l’instant, uniquement gratuit
     isFree: true,
     pricingTier: 'free_basic',
     currency: null,
@@ -473,13 +708,13 @@ const buildPayload = () => {
     paymentProvider: null,
     paymentReference: null,
 
-    // Un seul événement principal (obligatoire)
+    // Un seul événement principal (optionnel pour l’API, obligatoire dans le formulaire)
     events: [
       {
         eventType: form.event.eventType || 'funeral',
         title: form.title,
         description: null,
-        startsAt: form.event.startsAt,
+        startsAt: normalizeDateTimeLocal(form.event.startsAt),
         endsAt: null,
         timezone: null,
         venueName: form.event.venueName || null,
@@ -492,11 +727,24 @@ const buildPayload = () => {
       },
     ],
 
-    // Pas de contacts détaillés pour le MVP
-    contacts: [],
-
-    // photo principale free plan
-    coverImageUrl: form.coverImageUrl || null,
+    // Contact détaillé (facultatif) → table obituary_contacts
+    contacts:
+      form.familyContact.name ||
+      form.familyContact.phone ||
+      form.familyContact.whatsapp ||
+      form.familyContact.email
+        ? [
+            {
+              label: t('createObituary.defaults.familyContactLabel'),
+              name: form.familyContact.name || null,
+              phone: form.familyContact.phone || null,
+              whatsappNumber: form.familyContact.whatsapp || null,
+              email: form.familyContact.email || null,
+              isPublic: true,
+              isPrimary: true,
+            },
+          ]
+        : [],
   };
 };
 
@@ -560,7 +808,6 @@ const onSubmit = async () => {
   color: var(--color-text-soft);
 }
 
-/* Errors / footer */
 .form-error {
   margin-top: 0.25rem;
   font-size: 0.85rem;
@@ -576,5 +823,26 @@ const onSubmit = async () => {
 .card-footer--error {
   border-top: 1px solid var(--color-border-subtle);
   background: rgba(220, 38, 38, 0.04);
+}
+
+/* Radios / checkbox */
+.form-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.form-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.form-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
 }
 </style>
