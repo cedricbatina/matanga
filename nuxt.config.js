@@ -11,11 +11,7 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/main.css"],
 
-  modules: [
-    "@pinia/nuxt",
-    "@nuxtjs/i18n",
-    "@vite-pwa/nuxt",
-  ],
+  modules: ["@pinia/nuxt", "@nuxtjs/i18n", "@vite-pwa/nuxt"],
 
   i18n: {
     locales: [
@@ -34,16 +30,16 @@ export default defineNuxtConfig({
   // =======================
   // PWA / VitePWA
   // =======================
+  // =======================
+  // PWA / VitePWA
+  // =======================
   pwa: {
     registerType: "autoUpdate", // MAJ du SW dès qu’un nouveau build est dispo
-    workbox: {
-      // on laisse true en prod; en dev, vite-pwa gère un SW mocké
-      enabled: true,
 
+    // ⚙️ Workbox: options valides uniquement
+    workbox: {
       // 🧊 Patterns de fichiers à précacher (build)
-      globPatterns: [
-        "**/*.{js,css,html,ico,png,svg,webp,woff2}",
-      ],
+      globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
 
       // 🔁 Runtime caching – très important pour la sensation "rapide"
       runtimeCaching: [
@@ -97,8 +93,7 @@ export default defineNuxtConfig({
           },
         },
 
-        // 4) API obituaries & plans : NetworkFirst pour avoir du frais,
-        // mais on garde une copie cache pour offline / lenteur réseau
+        // 4) API obituaries & plans : NetworkFirst
         {
           urlPattern: /\/api\/(obituaries|plans)/,
           handler: "NetworkFirst",
@@ -118,6 +113,13 @@ export default defineNuxtConfig({
 
       // 🔻 Page de repli quand offline sur navigation
       navigateFallback: "/offline",
+    },
+
+    // ✅ La SEULE place où on utilise "enabled" pour la PWA
+    devOptions: {
+      enabled: process.env.NODE_ENV === "development",
+      suppressWarnings: true,
+      type: "module",
     },
 
     // 🔎 Expose la meta PWA aux composants (nuxt/vite-pwa intégration)
