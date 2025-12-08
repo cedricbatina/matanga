@@ -148,7 +148,10 @@
     "contact": "Si le problème persiste, vous pouvez demander un nouveau lien de confirmation depuis la page de connexion ou contacter le support Matanga."
   },
   "footer_info": "Pour votre sécurité, les liens de vérification expirent après un certain délai."
-}
+},
+"messages": {
+    "loginRequiredForObituary": "Veuillez vous connecter ou créer un compte pour poursuivre la création de votre annonce nécrologique."
+  }
 
   },
    "home": {
@@ -160,9 +163,14 @@
       "title": "Annoncer un décès, informer sans oublier personne.",
       "subtitle": "Matanga aide les familles et la diaspora à partager une information claire et fiable.",
       "body": "Créez une annonce nécrologique structurée, ajoutez les veillées, la messe, l’inhumation, et partagez facilement le lien par WhatsApp, SMS ou réseaux sociaux.",
-      "primaryCta": "Créer une annonce",
-      "secondaryCta": "Voir les annonces publiées",
-      "helperText": "Service pensé pour l’Afrique et sa diaspora, avec prise en compte des fuseaux horaires et des événements en ligne."
+      
+      
+      "helperText": "Service pensé pour l’Afrique et sa diaspora, avec prise en compte des fuseaux horaires et des événements en ligne.",
+        "primaryCta": "Publier une annonce gratuite",
+    "secondaryCta": "Voir toutes les annonces",
+    "viewPlansCta": "Voir les plans et options"
+   
+      
     },
     "howItWorks": {
       "title": "Comment ça marche ?",
@@ -235,6 +243,7 @@
     "gotoTotal": "/ {totalPages}",
     "gotoAria": "Aller à la page (1 à {totalPages})"
   },
+
    "obituary": {
     "meta": {
      "titlePattern": "{name} – Avis de décès",
@@ -256,7 +265,12 @@
       "paidPlan": "Formule {tier}",
       "views": "{count} vue(s)",
       "viewsLabel": "Consultations",
-      "publishedAt": "Annonce publiée le {date}"
+      "publishedAt": "Annonce publiée le {date}",
+      "draftBadge": "Brouillon (non publié)",
+      "privateBadge": "Privée"
+    },
+      "actions": {
+      "edit": "Modifier cette annonce"
     },
 
     "sections": {
@@ -320,19 +334,33 @@
     }
   },
   "common": {
-  "backToHome": "Retour à l’accueil"
+  "backToHome": "Retour à l’accueil",
+      "actions": {
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "archive": "Retirer du site"
+    }
 },
-  "createObituary": {
-    "meta": {
-      "title": "Créer une annonce nécrologique",
-      "description": "Renseignez les informations principales, le texte de l’annonce et le programme des cérémonies pour publier un avis de décès en ligne."
-    },
-    "title": "Créer une annonce",
-    "subtitle": "Remplissez les informations principales sur la personne défunte, le texte de l’annonce et la première cérémonie.",
+
+"createObituary": {
+
+      "meta": {
+    "title": "Créer une annonce nécrologique",
+    "description": "Créer une annonce, choisir un plan et préparer les informations avant validation."
+  },
+  "title": "Créer une annonce",
+  "subtitle": "Remplissez les informations principales sur la personne défunte, le texte de l’annonce et la première cérémonie.",
+  
     "sections": {
       "deceased": {
         "title": "Informations sur le défunt",
-        "subtitle": "Nom, dates, ville principale, religion…"
+        "subtitle": "Nom, dates, ville principale, religion…",
+        "description": "Renseignez les informations principales, le texte de l’annonce et le programme des cérémonies pour publier un avis de décès en ligne.",
+            "publish": {
+      "title": "Publication de l'annonce",
+      "selectedPlan": "Vous préparez cette annonce avec le plan « {plan} » ({days} jours de mise en avant).",
+      "changePlanCta": "Changer de plan ou voir les détails"
+    }
       },
       "content": {
         "title": "Texte de l’annonce",
@@ -349,7 +377,9 @@
       "publish": {
         "title": "Photo & publication",
         "subtitleFree": "Votre annonce gratuite sera publiée pendant {days} jours.",
-        "legal": "En envoyant cette annonce, vous confirmez disposer des droits nécessaires pour publier ces informations."
+        "legal": "En envoyant cette annonce, vous confirmez disposer des droits nécessaires pour publier ces informations.",
+        "selectedPlan": "Plan choisi : {plan} (publication {days} jours).",
+      "changePlanCta": "Changer de plan"
       }
     },
     "fields": {
@@ -485,6 +515,320 @@
       "eventStartsAtRequired": "La date et l’heure de l’événement principal sont obligatoires.",
       "submitFailed": "Impossible de créer l’annonce pour le moment. Merci de réessayer plus tard."
     }
+  },
+  
+"userInline": {
+  "guestLabel": "Visiteur – vous n’êtes pas encore connecté",
+  "guestHelper": "Connectez-vous ou créez un compte pour publier et gérer vos annonces.",
+  "login": "Se connecter",
+  "register": "Créer un compte",
+  "dashboard": "Mon espace",
+  "logout": "Se déconnecter",
+  "status": {
+    "online": "Connecté",
+    "offline": "Non connecté"
+  },
+  "role": {
+    "individual": "Compte particulier",
+    "pro": "Compte professionnel",
+    "generic": "Compte Matanga"
+  },
+  "todayLabel": "Aujourd’hui : {date}"
+}
+,
+
+"plans": {
+  "meta": {
+    "title": "Plans et options pour vos annonces",
+    "description": "Choisissez un plan adapté à votre situation : annonce gratuite, formule simple ou pack Essentiel, puis ajoutez des options mémorielles si besoin."
+  },
+
+  "title": "Plans et options pour vos annonces",
+  "subtitle": "Choisissez la formule la plus adaptée à l’hommage que vous souhaitez rendre.",
+  "helper": "Chaque plan concerne une seule annonce nécrologique. Vous pourrez ajouter des options mémorielles (bougies, livre d’or, page à long terme) plus tard.",
+
+  "error": "Impossible de charger les plans pour le moment.",
+  "retry": "Réessayer",
+
+  "audience": {
+    "individual": "Familles / particuliers",
+    "pro": "Professionnels du funéraire",
+    "proSoon": "Espace pro"
+  },
+
+  "badges": {
+    "free": "Gratuit",
+    "recommended": "Recommandé"
+  },
+
+  "price": {
+    "free": "Gratuit",
+    "paid": "{amount} € TTC",
+    "onetime": "Paiement unique"
+  },
+
+  "features": {
+    "duration": {
+      "label": "Durée de mise en ligne",
+      "value": "{days} jours de visibilité"
+    },
+    "visibility": {
+      "label": "Visibilité",
+      "value": "{primary} jours en mise en avant, puis {secondary} jours en communiqué discret"
+    },
+    "events": {
+      "label": "Événements",
+      "value": "Jusqu’à {count} événement(s) associé(s)"
+    },
+    "media": {
+      "label": "Médias",
+      "value": "Jusqu’à {photos} photo(s) et {videos} vidéo(s)"
+    },
+    "contacts": {
+      "label": "Contacts famille",
+      "value": "Jusqu’à {count} contact(s) affiché(s)"
+    },
+    "online": {
+      "label": "Cérémonies en ligne",
+      "value": "Jusqu’à {count} événement(s) en ligne (lien de streaming)"
+    }
+  },
+
+  "notes": {
+    "free": "Idéal pour une première annonce simple, centrée sur l’essentiel.",
+    "essentiel": "Le pack Essentiel offre davantage de souplesse sur la durée, les événements et les médias."
+  },
+
+  "cta": {
+    "startFree": "Commencer avec le plan gratuit",
+    "startPaid": "Choisir ce plan",
+    "startRecommended": "Choisir ce plan recommandé"
+  },
+
+  "legal": {
+    "reminder": "Chaque plan concerne une seule annonce. Les options mémorielles (bougies, livre d’or, page à long terme) seront ajoutées dans une étape ultérieure."
+  },
+
+  
+ "codes": {
+      "indiv_free_7": "Annonce découverte 7 jours",
+      "indiv_basic_21": "Formule Basic 21 jours",
+      "indiv_essentiel_30": "Pack Essentiel 30 jours + rappel",
+      "indiv_prestige_60": "Pack Prestige 60 jours",
+      "indiv_memorial_6m": "Mémoriel 6 mois",
+      "indiv_memorial_1y": "Mémoriel 1 an",
+      "indiv_memorial_10y": "Mémoriel 10 ans",
+      "pro_basic_30": "Annonce Pro Standard 30 jours",
+      "pro_essentiel_60": "Annonce Pro Essentielle 60 jours",
+      "pro_premium_90": "Annonce Pro Premium 90 jours",
+      "pro_sub_start": "Abonnement Pro Start",
+      "pro_sub_studio": "Abonnement Pro Studio",
+      "pro_sub_network": "Abonnement Pro Réseau"
+    },
+
+  "pro": {
+    "badgeSoon": "Espace pro",
+    "title": "Solutions pour les professionnels du funéraire",
+    "subtitle": "Centralisez vos annonces en ligne, gagnez du temps et offrez un suivi moderne aux familles.",
+    "features": {
+      "bundle": "Gestion de plusieurs annonces par mois avec suivi centralisé.",
+      "visibility": "Visibilité renforcée et mise en avant adaptée à votre zone d’intervention.",
+      "billing": "Facturation claire et adaptée à votre activité (mensuelle ou à l’usage)."
+    },
+    "ctaDisabled": "Sur demande",
+    "helper": "L’espace pro Matanga sera bientôt ouvert aux opérateurs funéraires. Contactez-nous pour être prévenu de son lancement."
   }
+},
+"obituaryReview": {
+  "title": "Vérifier votre annonce",
+  "subtitle": "Relisez toutes les informations avant de confirmer la publication ou le paiement.",
+
+  "meta": {
+    "title": "Récapitulatif de l'annonce nécrologique",
+    "description": "Relisez les détails de l'annonce nécrologique avant validation définitive."
+  },
+
+  "planMeta": "Publication {days} jours",
+
+  "error": "Impossible de charger le récapitulatif de l’annonce. Veuillez réessayer.",
+  "retry": "Réessayer",
+
+    "fields": {
+    "dates": "Dates de naissance et de décès",
+    "dateOfBirth": "Né(e) le {date}",
+    "dateOfDeath": "Décédé(e) le {date}",
+    "location": "Lieu principal",
+    "countryCode": "Code pays",
+    "ruralYes": "Annonce pour une zone rurale ou village",
+    "ruralNo": "Annonce pour une zone urbaine ou ville"
+  },
+
+  "sections": {
+    "deceased": {
+      "title": "Informations sur le défunt",
+      "subtitle": "Nom, dates, ville principale et autres éléments d'identité."
+    },
+    "content": {
+      "title": "Texte de l'annonce",
+      "subtitle": "Relisez le titre et le texte qui seront visibles par les visiteurs."
+    },
+    "events": {
+      "title": "Cérémonies et événements",
+      "subtitle": "Vérifiez la date, l’heure et le lieu de la cérémonie principale."
+    },
+    "contacts": {
+      "title": "Contacts famille / organisation",
+      "subtitle": "Personnes à contacter pour les informations pratiques."
+    }
+  },
+
+  "events": {
+    "main": "Événement principal",
+    "datePending": "Date et heure à confirmer",
+    "none": "Aucun événement n’est associé à cette annonce pour le moment."
+  },
+
+  "contacts": {
+    "primary": "contact principal",
+    "none": "Aucun contact n’est associé à cette annonce."
+  },
+
+  "side": {
+    "title": "Avant de publier",
+    "subtitle": "Vérifiez la formule choisie et la durée de publication.",
+    "plan": "Formule",
+    "duration": "Durée",
+    "price": "Montant",
+    "planUnknown": "Non renseignée",
+
+    "statusFree": "Plan gratuit : l’annonce sera envoyée à l’équipe Matanga pour validation avant mise en ligne.",
+    "statusPayment": "Plan payant : vous allez être redirigé vers l’étape de paiement pour finaliser la publication.",
+
+    "legal": "En confirmant, vous certifiez que les informations fournies sont exactes et que vous avez le droit de les publier. L’équipe Matanga peut retirer l’annonce en cas de signalement ou de non-respect des règles."
+  },
+    "delete": {
+      "softTitle": "Retirer cette annonce du site ?",
+      "softMessage": "L’annonce ne sera plus visible publiquement, mais vous pourrez encore la retrouver dans votre compte.",
+      "hardTitle": "Supprimer définitivement cette annonce ?",
+      "hardMessage": "Cette action est irréversible. Toutes les informations associées à cette annonce seront définitivement supprimées."
+    },
+
+  "actions": {
+    "edit": "Modifier l’annonce",
+    "publishFree": "Confirmer et envoyer en validation",
+    "confirmAndPay": "Confirmer et payer",
+    "delete": "Supprimer l’annonce",
+    "archive": "Retirer l’annonce du site",
+      "hardDelete": "Supprimer définitivement"
+  },
+   "features": {
+    "events": {
+      "value": "Jusqu’à {count} événement(s) associé(s)"
+    },
+    "media": {
+      "value": "Jusqu’à {photos} photo(s) et {videos} vidéo(s)"
+    },
+    "contacts": {
+      "value": "Jusqu’à {count} contact(s) affiché(s)"
+    }
+  }
+}
+,
+ "editObituary": {
+    "title": "Modifier l’annonce",
+    "subtitle": "Corrigez ou complétez les informations avant la publication.",
+    "meta": {
+      "title": "Modifier l’annonce nécrologique",
+      "description": "Modifiez les informations de l’avis de décès avant la publication sur la plateforme Matanga."
+    },
+    "sections": {
+      "events": {
+        "subtitle": "Vous pouvez ajuster le type de cérémonie, la date et le lieu de l’événement principal."
+      }
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "save": "Enregistrer les modifications",
+      "saving": "Enregistrement en cours…",
+      "retry": "Réessayer",
+      "delete": "Supprimer l’annonce"
+    },
+    "errors": {
+      "notFound": "Cette annonce n’existe pas ou n’est plus disponible.",
+      "forbidden": "Vous n’avez pas les droits pour modifier cette annonce.",
+      "generic": "Une erreur est survenue lors de l’enregistrement. Merci de réessayer."
+    }
+  },
+  "toasts": {
+  "obituary": {
+    "publishFreeSuccess": "Annonce publiée avec succès.",
+    "publishFreeError": "La publication de l’annonce a échoué. Merci de réessayer.",
+          "published": "L’annonce a été publiée avec succès.",
+      "publishError": "Impossible de publier l’annonce pour le moment. Veuillez réessayer.",
+      "paymentTodo": "Le paiement en ligne arrive bientôt. Pour l’instant, merci de suivre les instructions de règlement.",
+      "publishFreeTodo": "Publication gratuite simulée (à brancher sur l’API)."
+  }
+},
+"obituaryDelete": {
+  "confirmTitle": "Supprimer l’annonce pour {name} ?",
+  "confirmMessage": "Cette action va archiver l’annonce et la rendre privée. Vous pourrez la restaurer plus tard en contactant le support.",
+  "confirmLabel": "Oui, supprimer",
+  "cancelLabel": "Annuler",
+  "toasts": {
+    "archived": "L’annonce a été archivée avec succès.",
+    "error": "Une erreur est survenue lors de la suppression de l’annonce."
+  }
+}
+,
+
+  "checkoutObituary": {
+    "title": "Finaliser la publication",
+    "subtitle": "Choisissez un moyen de paiement pour confirmer la mise en ligne de cette annonce.",
+    "error": "Impossible de charger les informations de l’annonce.",
+    "retry": "Réessayer",
+
+    "meta": {
+      "title": "Paiement de l’annonce",
+      "description": "Récapitulatif et paiement sécurisé pour la publication de l’avis de décès."
+    },
+
+    "methods": {
+      "title": "Moyen de paiement",
+      "subtitle": "Sélectionnez la méthode qui vous convient le mieux.",
+      "processing": "Initialisation du paiement…",
+      "cardStripe": "Carte bancaire (Stripe)",
+      "paypal": "PayPal",
+      "bankTransfer": "Virement bancaire",
+      "notConfigured": "Ce moyen de paiement n’est pas encore disponible.",
+      "error": "Une erreur est survenue lors de l’initialisation du paiement."
+    },
+
+    "bank": {
+      "title": "Payer par virement bancaire",
+      "intro": "Effectuez le virement avec les informations ci-dessous. L’annonce sera publiée dès que le paiement sera confirmé.",
+      "holder": "Titulaire du compte",
+      "reference": "Référence à indiquer",
+      "amount": "Montant à payer",
+      "note": "Merci d’indiquer la référence exacte du virement pour que nous puissions associer le paiement à votre annonce.",
+      "toastSuccess": "Instructions de virement générées. Vous pouvez maintenant effectuer le virement."
+    }
+  ,
+
+  "plans": {
+    "price": {
+      "free": "Gratuit",
+      "paid": "{amount} €"
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
 
 }

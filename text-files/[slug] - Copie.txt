@@ -1,0 +1,929 @@
+<!-- pages/obituary/confirm/[slug].vue -->
+<template>
+  <main class="app-main fade-in">
+    <PageNavBar
+      aria-label="Navigation récapitulatif d'annonce"
+      :show-back-home="true"
+      :show-back-list="true"
+      back-list-to="/obituaries"
+      :show-create="false"
+    />
+
+    <section class="section">
+      <!-- Header -->
+      <header class="section-header">
+        <h1 class="section-title">
+          {{ t('obituaryReview.title') }}
+        </h1>
+
+        <p class="section-subtitle">
+          {{ t('obituaryReview.subtitle') }}
+        </p>
+
+        <!-- Info plan -->
+        <div
+          v-if="planLabel"
+          class="review-plan-banner"
+        >
+          <div class="review-plan-banner__top">
+            <span class="review-plan-banner__plan">
+              {{ planLabel }}
+            </span>
+            <span class="review-plan-banner__price">
+              {{ planPrice }}
+            </span>
+          </div>
+          <p class="review-plan-banner__meta">
+            {{ t('obituaryReview.planMeta', {
+              days: currentPlanMeta?.publishDurationDays || obituary?.publishDurationDays || 0
+            }) }}
+          </p>
+        </div>
+      </header>
+
+      <!-- Loading / error states -->
+      <div v-if="pending" class="review-loading">
+        <div class="review-skeleton" />
+        <div class="review-skeleton" />
+      </div>
+
+      <div
+        v-else-if="error"
+        class="review-error"
+        role="alert"
+        aria-live="polite"
+      >
+        <p class="review-error__text">
+          {{ t('obituaryReview.error') }}
+        </p>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          @click="refresh"
+        >
+          {{ t('obituaryReview.retry') }}
+        </button>
+      </div>
+
+      <form
+        v-else-if="obituary"
+        class="review-layout"
+        @submit.prevent="onConfirm"
+      >
+        <!-- Colonne principale : contenu de l’annonce -->
+        <section class="card review-main" aria-label="Récapitulatif de l'annonce">
+          <div class="card-body review-main__body">
+            <!-- Bloc défunt -->
+            <section class="review-section">
+              <h2 class="review-section__title">
+                {{ t('obituaryReview.sections.deceased.title') }}
+              </h2>
+              <p class="review-section__subtitle">
+                {{ t('obituaryReview.sections.deceased.subtitle') }}
+              </p>
+
+             <dl class="review-dl">
+  <!-- Nom -->
+  <div class="review-dl__row">
+    <dt>{{ t('createObituary.fields.deceasedFullName.label') }}</dt>
+    <dd>{{ obituary.deceasedFullName }}</dd>
+  </div>
+
+  <!-- Genre -->
+  <div
+    v-if="obituary.deceasedGender"
+    class="review-dl__row"
+  >
+    <dt>{{ t('createObituary.fields.gender.label') }}</dt>
+    <dd>{{ formatGender(obituary.deceasedGender) }}</dd>
+  </div>
+
+  <!-- Niveau d’identification -->
+  <div
+    v-if="obituary.identityStatus"
+    class="review-dl__row"
+  >
+    <dt>{{ t('createObituary.fields.identityStatus.label') }}</dt>
+    <dd>{{ formatIdentityStatus(obituary.identityStatus) }}</dd>
+  </div>
+
+  <!-- Dates naissance / décès -->
+  <div
+    v-if="obituary.dateOfBirth || obituary.dateOfDeath"
+    class="review-dl__row"
+  >
+    <dt>{{ t('obituaryReview.fields.dates') }}</dt>
+    <dd>
+      <span v-if="obituary.dateOfBirth">
+        {{ t('obituaryReview.fields.dateOfBirth', { date: obituary.dateOfBirth }) }}
+      </span>
+      <span v-if="obituary.dateOfBirth && obituary.dateOfDeath"> · </span>
+      <span v-if="obituary.dateOfDeath">
+        {{ t('obituaryReview.fields.dateOfDeath', { date: obituary.dateOfDeath }) }}
+      </span>
+    </dd>
+  </div>
+
+  <!-- Âge affiché -->
+  <div
+    v-if="obituary.ageDisplay"
+    class="review-dl__row"
+  >
+    <dt>{{ t('createObituary.fields.ageDisplay.label') }}</dt>
+    <dd>{{ obituary.ageDisplay }}</dd>
+  </div>
+
+  <!-- Religion -->
+  <div
+    v-if="obituary.religion || obituary.denomination"
+    class="review-dl__row"
+  >
+    <dt>{{ t('createObituary.fields.religion.label') }}</dt>
+    <dd>
+      <span v-if="obituary.religion">
+        {{ formatReligion(obituary.religion) }}
+      </span>
+      <span v-if="obituary.religion && obituary.denomination"> · </span>
+      <span v-if="obituary.denomination">
+        {{ obituary.denomination }}
+      </span>
+    </dd>
+  </div>
+
+  <!-- Localisation -->
+  <div
+    v-if="obituary.city || obituary.region || obituary.country"
+    class="review-dl__row"
+  >
+    <dt>{{ t('obituaryReview.fields.location') }}</dt>
+    <dd>
+      {{ [obituary.city, obituary.region, obituary.country].filter(Boolean).join(', ') }}
+    </dd>
+  </div>
+
+  <!-- Code pays -->
+  <div
+    v-if="obituary.countryCode"
+    class="review-dl__row"
+  >
+    <dt>{{ t('obituaryReview.fields.countryCode') }}</dt>
+    <dd>{{ obituary.countryCode }}</dd>
+  </div>
+
+  <!-- Zone rurale / village -->
+  <div
+    v-if="obituary.isRuralArea !== null && obituary.isRuralArea !== undefined"
+    class="review-dl__row"
+  >
+    <dt>{{ t('createObituary.fields.isRuralArea.label') }}</dt>
+    <dd>
+      {{ obituary.isRuralArea ? t('obituaryReview.fields.ruralYes') : t('obituaryReview.fields.ruralNo') }}
+    </dd>
+  </div>
+</dl>
+
+            </section>
+
+            <!-- Bloc texte annonce -->
+            <section class="review-section">
+              <h2 class="review-section__title">
+                {{ t('obituaryReview.sections.content.title') }}
+              </h2>
+              <p class="review-section__subtitle">
+                {{ t('obituaryReview.sections.content.subtitle') }}
+              </p>
+
+              <h3 class="review-content__title">
+                {{ obituary.title }}
+              </h3>
+
+              <p class="review-content__body">
+                {{ obituary.content }}
+              </p>
+            </section>
+
+            <!-- Bloc événements -->
+            <section class="review-section">
+              <h2 class="review-section__title">
+                {{ t('obituaryReview.sections.events.title') }}
+              </h2>
+              <p class="review-section__subtitle">
+                {{ t('obituaryReview.sections.events.subtitle') }}
+              </p>
+
+              <ul
+                v-if="events.length"
+                class="review-events"
+                aria-label="Liste des événements associés à cette annonce"
+              >
+                <li
+                  v-for="event in events"
+                  :key="event.id || event.startsAt || event.venueName"
+                  class="review-events__item"
+                >
+                  <div class="review-events__header">
+                    <span class="review-events__type">
+                      {{ formatEventType(event.eventType) }}
+                    </span>
+                    <span
+                      v-if="event.isMainEvent"
+                      class="review-events__badge"
+                    >
+                      {{ t('obituaryReview.events.main') }}
+                    </span>
+                  </div>
+
+                  <p class="review-events__datetime">
+                    <span v-if="event.startsAt">
+                      {{ formatDateTime(event.startsAt) }}
+                    </span>
+                    <span v-else>
+                      {{ t('obituaryReview.events.datePending') }}
+                    </span>
+                  </p>
+
+                  <p
+                    v-if="event.venueName || event.venueAddress"
+                    class="review-events__place"
+                  >
+                    <strong>{{ event.venueName }}</strong>
+                    <br v-if="event.venueName && event.venueAddress" />
+                    <span v-if="event.venueAddress">
+                      {{ event.venueAddress }}
+                    </span>
+                  </p>
+                </li>
+              </ul>
+
+              <p
+                v-else
+                class="review-empty"
+              >
+                {{ t('obituaryReview.events.none') }}
+              </p>
+            </section>
+
+            <!-- Bloc contacts -->
+            <section class="review-section">
+              <h2 class="review-section__title">
+                {{ t('obituaryReview.sections.contacts.title') }}
+              </h2>
+              <p class="review-section__subtitle">
+                {{ t('obituaryReview.sections.contacts.subtitle') }}
+              </p>
+
+              <ul
+                v-if="contacts.length"
+                class="review-contacts"
+                aria-label="Contacts famille ou organisation"
+              >
+                <li
+                  v-for="contact in contacts"
+                  :key="contact.id || contact.email || contact.phone || contact.name"
+                  class="review-contacts__item"
+                >
+                  <p class="review-contacts__name">
+                    <strong>{{ contact.name || contact.label }}</strong>
+                    <span v-if="contact.isPrimary">
+                      · {{ t('obituaryReview.contacts.primary') }}
+                    </span>
+                  </p>
+                  <ul class="review-contacts__channels">
+                    <li v-if="contact.phone">
+                      <i class="fas fa-phone" aria-hidden="true"></i>
+                      <span>{{ contact.phone }}</span>
+                    </li>
+                    <li v-if="contact.whatsappNumber">
+                      <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                      <span>{{ contact.whatsappNumber }}</span>
+                    </li>
+                    <li v-if="contact.email">
+                      <i class="fas fa-envelope" aria-hidden="true"></i>
+                      <span>{{ contact.email }}</span>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+
+              <p
+                v-else
+                class="review-empty"
+              >
+                {{ t('obituaryReview.contacts.none') }}
+              </p>
+            </section>
+          </div>
+        </section>
+
+        <!-- Colonne droite : encadré actions / paiement -->
+        <aside
+          class="card review-side"
+          aria-label="Validation et publication"
+        >
+          <div class="card-body review-side__body">
+            <p class="review-side__status">
+  {{ isFreePlan ? t('obituaryReview.side.statusFree') : t('obituaryReview.side.statusPayment') }}
+</p>
+
+            <h2 class="review-side__title">
+              {{ t('obituaryReview.side.title') }}
+            </h2>
+            <p class="review-side__subtitle">
+              {{ t('obituaryReview.side.subtitle') }}
+            </p>
+
+            <ul class="review-side__summary">
+              <li>
+                <span class="review-side__label">
+                  {{ t('obituaryReview.side.plan') }}
+                </span>
+                <span class="review-side__value">
+                  {{ planLabel || t('obituaryReview.side.planUnknown') }}
+                </span>
+              </li>
+              <li>
+                <span class="review-side__label">
+                  {{ t('obituaryReview.side.duration') }}
+                </span>
+                <span class="review-side__value">
+                  {{ t('obituaryReview.planMeta', {
+                    days: currentPlanMeta?.publishDurationDays || obituary.publishDurationDays || 0
+                  }) }}
+                </span>
+              </li>
+              <li>
+                <span class="review-side__label">
+                  {{ t('obituaryReview.side.price') }}
+                </span>
+                <span class="review-side__value">
+                  {{ planPrice }}
+                </span>
+              </li>
+            </ul>
+
+            <p class="review-side__legal">
+              {{ t('obituaryReview.side.legal') }}
+            </p>
+
+            <div class="review-side__actions">
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                @click="onEdit"
+              >
+                {{ t('obituaryReview.actions.edit') }}
+              </button>
+
+              <button
+                v-if="isFreePlan"
+                type="submit"
+                class="btn btn-primary"
+              >
+                {{ t('obituaryReview.actions.publishFree') }}
+              </button>
+
+              <button
+                v-else
+                type="button"
+                class="btn btn-primary"
+                @click="onPay"
+              >
+                {{ t('obituaryReview.actions.confirmAndPay') }}
+              </button>
+            </div>
+          </div>
+        </aside>
+      </form>
+    </section>
+  </main>
+</template>
+
+<script setup>
+definePageMeta({
+  middleware: ['auth'],
+});
+
+import { computed } from 'vue';
+import { useRoute, useRouter, useSeoMeta, useFetch } from '#imports';
+import { useI18n } from 'vue-i18n';
+import PageNavBar from '~/components/PageNavBar.vue';
+
+const { t, locale } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
+const slug = computed(() => route.params.slug);
+
+// 💡 mini PLAN_META côté client pour le prix / libellé
+const PLAN_META = {
+  indiv_free_7: {
+    code: 'indiv_free_7',
+    labelKey: 'plans.codes.indiv_free_7',
+    isFree: true,
+    currency: null,
+    basePriceCents: 0,
+    publishDurationDays: 7,
+  },
+  indiv_basic_21: {
+    code: 'indiv_basic_21',
+    labelKey: 'plans.codes.indiv_basic_21',
+    isFree: false,
+    currency: 'EUR',
+    basePriceCents: 1800,
+    publishDurationDays: 21,
+  },
+  indiv_essentiel_30: {
+    code: 'indiv_essentiel_30',
+    labelKey: 'plans.codes.indiv_essentiel_30',
+    isFree: false,
+    currency: 'EUR',
+    basePriceCents: 2500,
+    publishDurationDays: 30,
+  },
+  indiv_prestige_60: {
+    code: 'indiv_prestige_60',
+    labelKey: 'plans.codes.indiv_prestige_60',
+    isFree: false,
+    currency: 'EUR',
+    basePriceCents: 4900,
+    publishDurationDays: 60,
+  },
+};
+
+// 📡 Récupération de l’annonce par slug
+const {
+  data: obituary,
+  pending,
+  error,
+  refresh,
+} = await useFetch(() => `/api/obituaries/${slug.value}`, {
+  key: () => `obituary-confirm-${slug.value}`,
+});
+
+// SEO dynamique
+useSeoMeta({
+  title: () => {
+    const base = t('obituaryReview.meta.title');
+    const name = obituary.value?.deceasedFullName;
+    return name ? `${base} – ${name}` : base;
+  },
+  description: () =>
+    obituary.value?.content?.slice(0, 160) ||
+    t('obituaryReview.meta.description') ||
+    '',
+  ogTitle: () => t('obituaryReview.meta.title'),
+  ogDescription: () =>
+    obituary.value?.content?.slice(0, 160) ||
+    t('obituaryReview.meta.description') ||
+    '',
+});
+
+// ✅ Helpers dérivés
+const events = computed(() => obituary.value?.events || []);
+const contacts = computed(() => obituary.value?.contacts || []);
+
+const planCodeFromData = computed(() => {
+  const o = obituary.value;
+  return o?.planCode || o?.pricingTier || null;
+});
+
+const currentPlanMeta = computed(() => {
+  const code = planCodeFromData.value;
+  if (!code) return null;
+  return PLAN_META[code] || null;
+});
+
+const isFreePlan = computed(() => {
+  if (currentPlanMeta.value) return !!currentPlanMeta.value.isFree;
+  // fallback sur donnée backend
+  return !!obituary.value?.isFree;
+});
+
+const planLabel = computed(() => {
+  if (!currentPlanMeta.value) {
+    const code = planCodeFromData.value;
+    return code ? code : null;
+  }
+  return t(currentPlanMeta.value.labelKey);
+});
+
+const planPrice = computed(() => {
+  const meta = currentPlanMeta.value;
+  if (meta && meta.isFree) {
+    return t('plans.price.free');
+  }
+  const cents =
+    meta?.basePriceCents ??
+    (typeof obituary.value?.amountPaid === 'number'
+      ? obituary.value.amountPaid * 100
+      : 0);
+
+  if (!cents || cents <= 0) {
+    return t('plans.price.free');
+  }
+
+  const euros = (cents / 100).toFixed(2);
+  return t('plans.price.paid', { amount: euros });
+});
+
+// 🌍 Formatters
+const formatEventType = (type) => {
+  if (!type) return '';
+  switch (type) {
+    case 'funeral':
+      return t('home.eventTypes.funeral');
+    case 'wake':
+      return t('home.eventTypes.wake');
+    case 'burial':
+      return t('home.eventTypes.burial');
+    case 'memorial':
+      return t('home.eventTypes.memorial');
+    default:
+      return type;
+  }
+};
+
+const formatDateTime = (value) => {
+  if (!value) return '';
+  // value en pratique "YYYY-MM-DD HH:mm:ss" côté backend
+  const normalized = value.replace(' ', 'T');
+  const d = new Date(normalized);
+  if (Number.isNaN(d.getTime())) return value;
+
+  return d.toLocaleString(locale.value || 'fr-FR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+};
+const formatGender = (value) => {
+  if (!value) return '';
+  if (value === 'male') return t('createObituary.fields.gender.options.male');
+  if (value === 'female') return t('createObituary.fields.gender.options.female');
+  return value;
+};
+
+const formatIdentityStatus = (value) => {
+  switch (value) {
+    case 'known':
+      return t('createObituary.fields.identityStatus.options.known');
+    case 'partial':
+      return t('createObituary.fields.identityStatus.options.partial');
+    case 'unknown':
+      return t('createObituary.fields.identityStatus.options.unknown');
+    default:
+      return value;
+  }
+};
+
+const formatReligion = (value) => {
+  if (!value) return t('createObituary.fields.religion.options.none');
+  if (value === 'christian') return t('createObituary.fields.religion.options.christian');
+  if (value === 'muslim') return t('createObituary.fields.religion.options.muslim');
+  if (value === 'other') return t('createObituary.fields.religion.options.other');
+  return value;
+};
+
+// 🎬 Actions
+const onEdit = () => {
+  // TODO : quand tu auras une vraie page d’édition /obituary/edit/[slug]
+  // pour l’instant, on peut renvoyer vers la création avec le plan
+  const code = planCodeFromData.value;
+  router.push({
+    path: '/obituary/create',
+    query: code ? { plan: code } : {},
+  });
+};
+
+const onPay = () => {
+  // TODO : ici tu brancheras ta vraie page/flow de paiement
+  // Exemple futur :
+  // router.push({ path: `/checkout/obituary/${slug.value}` });
+  console.info('TODO: lancer le flow de paiement pour', slug.value);
+};
+
+const onConfirm = () => {
+  // Gratuit : publication directe
+  console.info('TODO: appel backend pour publier définitivement', slug.value);
+  // ex futur : POST /api/obituaries/:slug/publish
+};
+</script>
+
+<style scoped>
+.review-plan-banner {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.9rem;
+
+  /* ✅ Fond doux et cohérent avec create */
+  background: var(--color-accent-soft, rgba(56, 189, 248, 0.08));
+  border: 1px solid rgba(56, 189, 248, 0.6);
+}
+
+.review-plan-banner__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.review-plan-banner__plan {
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+
+.review-plan-banner__price {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.review-plan-banner__meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+}
+
+
+/* Layout */
+.review-layout {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* mobile-first, puis 2 colonnes sur desktop */
+@media (min-width: 900px) {
+  .review-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+    align-items: flex-start;
+  }
+}
+
+.review-main__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Sections */
+.review-section {
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-bottom: var(--space-3);
+}
+.review-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.review-section__title {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.review-section__subtitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+}
+
+/* Definition list */
+.review-dl {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.review-dl__row {
+  display: grid;
+  gap: 0.15rem;
+}
+.review-dl__row dt {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-soft);
+}
+.review-dl__row dd {
+  margin: 0;
+  font-size: 0.93rem;
+}
+
+/* Content */
+.review-content__title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.review-content__body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Events */
+.review-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-events__item {
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.review-events__header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.3rem;
+}
+
+.review-events__type {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.review-events__badge {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #7dd3fc;
+}
+
+.review-events__datetime {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.review-events__place {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  color: var(--color-text-soft);
+}
+
+/* Contacts */
+.review-contacts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-contacts__item {
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.review-contacts__name {
+  margin: 0 0 0.3rem;
+  font-size: 0.9rem;
+}
+
+.review-contacts__channels {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.88rem;
+}
+.review-contacts__channels li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.review-contacts__channels i {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Side card */
+.review-side__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.review-side__title {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.review-side__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+}
+
+.review-side__summary {
+  list-style: none;
+  margin: 0.4rem 0 0.2rem;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.review-side__label {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-soft);
+}
+
+.review-side__value {
+  display: block;
+}
+
+.review-side__legal {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-soft);
+}
+
+.review-side__actions {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+@media (min-width: 600px) {
+  .review-side__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+/* Generic */
+.review-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-text-soft);
+}
+
+/* Loading / error */
+.review-loading {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.review-skeleton {
+  height: 120px;
+  border-radius: 1rem;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.18),
+    rgba(148, 163, 184, 0.35),
+    rgba(148, 163, 184, 0.18)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite;
+}
+
+.review-error {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(239, 68, 68, 0.7);
+  background: rgba(239, 68, 68, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.review-error__text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.review-side__status {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-soft);
+}
+
+</style>

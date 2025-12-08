@@ -789,3 +789,549 @@ prière à la mosquée + inhumation au village,
 cas simple avec veillée unique + messe souvenir à 40 jours.
 
 Objectif : tester la page de détail nécrologique (timeline d’événements, affichage des contacts, supports médias) et, plus tard, le listing/filtrage par ville/pays.
+
+Yes, faisons un vrai checkpoint Matanga 👇
+
+1. Backend & données — où on en est
+1.1 Tables principales (DB)
+
+users / user_individual_profiles / user_pro_profiles
+
+Users : email, account_type (individual/pro), statut, ville, pays, locale.
+
+Individual : first_name, last_name, phone.
+
+Pro : organization_name, type (funeral_home, church…), adresse, website, etc.
+
+obituaries
+
+Tout le cœur de l’annonce : nom du défunt, dates, religion, texte, slug, status, visibility, pays/ville, monétisation (is_free, pricing_tier, currency, amount_paid, publish_duration_days, expires_at, etc.), cover_image_url, stats (view_count…).
+
+obituary_events
+
+Timeline : veillée, messe, inhumation, mémorial… avec starts_at, venue_name, address, ville/pays, online flags, etc.
+
+obituary_contacts
+
+Contacts publics de la famille (téléphone, WhatsApp, email) pour info/condoléances.
+
+obituary_media
+
+Images / vidéos liées à l’annonce (type, provider, url, thumbnail, is_main, sort_order).
+
+Rien n’a été cassé dans le schéma DB, on s’appuie dessus.
+
+1.2 API annonces
+GET /api/obituaries (listing)
+
+Filtres :
+
+page, pageSize
+
+country_code, city, language, type (death/anniversary/memorial/other)
+
+is_free, sort (recent / oldest / popular)
+
+q pour recherche (nom du défunt / titre)
+
+Ne renvoie que :
+
+status = 'published'
+
+visibility = 'public'
+
+moderation_status != 'removed'
+
+fenêtre de publication (publish_at <= NOW, expires_at > NOW ou NULL)
+
+Inclus dans chaque item :
+
+métadonnées de l’annonce
+
+coverImageUrl (donc les miniatures sont dispo)
+
+mainEvent (événement principal calculé comme le plus tôt dans obituary_events).
+
+GET /api/obituary/[slug]
+
+Charge une annonce complète + :
+
+events[] (tous les événements liés, ordonnés)
+
+contacts[] (contacts publics, primaires d’abord)
+
+Règles d’accès :
+
+Public : seulement si published, pas removed, pas private.
+
+Propriétaire / admin / modérateur : peuvent voir brouillons, privés, etc.
+
+Incrémente view_count + last_view_at pour les annonces publiées.
+
+POST /api/obituaries
+
+On l’a aligné sur ton create form :
+
+champs défunt (identityStatus, gender, dates, ageDisplay, religion, denomination…)
+
+localisation
+
+contenu (title, body, mainLanguage)
+
+monétisation (isFree, pricingTier, publishDurationDays, etc.)
+
+événements (table obituary_events)
+
+contacts (table obituary_contacts)
+
+coverImageUrl
+
+Actuellement, côté front on envoie un seul événement principal et zéro ou un contact.
+
+2. Frontend — pages & UX
+2.1 App & layout
+
+App.vue
+
+Thème clair/sombre géré via useTheme.
+
+SEO global (OpenGraph, JSON-LD organization, meta description, canonical, etc.).
+
+layouts/default.vue
+
+Header pro Matanga (logo + tagline).
+
+Bouton thème avec icône soleil/lune + libellé “Thème clair / sombre”.
+
+Bandeau utilisateur sous le header :
+
+utilise UserInlineCard + authStore
+
+affiche l’état du compte, nom / orga quand connecté.
+
+2.2 Bandeau utilisateur (UserInlineCard.vue)
+
+En invité :
+
+texte du type :
+
+Visiteur – vous n’êtes pas encore connecté
+“Connectez-vous ou créez un compte pour publier et gérer vos annonces.”
+
+boutons :
+
+Se connecter → /login
+
+Créer un compte → /register
+
+En connecté :
+
+affiche :
+
+displayName (prénom + nom pour particulier, organization_name pour pro)
+
+ou fallback email
+
+montre le rôle :
+
+“Compte particulier” / “Compte professionnel” / “Compte Matanga”
+
+boutons :
+
+Mon espace → /dashboard (route à définir)
+
+Se déconnecter (appel authStore.logout(), redirection /).
+
+Design :
+
+fond cohérent avec les variables thème (var(--color-surface-muted)),
+
+pas de gros fond noir en clair.
+
+2.3 Home / listing
+
+Nouvelle page d’accueil :
+
+Hero pro (titre, sous-titre, body, CTA créa + CTA recherche) avec clés i18n home.hero.*.
+
+Section “Comment ça marche” (3 étapes).
+
+Bloc “Annonces récentes” :
+
+cartes avec :
+
+miniature (coverImageUrl)
+
+type d’annonce / titre
+
+date de décès + âge + “il y a X heures/jours” grâce à useDateUtils
+
+ville / région / pays
+
+badge Gratuit / Payant selon isFree et pricingTier
+
+évent principal (date/lieu) si dispo
+
+compteur vues.
+
+Zone de recherche / filtres :
+
+pays, ville, texte libre, tri.
+
+Utilisation de ton composant Pagination.vue adapté (labels i18n, résumé, goto page).
+
+2.4 Page détail annonce /obituary/[slug]
+
+On a conçu une page “haut de gamme” :
+
+en-tête avec :
+
+type d’annonce, nom complet, âge affiché, dates naissance/décès si présentes.
+
+badge plan (Gratuit / Essentiel / etc. selon pricing_tier).
+
+localisation principale.
+
+Photo principale :
+
+coverImageUrl si présent, sinon avatar symbolique.
+
+Corps de texte de l’annonce (body, paragraphe lisible, responsive).
+
+Timeline des événements (wake, messe, enterrement, mémorial) :
+
+pour chaque event : date/heure (via useDateUtils), type d’événement, lieu, adresse, ville/pays.
+
+Contacts :
+
+liste des contacts publics (nom, label, tel, WhatsApp, email), formatés proprement.
+
+Accessibilité :
+
+niveaux de titres <h1> / <h2>, aria-labels, structure claire mobile-first.
+
+(Même si tu ne m’as pas recollé le fichier là maintenant, le design qu’on a décrit repose bien sur l’API que tu as montrée.)
+
+2.5 Page création /obituary/create
+
+Formulaire multi-blocs, mobile-first :
+
+Infos défunt
+
+nom complet
+
+genre (H/F)
+
+niveau d’identification (known / partial / unknown)
+
+dates naissance / décès
+
+âge affiché
+
+religion + dénomination
+
+localisation (ville, région, pays, code pays, rural ou non).
+
+Texte de l’annonce
+
+titre (auto-suggéré à partir du nom : “Annonce de décès – {name}”)
+
+texte (body) avec validation longueur min.
+
+Événement principal
+
+type (veillée, obsèques, inhumation, mémorial)
+
+date/heure (datetime-local → normalisé en YYYY-MM-DD HH:mm:ss)
+
+lieu + adresse.
+
+Contact famille
+
+nom, téléphone, WhatsApp, email
+
+créé en même temps dans obituary_contacts si renseigné.
+
+Photo & publication (gratuit)
+
+URL de la photo principale (coverImageUrl)
+
+texte légal / consentement.
+
+Validation côté front :
+
+nom défunt obligatoire
+
+titre obligatoire
+
+texte min 40 caractères
+
+date/heure event obligatoire.
+
+Payload :
+
+aligne les noms de champs avec index.post.js (API create),
+
+envoie events[] et contacts[],
+
+monétisation actuellement fixée à :
+
+isFree: true
+
+pricingTier: 'free_basic'
+
+publishDurationDays: 5 (constante FREE_PLAN_DURATION_DAYS).
+
+3. Auth / session — état actuel
+
+JWT access + refresh, cookies HttpOnly via authCookies.
+
+/api/auth/login :
+
+vérifie l’email + mot de passe,
+
+vérifie status (pending, suspended…),
+
+charge les rôles (user_roles),
+
+signe access + refresh tokens, enregistre le refresh en DB.
+
+utils/authSession.js :
+
+lit cookies access / refresh,
+
+vérifie access token :
+
+maintenant, recharge l’utilisateur depuis la DB via buildSessionFromUserId :
+
+users + user_individual_profiles + user_pro_profiles + roles.
+
+construit une session enrichie :
+
+userId, email, accountType, roles, city, country, locale
+
+firstName, lastName, organizationName, displayName.
+
+si access expiré : utilise le refresh pour émettre un nouveau access + aller en DB.
+
+/api/auth/me :
+
+renvoie { ok: true, user: session }
+→ le front récupère bien displayName.
+
+Store Pinia auth :
+
+user, isAuthenticated, roles, isAdmin, isPro, loading, error.
+
+ensureAuthLoaded() appelle /api/auth/me une seule fois.
+
+login() : appelle /api/auth/login puis fetchMe() pour hydrater complet.
+
+logout() : appelle /api/auth/logout (ou équivalent) et reset le store.
+
+useAuth() :
+
+composable qui connecte les pages au store (user, isAuthenticated, etc.), avec hydratation automatique SSR/CSR.
+
+4. Plans & monétisation — ce qui est décidé / ce qui reste à fixer
+
+On a pas encore tout codé, mais on a convergé sur plusieurs principes fonctionnels :
+
+4.1 Ce qui est déjà en dur dans le code
+
+Plan par défaut à la création via la page actuelle :
+
+Plan “Gratuit basique” :
+
+is_free = 1
+
+pricing_tier = 'free_basic'
+
+publish_duration_days = 5 (techniquement, on pourra passer à 7 ou 10 en ajustant la constante).
+
+1 événement principal
+
+1 contact (facultatif)
+
+1 cover_image_url
+
+pas de streaming / online pour le free (le champ stream_url ne sera pas exposé côté form pour free).
+
+Après expiration, on a prévu : archiver l’annonce (pas encore implémenté, mais pensé pour).
+
+4.2 Plans discutés pour particuliers (non codés mais “designés”)
+
+(Ce sont des specs produit, pas encore implémentées dans le front ni dans la logique d’upgrade)
+
+Free basic
+
+Durée : 5–7 jours (à trancher exactement; le code est à 5, toi tu penches plutôt pour 7 ou 10 max).
+
+Limitations :
+
+1 événement
+
+1 contact
+
+1 photo (cover)
+
+pas de lien online.
+
+Après expiration :
+
+soit archivage,
+
+soit montée de plan payant.
+
+Prolongation du free (Pack simple / add-on)
+On a beaucoup itéré, mais le dernier consensus était :
+
+Free de base → possibilité de prolonger la visibilité à 20 jours (10 → 20) via un add-on ≈ 12 € (tu as parlé ensuite de 15 €, à repréciser).
+
+Pas de prolongation gratuite infinie :
+
+max ~10 jours gratuits,
+
+au-delà : payant.
+
+Toujours avec les mêmes limites (1 event, 1 contact, 1 photo).
+
+Pack Essentiel (payant)
+
+Tu as validé le principe :
+
+~30 jours de mise en avant principale,
+
++15 jours dans des zones secondaires (ex : “autres annonces”).
+
+Pricing :
+
+on est parti sur 15 €,
+
+tu as remonté à 18 € pour garder un positionnement “premium” par rapport à la simple prolongation.
+
+Limites techniques (à préciser mais idée générale) :
+
+plus de photos (ex: 5 au lieu de 1)
+
+1 vidéo & lien replay
+
+plus d’événements
+
+plus de contacts.
+
+Plans mémoriels (“page mémoire”)
+
+Durées plus longues :
+
+6 mois, 1 an,
+
+10 ans renouvelables plutôt que “à vie”.
+
+Options :
+
+page mémorielle dédiée,
+
+bougies virtuelles, fleurs, messages,
+
+commentaires authentifiés,
+
+anniversaires automatiques (rappels chaque année).
+
+Option privée :
+
+page mémorielle consultable uniquement via un lien privé (non indexée, pas listée).
+
+Prix évoqués : “20–40 € pour 6 mois, 30–50 € pour 1 an”, à affiner.
+
+4.3 Plans pro & abonnements
+
+Pour les pros (pompes funèbres, églises, associations) :
+
+au choix :
+
+paiement à l’annonce (comme un particulier mais avec quelques bonus),
+
+ou abonnement mensuel avec quotas :
+
+nombre d’annonces / mois,
+
+nombre de mises en avant,
+
+nombre de photos/vidéos par annonce,
+
+anniversaires inclus,
+
+support prioritaire, etc.
+
+Rien n’est encore codé côté plans pro, mais la DB est prête :
+
+account_type = 'pro'
+
+user_pro_profiles
+
+et dans obituaries : user_id, pricing_tier, etc., permettent déjà de distinguer.
+
+4.4 Techniquement, côté code “plans”
+
+On a posé les bases :
+
+champs dans obituaries : is_free, pricing_tier, publish_duration_days, expires_at, etc.
+
+la route GET /api/plans (que tu as commencée) peut servir de source de vérité pour le front.
+
+Ce qui reste à faire (gros morceau à venir) :
+
+Une page /plans ou un sélecteur de plan avant / dans le formulaire create.
+
+Adapter le formulaire /obituary/create en fonction du plan choisi :
+
+nombre d’événements autorisés,
+
+nombre de photos / vidéos,
+
+options mémorielles, etc.
+
+Une étape de récap :
+
+/obituary/create/review ou step 2 sur la même page.
+
+Une page de paiement pour les plans payants (Stripe, PayPal, virement…).
+
+Gestion des upgrades :
+
+de free → extension,
+
+de simple → Essentiel,
+
+etc.
+
+5. En résumé ultra-court
+
+Tu as :
+
+un backend solide (tables, APIs listing/détail/création),
+
+une page d’accueil pro avec liste d’annonces, miniatures, recherche, pagination,
+
+une page de détail cohérente avec les events/contacts,
+
+une page de création déjà bien riche (défunt + event + contact + photo),
+
+un système auth/session propre (JWT + refresh + profils + displayName),
+
+un bandeau utilisateur qui gère invité/particulier/pro proprement.
+
+Sur les plans, on a :
+
+un plan gratuit déjà câblé (free_basic),
+
+une vision claire des futurs plans (extension, Essentiel, mémoriel, pro) et des règles produit,
+
+mais pas encore :
+
+la page /plans,
+
+la logique de choix de plan dans le formulaire,
+
+ni l’étape paiement/upgrade.

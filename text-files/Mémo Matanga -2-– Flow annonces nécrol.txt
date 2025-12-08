@@ -1,0 +1,239 @@
+Mémo Matanga – Flow annonces nécrologiques (à rappeler dans le prochain chat)
+1. Contexte général
+
+Stack : Nuxt 4 (SSR), JS only, déployé sur Vercel.
+
+Auth : JWT + /api/auth/me, middleware auth côté Nuxt, auth.global côté server.
+
+Domain : annonces nécrologiques “particuliers”.
+
+Flow concerné :
+
+Choix d’un plan sur /plans (ex. indiv_essentiel_30).
+
+Formulaire de création : /obituary/create?plan=...
+
+Récap / confirmation : /obituary/confirm/[slug]
+
+Plus tard : publication / paiement (à brancher).
+
+Les annonces sont créées via POST /api/obituaries, qui renvoie un slug utilisé sur la page de confirmation.
+
+2. Fichiers clés à revoir (sans toucher tant qu’on n’a pas relu la version partagée)
+
+app/pages/obituary/create/index.vue
+
+app/pages/obituary/confirm/[slug].vue
+
+Éventuellement : server/utils/pricingPlans.js (pour vérifier la cohérence des plans, sans modifier le back si possible).
+
+Règle importante pour la suite :
+👉 On ne modifie jamais un fichier sans avoir relu la version EXACTE que tu viens de coller dans le nouveau chat.
+
+3. État actuel (ce qu’on a déjà fait)
+3.1. Sur /obituary/create
+
+Lecteur de plan via route.query.plan avec fallback indiv_free_7.
+
+PLAN_META côté front pour les plans individuels par annonce (scope “obituary”) :
+
+indiv_free_7
+
+indiv_basic_21
+
+indiv_essentiel_30
+
+indiv_prestige_60
+
+Chaque plan contient :
+
+pricingTier, isFree, publishDurationDays, currency, basePriceCents
+
+labelKey: 'plans.codes.xxx'
+
+features aligné sur server/utils/pricingPlans.js (maxEvents, maxPhotos, maxVideos, maxContacts, etc.).
+
+Bandeau plan en haut du formulaire (selected-plan-banner) :
+
+Affiche nom du plan + prix + texte “Plan choisi : … (publication X jours)”.
+
+Style revu pour être lisible en clair / sombre (fond soft + bordure accent).
+
+Formulaire :
+
+Bloc défunt : identité, dates, localisation, religon, ruralité.
+
+Bloc texte : titre + corps (avec validation).
+
+Bloc événement principal : type, date/heure, lieu.
+
+Affiche un hint dynamique : Jusqu’à N événements en fonction de currentPlanFeatures.maxEvents.
+
+Bloc contact famille : 1 contact.
+
+Bloc publication : coverImageUrl + texte légal.
+
+Construction du payload pour /api/obituaries avec :
+
+champs défunt + texte + localisation,
+
+events: [ { ... isMainEvent: true } ] (un seul event pour l’instant),
+
+contacts: [] ou [contact principal],
+
+infos de plan (isFree, pricingTier, currency, amountPaid, publishDurationDays, planCode).
+
+Sur succès : redirection systématique vers /obituary/confirm/${slug}.
+
+3.2. Sur /obituary/confirm/[slug]
+
+useFetch('/api/obituaries/:slug') pour récupérer l’annonce, ses events et contacts.
+
+Mini PLAN_META front (les mêmes codes) pour calculer :
+
+planLabel (via i18n plans.codes.*),
+
+planPrice (Gratuit / X € TTC),
+
+planMeta.publishDurationDays (fallback sur obituary.publishDurationDays).
+
+Layout 2 colonnes :
+
+Colonne gauche :
+
+Infos défunt (nom, genre, identité, dates, âge, religion, localisation, ruralité).
+
+Texte d’annonce.
+
+Liste d’événements (type, badget “Événement principal”, date/heure, lieu).
+
+Liste de contacts (nom, badge “contact principal”, téléphone, WhatsApp, email).
+
+Colonne droite :
+
+Récap plan (Formule, Durée, Montant).
+
+Texte légal Matanga.
+
+Boutons :
+
+“Modifier l’annonce” ➜ pour l’instant renvoie vers /obituary/create?plan=...
+
+“Publier gratuitement” (si plan gratuit) ou “Confirmer et payer” (si payant, flow encore TODO).
+
+4. Problèmes connus à traiter dans la prochaine session
+4.1. Problèmes d’affichage (UI / thème clair)
+
+Sur la page de confirmation, certains textes/badges sont :
+
+écrits en noir sur fond sombre en mode clair, donc invisibles :
+
+Les petites phrases d’aide sous les titres de sections (“Relisez le titre…”, “Vérifiez la date…”),
+
+Certains badges / labels.
+
+Point à faire :
+👉 Revoir les classes CSS de ces sous-titres et badges dans confirm/[slug].vue (et éventuellement create/index.vue) pour :
+
+utiliser var(--color-text-soft) / var(--color-text) plutôt que du noir fixe,
+
+vérifier le fond des cartes / bannières.
+
+4.2. Plan mal restitué sur /obituary/confirm
+
+Même quand on a choisi un plan payant (ex. Pack Essentiel 30 jours + rappel), la colonne droite affiche parfois :
+
+Formule : Non renseignée
+
+Publication : 0 jours
+
+Montant : Gratuit
+
+Donc quelque chose cloche entre :
+
+ce que create envoie (planCode, pricingTier, isFree, publishDurationDays, etc.),
+
+ce que le backend stocke et renvoie dans /api/obituaries/:slug,
+
+ce que confirm lit (planCodeFromData, currentPlanMeta, planLabel, planPrice).
+
+Point à faire :
+
+Vérifier dans la réponse JSON d’un exemple d’annonce :
+
+planCode
+
+pricingTier
+
+publishDurationDays
+
+isFree
+
+amountPaid
+
+S’assurer que :
+
+planCodeFromData lit les bons champs,
+
+PLAN_META front contient bien le code utilisé (indiv_essentiel_30, etc.),
+
+la durée affichée utilise le bon fallback :
+
+d’abord currentPlanMeta.publishDurationDays
+
+sinon obituary.publishDurationDays
+
+sinon 0 (mais ça doit rester un cas rare).
+
+4.3. Formulaire create pas encore aligné avec les features des plans
+
+Aujourd’hui, même pour Essentiel / Prestige, le formulaire :
+
+ne permet qu’un seul événement,
+
+qu’un seul contact,
+
+et une seule image (coverImageUrl).
+
+Alors que les features des plans prévoient :
+
+Gratuit : 1 event / 1 photo / 1 contact
+
+Essentiel : jusqu’à 3 events / 3 photos / 1 vidéo / 2 contacts
+
+Prestige : encore plus.
+
+Point à faire (gros morceau prévu) :
+
+Transformer le bloc “Événement principal” en builder multi-événements limité par currentPlanFeatures.maxEvents.
+
+Préparer la structure pour plusieurs médias (photos / vidéos) même si on commence simple.
+
+Permettre plusieurs contacts jusqu’à currentPlanFeatures.maxContacts.
+
+5. Priorités pour la prochaine session (ordre proposé)
+
+Quand on relancera dans le nouveau chat avec ce mémo :
+
+Relire la VERSION ACTUELLE de :
+
+pages/obituary/create/index.vue
+
+pages/obituary/confirm/[slug].vue
+(tu les recolleras entièrement pour être sûr qu’on travaille sur le bon code).
+
+Corriger l’affichage plan sur la page de confirmation :
+
+S’assurer que Formule / Durée / Montant reflètent vraiment le plan choisi.
+
+Fixer les problèmes de contraste / couleurs :
+
+Badges, sous-titres, messages d’aide en mode clair.
+
+Commencer le builder multi-événements dans create/index.vue :
+
+Introduire form.events[] au lieu de form.event unique,
+
+UI minimaliste pour ajouter / supprimer jusqu’à currentPlanFeatures.maxEvents,
+
+Garder un event principal (isMainEvent ou le premier par défaut).

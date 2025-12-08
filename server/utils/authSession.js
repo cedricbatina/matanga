@@ -31,10 +31,15 @@ async function buildSessionFromUserId(userId, requestId) {
       u.city,
       u.country,
       u.preferred_locale,
+      ip.first_name AS first_name,
+      ip.last_name AS last_name,
+      pp.organization_name AS organization_name,
       GROUP_CONCAT(r.name) AS roles
     FROM users u
     LEFT JOIN user_roles ur ON ur.user_id = u.id
     LEFT JOIN roles r ON r.id = ur.role_id
+    LEFT JOIN user_individual_profiles ip ON ip.user_id = u.id
+    LEFT JOIN user_pro_profiles pp ON pp.user_id = u.id
     WHERE u.id = ?
     GROUP BY u.id
     LIMIT 1
@@ -50,11 +55,23 @@ async function buildSessionFromUserId(userId, requestId) {
   const user = rows[0];
 
   if (user.status !== "active") {
-    // On ne construit pas de session si le compte n'est plus actif
+    // Pas de session pour un compte non actif
     return null;
   }
 
   const roles = user.roles ? user.roles.split(",") : [];
+
+  const firstName = user.first_name || null;
+  const lastName = user.last_name || null;
+  const organizationName = user.organization_name || null;
+
+  let displayName = null;
+  if (user.account_type === "individual") {
+    const full = `${firstName || ""} ${lastName || ""}`.trim();
+    displayName = full || null;
+  } else if (user.account_type === "pro") {
+    displayName = organizationName || null;
+  }
 
   const session = {
     userId: user.id,
@@ -64,6 +81,10 @@ async function buildSessionFromUserId(userId, requestId) {
     city: user.city,
     country: user.country,
     locale: user.preferred_locale,
+    firstName,
+    lastName,
+    organizationName,
+    displayName,
   };
 
   return session;
@@ -105,22 +126,21 @@ export async function getAuthSession(event) {
   }
 
   // 1) Essayer de valider l'access token
+  // 1) Essayer de valider l'access token
   if (accessToken) {
     const decoded = verifyAccessToken(accessToken);
     if (decoded && decoded.sub) {
-      // On peut se contenter du payload pour éviter une requête DB à chaque requête
-      const session = {
-        userId: decoded.sub,
-        email: decoded.email,
-        accountType: decoded.at,
-        roles: decoded.roles || [],
-        // city / country / locale facultatifs, si tu veux les inclure dans le payload plus tard
-      };
+      const sessionUser = await buildSessionFromUserId(decoded.sub, requestId);
+      if (!sessionUser) {
+        clearAuthCookies(event);
+        return setSession(null);
+      }
+
       logDebug("AuthSession: access token valid", {
         requestId,
-        userId: session.userId,
+        userId: sessionUser.userId,
       });
-      return setSession(session);
+      return setSession(sessionUser);
     }
   }
 

@@ -92,108 +92,135 @@
               • {{ locationLabel }}
             </span>
           </p>
-
-          <div class="obituary-hero__badges">
-            <span
-              v-if="obituary.monetization?.isFree"
-              class="badge badge-success"
-            >
-              {{ t('obituary.summary.freePlan') }}
-            </span>
-            <span
-              v-else
-              class="badge badge-neutral"
-            >
-              {{
-                t('obituary.summary.paidPlan', {
-                  tier: obituary.monetization?.pricingTier || 'pro',
-                })
-              }}
-            </span>
-
-            <span
-              v-if="obituary.stats?.viewCount != null"
-              class="badge badge-soft"
-            >
-              {{
-                t('obituary.summary.views', {
-                  count: obituary.stats.viewCount,
-                })
-              }}
-            </span>
-          </div>
-          <div
-  v-if="shareUrls"
-  class="obituary-hero__share"
->
-  <!-- Bouton principal (Web Share / copie lien) -->
-  <button
-    type="button"
-    class="btn btn-primary btn-sm"
-    @click="onShare"
+<div class="obituary-hero__badges">
+  <span
+    v-if="obituary.monetization?.isFree"
+    class="badge badge-success"
   >
-    {{ t('share.obituary.shareButton') }}
-  </button>
-
-  <!-- Boutons réseaux -->
-  <a
-    v-if="shareUrls.whatsapp"
-    :href="shareUrls.whatsapp"
-    target="_blank"
-    rel="noopener"
-    class="btn btn-ghost btn-sm"
+    {{ t('obituary.summary.freePlan') }}
+  </span>
+  <span
+    v-else
+    class="badge badge-neutral"
   >
-    {{ t('share.channels.whatsapp') }}
-  </a>
+    {{
+      t('obituary.summary.paidPlan', {
+        tier: obituary.monetization?.pricingTier || 'pro',
+      })
+    }}
+  </span>
 
-  <a
-    v-if="shareUrls.facebook"
-    :href="shareUrls.facebook"
-    target="_blank"
-    rel="noopener"
-    class="btn btn-ghost btn-sm"
+  <span
+    v-if="obituary.stats?.viewCount != null"
+    class="badge badge-soft"
   >
-    {{ t('share.channels.facebook') }}
-  </a>
+    {{
+      t('obituary.summary.views', {
+        count: obituary.stats.viewCount,
+      })
+    }}
+  </span>
 
-  <a
-    v-if="shareUrls.x"
-    :href="shareUrls.x"
-    target="_blank"
-    rel="noopener"
-    class="btn btn-ghost btn-sm"
+  <!-- Éventuel badge de statut -->
+  <span
+    v-if="!isPublished"
+    class="badge badge-warning"
   >
-    {{ t('share.channels.x') }}
-  </a>
-
-  <a
-    v-if="shareUrls.linkedin"
-    :href="shareUrls.linkedin"
-    target="_blank"
-    rel="noopener"
-    class="btn btn-ghost btn-sm"
+    {{ t('obituary.summary.draftBadge') }}
+  </span>
+  <span
+    v-else-if="isPrivate"
+    class="badge badge-warning"
   >
-    {{ t('share.channels.linkedin') }}
-  </a>
-
-  <a
-    v-if="shareUrls.telegram"
-    :href="shareUrls.telegram"
-    target="_blank"
-    rel="noopener"
-    class="btn btn-ghost btn-sm"
-  >
-    {{ t('share.channels.telegram') }}
-  </a>
-
-  <a
-    v-if="shareUrls.email"
-    :href="shareUrls.email"
-    class="btn btn-ghost btn-sm"
-  >
-    {{ t('share.channels.email') }}
-  </a>
+    {{ t('obituary.summary.privateBadge') }}
+  </span>
 </div>
+
+<div class="obituary-hero__actions">
+  <div
+    v-if="shareUrls"
+    class="obituary-hero__share"
+  >
+    <!-- Bouton principal (Web Share / copie lien) -->
+    <button
+      type="button"
+      class="btn btn-primary btn-sm"
+      @click="onShare"
+    >
+      {{ t('share.obituary.shareButton') }}
+    </button>
+
+    <!-- Boutons réseaux -->
+    <a
+      v-if="shareUrls.whatsapp"
+      :href="shareUrls.whatsapp"
+      target="_blank"
+      rel="noopener"
+      class="btn btn-ghost btn-sm"
+    >
+      {{ t('share.channels.whatsapp') }}
+    </a>
+
+    <a
+      v-if="shareUrls.facebook"
+      :href="shareUrls.facebook"
+      target="_blank"
+      rel="noopener"
+      class="btn btn-ghost btn-sm"
+    >
+      {{ t('share.channels.facebook') }}
+    </a>
+
+    <a
+      v-if="shareUrls.x"
+      :href="shareUrls.x"
+      target="_blank"
+      rel="noopener"
+      class="btn btn-ghost btn-sm"
+    >
+      {{ t('share.channels.x') }}
+    </a>
+
+    <a
+      v-if="shareUrls.linkedin"
+      :href="shareUrls.linkedin"
+      target="_blank"
+      rel="noopener"
+      class="btn btn-ghost btn-sm"
+    >
+      {{ t('share.channels.linkedin') }}
+    </a>
+
+    <a
+      v-if="shareUrls.telegram"
+      :href="shareUrls.telegram"
+      target="_blank"
+      rel="noopener"
+      class="btn btn-ghost btn-sm"
+    >
+      {{ t('share.channels.telegram') }}
+    </a>
+
+    <a
+      v-if="shareUrls.email"
+      :href="shareUrls.email"
+      class="btn btn-ghost btn-sm"
+    >
+      {{ t('share.channels.email') }}
+    </a>
+  </div>
+
+  <!-- Bouton "Modifier cette annonce" pour owner / admin / moderator -->
+  <button
+    v-if="canEdit"
+    type="button"
+    class="btn btn-ghost btn-sm obituary-hero__edit"
+    @click="goToEdit"
+  >
+    {{ t('obituary.actions.edit') }}
+  </button>
+</div>
+
 
           <p
             v-if="obituary.publishedAt"
@@ -600,6 +627,8 @@ import { useObituariesStore } from '~/stores/obituaries';
 import { useDateUtils } from '~/composables/useDateUtils';
 import { useShareObituary } from '~/composables/useShareObituary';
 import PageNavBar from '~/components/PageNavBar.vue';
+import { useRouter } from '#imports';
+import { useAuthStore } from '~/stores/auth'; // adapte le chemin si ton store a un autre nom
 
 const { t } = useI18n();
 const route = useRoute();
@@ -611,6 +640,8 @@ const {
   timeAgo,
   formattedHourMinute,
 } = useDateUtils();
+const router = useRouter();
+const auth = useAuthStore();
 
 // --- Chargement des données ---
 const slug = computed(() => route.params.slug);
@@ -777,6 +808,29 @@ const onShare = async () => {
   // } else if (!result.ok && result.method === 'native') {
   //   $toast.error(t('share.obituary.nativeError'));
   // }
+};
+// --- Statut & permissions (pour afficher le bouton "Modifier") ---
+const isPublished = computed(() => obituary.value?.status === 'published');
+const isPrivate = computed(() => obituary.value?.visibility === 'private');
+
+const canEdit = computed(() => {
+  const user = auth.currentUser || auth.user || null; // adapte selon ton store
+  if (!user || !obituary.value) return false;
+
+  const userId = user.id || user.userId;
+  if (!userId) return false;
+
+  // Propriétaire
+  if (obituary.value.owner?.userId === userId) return true;
+
+  // Admin / modérateur
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  return roles.includes('admin') || roles.includes('moderator');
+});
+
+const goToEdit = () => {
+  if (!obituary.value?.slug) return;
+  router.push(`/obituary/edit/${obituary.value.slug}`);
 };
 
 useSeoMeta({
@@ -1093,6 +1147,18 @@ useSeoMeta({
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+.obituary-hero__actions {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.obituary-hero__edit {
+  margin-left: auto;
+}
+
 .section-header--nav {
   display: flex;
   align-items: center;

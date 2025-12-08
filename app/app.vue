@@ -72,7 +72,6 @@ useHead({
       name: 'viewport',
       content: 'width=device-width, initial-scale=1, viewport-fit=cover',
     },
-    // Theme-color selon préférence système (utile pour mobile)
     {
       name: 'theme-color',
       content: '#fafafa',
@@ -88,15 +87,47 @@ useHead({
     { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
   ],
   link: [
+    // Canonical
     {
       rel: 'canonical',
       href: canonicalUrl,
     },
+
+    // Favicon SVG principal
     {
       rel: 'icon',
       type: 'image/svg+xml',
       href: '/favicon.svg',
     },
+
+    // PNG 32x32 & 16x16 (à mettre dans /public/icons)
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '32x32',
+      href: '/icons/icon-32x32.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '16x16',
+      href: '/icons/icon-16x16.png',
+    },
+
+    // Apple touch icon (on peut réutiliser le 192x192 si tu n'as pas un 180x180)
+    {
+      rel: 'apple-touch-icon',
+      sizes: '180x180',
+      href: '/icons/icon-192x192.png',
+    },
+
+    // Manifest (si tu veux absolument /site.webmanifest)
+    {
+      rel: 'manifest',
+      href: '/site.webmanifest',
+    },
+
+    // Alternate (i18n)
     {
       rel: 'alternate',
       hreflang: currentLang,
@@ -104,7 +135,6 @@ useHead({
     },
   ],
   script: [
-    // JSON-LD Organisation (SEO pro)
     {
       type: 'application/ld+json',
       children: JSON.stringify({
@@ -113,14 +143,13 @@ useHead({
         name: siteName,
         url: siteUrl,
         description: defaultDescription,
-        logo: `${siteUrl}/logo-matanga.png`, // tu le créeras plus tard
-        sameAs: [
-          // à remplir ensuite (site vitrine, réseaux, etc.)
-        ],
+        logo: `${siteUrl}/logo-matanga.png`,
+        sameAs: [],
       }),
     },
   ],
 });
+
 
 // Meta SEO globales (les pages pourront surcharger avec useSeoMeta local)
 useSeoMeta({

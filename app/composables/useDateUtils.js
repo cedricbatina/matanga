@@ -96,6 +96,71 @@ export function useDateUtils() {
     });
   };
 
+  // 🔹 Helpers pour les champs <input type="date"> et <input type="datetime-local">
+
+  /**
+   * Normalise une valeur de date (ISO, string, Date…) vers "YYYY-MM-DD"
+   * pour <input type="date">
+   */
+  const toDateInput = (value) => {
+    if (!value) return "";
+    // Déjà au bon format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    const d = safeDate(value);
+    if (!d) {
+      // Fallback : on prend les 10 premiers caractères si c'est une string
+      return String(value).slice(0, 10);
+    }
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  /**
+   * Transforme une valeur de backend vers "YYYY-MM-DDTHH:mm"
+   * pour <input type="datetime-local">, en utilisant l'heure locale.
+   * Gère :
+   *  - ISO "2025-01-06T13:30:00.000Z"
+   *  - "2025-01-06 13:30:00"
+   */
+  const toDateTimeLocalInput = (value) => {
+    if (!value) return "";
+
+    const d = safeDate(
+      // on remplace " " par "T" pour les vieux formats "YYYY-MM-DD HH:mm:ss"
+      typeof value === "string" ? value.replace(" ", "T") : value
+    );
+    if (!d) return "";
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+
+    // 👉 Heure locale : plus de 14:30 qui redevient 13:30
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  /**
+   * Transforme une valeur d'<input type="datetime-local">
+   * ("YYYY-MM-DDTHH:mm" ou "YYYY-MM-DDTHH:mm:ss")
+   * en string "YYYY-MM-DD HH:mm:ss" pour le backend.
+   */
+  const normalizeDateTimeLocal = (value) => {
+    if (!value) return null;
+    const [date, time] = value.split("T");
+    if (!date || !time) return value;
+    const tPart = time.length === 5 ? `${time}:00` : time;
+    return `${date} ${tPart}`;
+  };
+
   return {
     timeAgo,
     shortDate,
@@ -105,5 +170,11 @@ export function useDateUtils() {
     getCountdownString,
     formattedHourMinute,
     formattedDateTimeWithSeconds,
+
+    // nouveaux helpers
+    safeDate,
+    toDateInput,
+    toDateTimeLocalInput,
+    normalizeDateTimeLocal,
   };
 }

@@ -47,13 +47,16 @@ export const useAuthStore = defineStore("auth", {
                 city: res.user.city,
                 country: res.user.country,
                 locale: res.user.locale,
+                firstName: res.user.firstName || null,
+                lastName: res.user.lastName || null,
+                organizationName: res.user.organizationName || null,
+                displayName: res.user.displayName || null,
               }
             : null;
         } else {
           this.user = null;
         }
       } catch (err) {
-        // en cas d'erreur réseau ou autre, on ne casse pas tout
         this.error =
           err?.data?.statusMessage ||
           err.message ||
@@ -69,7 +72,6 @@ export const useAuthStore = defineStore("auth", {
       if (this.initialized) return;
       return this.fetchMe();
     },
-
     async login({ email, password }) {
       this.loading = true;
       this.error = null;
@@ -84,18 +86,9 @@ export const useAuthStore = defineStore("auth", {
           throw new Error(res?.message || "Erreur de connexion");
         }
 
-        // Le serveur a mis les cookies, on récupère le user retourné
-        this.user = {
-          id: res.user.id,
-          email: res.user.email,
-          accountType: res.user.accountType,
-          roles: res.user.roles || [],
-          city: res.user.city,
-          country: res.user.country,
-          locale: res.user.locale,
-        };
-
-        this.initialized = true;
+        // Les cookies sont en place, on recharge le profil complet
+        this.initialized = false;
+        await this.fetchMe();
       } catch (err) {
         this.error =
           err?.data?.statusMessage ||

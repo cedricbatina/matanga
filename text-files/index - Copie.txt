@@ -997,14 +997,11 @@ const onSubmit = async () => {
     const slug = res?.slug;
 
     if (slug) {
-  await router.push({
-    path: `/obituary/confirm/${slug}`,
-    query: { plan: selectedPlanCode.value },
-  });
-} else {
-  await router.push('/obituaries');
-}
-
+      // Nouveau flow : on passe toujours par la page de confirmation
+      await router.push(`/obituary/confirm/${slug}`);
+    } else {
+      await router.push('/obituaries');
+    }
   } catch (err) {
     console.error('Create obituary failed', err);
     submitError.value =

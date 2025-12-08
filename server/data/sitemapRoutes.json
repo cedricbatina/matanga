@@ -1,0 +1,80 @@
+[
+  {
+    "loc": "/",
+    "lastmod": "2025-12-07T12:45:28.222Z",
+    "changefreq": "weekly",
+    "priority": 1
+  },
+  {
+    "loc": "/obituaries",
+    "lastmod": "2025-12-07T12:45:28.224Z",
+    "changefreq": "weekly",
+    "priority": 0.8
+  },
+  {
+    "loc": "/plans",
+    "lastmod": "2025-12-07T12:45:28.224Z",
+    "changefreq": "weekly",
+    "priority": 0.8
+  },
+  {
+    "loc": "/obituary/maman-marie-ndinga-2025-brazzaville",
+    "lastmod": "2025-12-06T19:54:22.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/monsieur-kouadio-koffi-2025-abidjan",
+    "lastmod": "2025-12-06T00:32:05.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/gran-me-rose-desir-2025-martinique",
+    "lastmod": "2025-12-05T19:21:14.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/senhor-joao-manuel-2025-luanda",
+    "lastmod": "2025-12-03T22:09:38.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/imam-abdoulaye-diallo-2025-dakar",
+    "lastmod": "2025-12-05T19:15:56.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/professeure-carla-santos-2025-lisbonne",
+    "lastmod": "2025-12-05T19:19:37.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/pere-andre-mabiala-2025-kinshasa",
+    "lastmod": "2025-12-04T12:07:54.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/soeur-clarisse-nguessan-2025-paris",
+    "lastmod": "2025-12-05T19:18:31.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/etudiant-patrick-mabika-2025-lyon",
+    "lastmod": "2025-12-06T19:24:29.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  },
+  {
+    "loc": "/obituary/prisca-da-silva-2025-gradignan",
+    "lastmod": "2025-12-06T16:38:19.000Z",
+    "changefreq": "daily",
+    "priority": 0.9
+  }
+]

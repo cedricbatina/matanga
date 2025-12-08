@@ -14,7 +14,6 @@ import {
 
 const MIN_TITLE_LENGTH = 8;
 const MIN_BODY_LENGTH = 30;
-const FREE_OBITUARY_DURATION_DAYS = 7;
 
 function isNonEmptyString(v) {
   return typeof v === "string" && v.trim().length > 0;
@@ -164,7 +163,6 @@ export default defineEventHandler(async (event) => {
   }
 
   // 2) Valeurs monétisation / durée dérivées du plan
-  // 2) Valeurs monétisation / durée dérivées du plan
   let isFreeValue = typeof isFree === "boolean" ? isFree : true;
   let pricingTierValue = pricingTier || null;
   let currencyValue = currency || null;
@@ -179,13 +177,7 @@ export default defineEventHandler(async (event) => {
     isFreeValue = selectedPlan.isFree;
     pricingTierValue = selectedPlan.pricingTier;
     currencyValue = selectedPlan.currency;
-
-    // 👇 SOURCE DE VÉRITÉ : gratuit = 7 jours
-    if (selectedPlan.isFree) {
-      publishDurationDaysValue = FREE_OBITUARY_DURATION_DAYS;
-    } else {
-      publishDurationDaysValue = selectedPlan.publishDurationDays;
-    }
+    publishDurationDaysValue = selectedPlan.publishDurationDays;
   }
 
   if (!isFreeValue) {
@@ -297,15 +289,12 @@ export default defineEventHandler(async (event) => {
 
   // publish_at / published_at / expires_at
   const now = new Date();
-
-  // Pour l'instant : création en brouillon privé, publication plus tard via une étape dédiée
-  const publishDirect = false;
+  const publishDirect = true; // pour l’instant : publication directe
 
   const publishAtValue = publishDirect ? now : null;
   let expiresAtValue = null;
 
   if (
-    publishDirect &&
     publishDurationDaysValue != null &&
     Number(publishDurationDaysValue) > 0
   ) {
@@ -315,7 +304,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const statusValue = publishDirect ? "published" : "draft";
-  const visibilityValue = publishDirect ? "public" : "private";
 
   const formatDateTime = (d) =>
     d ? d.toISOString().slice(0, 19).replace("T", " ") : null;
@@ -392,7 +380,7 @@ export default defineEventHandler(async (event) => {
           languageValue,
 
           slug,
-          visibilityValue,
+          "public",
           statusValue,
 
           "not_required",

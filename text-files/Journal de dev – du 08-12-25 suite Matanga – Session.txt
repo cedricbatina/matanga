@@ -1,0 +1,258 @@
+Journal de dev – Matanga – Session du jour
+1. Page de confirmation d’annonce /obituary/confirm/[slug].vue
+
+Plan / monétisation côté front
+
+Gardé un mini PLAN_META côté client avec :
+
+indiv_free_7 (7 jours, gratuit, source de vérité produit),
+
+indiv_basic_21, indiv_essentiel_30, indiv_prestige_60.
+
+Calcul de planCodeFromData à partir de obituary.monetization.pricingTier ou du paramètre ?plan= dans l’URL.
+
+currentPlanMeta, planLabel, planPrice, effectivePublishDays :
+
+Alignés sur le plan front quand connu.
+
+Fallback sur les champs renvoyés par l’API (publishDurationDays, amountPaid, etc.).
+
+Pour un plan gratuit sans info fiable venant de la DB, on force 7 jours côté UI.
+
+Statut de publication / visibilité
+
+La page de confirm ne publie plus implicitement :
+
+Pour un plan gratuit, le bouton “Confirmer et envoyer en validation” appelle désormais un endpoint dédié POST /api/obituaries/:slug/publish.
+
+Pour un plan payant, le bouton “Confirmer et payer” redirigera vers la future page de checkout (route /checkout/obituary/:slug), avec un toast “Flow paiement à venir”.
+
+Formatage des dates
+
+Intégration de useDateUtils :
+
+formatDate utilisé pour afficher les dates de naissance / décès dans le recap :
+
+Plus de 2025-12-07T23:00:00.000Z en brut.
+
+Affichage en français lisible via i18n (“Né(e) le {date}… Décédé(e) le {date}…”).
+
+formattedDateTimeWithSeconds utilisé dans formatDateTime pour les événements (veillées / obsèques).
+
+Soft delete / hard delete (archive & suppression définitive)
+
+Ajout de deux actions dans la colonne de droite :
+
+🗂 Retirer l’annonce du site → soft delete (DELETE /api/obituaries/:slug)
+
+Retire l’annonce de la liste publique (visibilité / statut mis à jour côté API).
+
+Redirige vers /obituaries + toast de succès / erreur.
+
+🗑 Supprimer définitivement → hard delete (DELETE /api/obituaries/:slug/hard)
+
+Suppression physique de l’annonce et de ses dépendances (événements, contacts…) côté API.
+
+Redirection vers /obituaries + toast.
+
+Utilisation du composant global LkConfirmModal + useConfirmStore :
+
+onSoftDeleteClick → confirmStore.ask(...) avec texte dédié (titre, message, labels).
+
+onHardDeleteClick → même principe avec messages orientés “action irréversible”.
+
+Labels et messages passés par i18n (obituaryReview.delete.softTitle, softMessage, hardTitle, hardMessage, common.actions.archive, common.actions.delete, etc.).
+
+Harmonisation des boutons
+
+Uniformisation des boutons de la colonne de droite :
+
+“Modifier l’annonce” → btn btn-ghost btn-sm.
+
+“Confirmer et envoyer en validation” / “Confirmer et payer” → btn btn-primary.
+
+Boutons “Retirer l’annonce du site” et “Supprimer définitivement” → btn btn-ghost btn-sm, avec icônes 🗂 et 🗑.
+
+Résultat : une seule “grosse” action principale en btn-primary, les autres en secondaires cohérentes.
+
+Toasts
+
+Utilisation du plugin toastification via useNuxtApp().$useToast() :
+
+Succès publication gratuite (après POST /publish).
+
+Erreur publication gratuite (404 / 500).
+
+Info “flow paiement à venir” pour les plans payants.
+
+Clés i18n prévues : toasts.obituary.publishFreeSuccess, toasts.obituary.publishFreeError, toasts.obituary.paymentTodo.
+
+2. Création / statut côté API server/api/obituaries/index.post.js
+
+Vérification complète de la route POST /api/obituaries
+
+On a confirmé que :
+
+La création se fait bien en brouillon privé :
+
+status = 'draft'
+
+visibility = 'private'
+
+publish_at = NULL, published_at = NULL.
+
+publishDirect = false.
+
+Les champs plan / monétisation sont bien dérivés de planCode + session.accountType.
+
+Alignement durée plan gratuit
+
+Introduction explicite de FREE_OBITUARY_DURATION_DAYS = 7.
+
+Quand le plan est gratuit (selectedPlan.isFree === true) :
+
+publishDurationDaysValue forcé à 7.
+
+C’est maintenant la source de vérité côté API, ce qui permet :
+
+d’avoir une cohérence stricte entre back et front,
+
+de corriger implicitement les valeurs 14 jours existantes en DB à terme.
+
+3. Endpoint de publication POST /api/obituaries/:slug/publish
+
+(Fichier ajouté aujourd’hui, basé sur ta convention API actuelle)
+
+Comportement :
+
+requireAuth(event) + vérification ownership (user = owner de l’annonce) ou rôle admin/modérateur.
+
+Chargement de l’obituary par slug + vérification :
+
+status === 'draft'
+
+visibility === 'private'
+
+Mise à jour en :
+
+status = 'published'
+
+visibility = 'public'
+
+published_at = NOW()
+
+publish_at = NOW() si null.
+
+expires_at recalculé à partir de publishDurationDays (si non null).
+
+Retour JSON simple { ok: true, obituaryId, slug, ... } pour que le front puisse éventuellement se baser dessus.
+
+Intégration front :
+
+onConfirm (plan gratuit) appelle maintenant réellement cet endpoint.
+
+Gestion des erreurs (404, 403, 500) + toasts associés.
+
+4. Suppression / archive côté API
+
+Soft delete : DELETE /api/obituaries/:slug
+
+Utilisé pour “Retirer l’annonce du site” :
+
+Statut & visibilité mis à jour en mode “archivé / privé” (selon ta logique existante).
+
+L’annonce reste présente en base pour :
+
+historique,
+
+éventuel republish ultérieur,
+
+accès par l’owner.
+
+Hard delete : DELETE /api/obituaries/:slug/hard
+
+Utilisé pour “Supprimer définitivement” :
+
+Suppression de l’entrée dans obituaries.
+
+Suppression des lignes associées (événements, contacts, et plus tard médias).
+
+Réservé à l’owner + admin / modérateur (contrôlé côté API).
+
+5. Checkout paiement (Stripe / PayPal / virement) – squelette
+
+Objectif produit
+
+Pour les plans payants, remplacer le “Confirmer et payer” par un vrai flow de commande :
+
+Page : /checkout/obituary/[slug].vue.
+
+Méthodes prévues :
+
+Carte bancaire via Stripe (Checkout Session).
+
+PayPal.
+
+Virement bancaire (avec référence structurée, statut “pending_payment” en DB).
+
+Avancées du jour
+
+Définition de la structure de la page :
+
+Colonne gauche : rappel annonce + plan + durée.
+
+Colonne droite : bloc “Moyen de paiement” + 3 boutons de choix.
+
+Bloc “Virement bancaire” avec infos IBAN/BIC/titulaire/référence + texte d’explication.
+
+Ajout des styles dédiés :
+
+checkout-layout, checkout-main__*, checkout-side__*, checkout-methods, checkout-bank__*, etc.
+
+Cohérent avec la grille et la charte de la page de confirmation.
+
+Ajout des clés i18n checkoutObituary dans fr.json :
+
+Titres / sous-titres,
+
+Textes de modes de paiement,
+
+Bloc explicatif virement,
+
+Toast informatif pour un futur virement (checkoutObituary.bank.toastSuccess).
+
+TODO pour demain / suite
+
+Créer les endpoints backend :
+
+POST /api/payments/obituaries/:slug/stripe → création checkout_session_id Stripe.
+
+POST /api/payments/obituaries/:slug/paypal → création orderId.
+
+POST /api/payments/obituaries/:slug/bank-transfer → génération d’une référence + marquage “pending_payment”.
+
+Brancher la page /checkout/obituary/[slug].vue sur ces endpoints :
+
+Gestion loading/erreurs.
+
+Redirections (Stripe Checkout, PayPal) côté front.
+
+Mettre en place les webhooks :
+
+Stripe : validation paiement, mise à jour amount_paid, payment_provider, payment_reference, status, published_at.
+
+PayPal : même logique.
+
+Statut métier :
+
+draft → awaiting_payment → published / payment_failed.
+
+Pour virement : awaiting_bank_transfer + écran “Merci, nous publierons dès réception”.
+
+Harmoniser l’utilisation de useDateUtils sur :
+
+Page liste,
+
+Page détail annonce publique,
+
+Eventuelles autres vues timeline.

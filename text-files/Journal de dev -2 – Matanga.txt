@@ -1,0 +1,370 @@
+Journal de dev – Matanga (obituaries)
+Période : 6–7 décembre 2025
+🧱 1. Récap général du flow obituaries
+
+Flow “particulier” travaillé :
+
+/plans ➜ choix d’un plan (indiv_free_7, indiv_basic_21, indiv_essentiel_30, indiv_prestige_60)
+
+/obituary/create?plan=… ➜ formulaire de création d’annonce (brouillon côté back)
+
+/obituary/confirm/[slug] ➜ page de récap / confirmation (publication ou paiement, selon plan)
+
+L’API POST /api/obituaries crée l’annonce + events + contacts, et renvoie un slug utilisé dans l’URL de confirm.
+
+📝 2. Page création d’annonce
+
+pages/obituary/create/index.vue
+
+a) Bandeau de plan & méta locales
+
+Ajout / refonte de PLAN_META côté front pour les plans individuels par annonce (scope obituary) :
+
+indiv_free_7
+
+indiv_basic_21
+
+indiv_essentiel_30
+
+indiv_prestige_60
+
+Chaque plan contient :
+
+pricingTier, isFree, publishDurationDays, currency, basePriceCents
+
+labelKey : pointant vers plans.codes.* dans les locales
+
+features (maxEvents, maxPhotos, maxVideos, maxContacts, etc.) alignés sur server/utils/pricingPlans.js.
+
+Sélection du plan :
+
+On lit route.query.plan
+
+Fallback : indiv_free_7 si rien n’est fourni
+
+Computeds :
+
+currentPlan (à partir de PLAN_META)
+
+currentPlanLabel (via i18n)
+
+currentPlanFeatures (avec fallback DEFAULT_PLAN_FEATURES)
+
+selectedPlanText : phrase de synthèse du plan (nom + durée)
+
+formatPlanPrice(plan) : affiche “Gratuit” ou “xx,xx € TTC”.
+
+UI :
+
+selected-plan-banner en haut du formulaire, avec label + prix + phrase d’aide.
+
+Couleurs revues pour être lisibles en clair et sombre.
+
+b) Formulaire de création
+
+Bloc 1 : Infos défunt
+
+Nom complet, genre (radio), identité (connue / partielle / inconnue)
+
+Dates (naissance, décès), âge affiché
+
+Religion + dénomination
+
+Localisation : ville, région, pays, code pays (2 lettres) + indicateur zone rurale.
+
+Bloc 2 : Texte de l’annonce
+
+Titre
+
+Corps de texte
+
+Détection automatique du titre à partir du nom si vide, avec share.obituary.titlePattern.
+
+Validation :
+
+deceasedFullName obligatoire
+
+Titre min 8 caractères
+
+Corps min 40 caractères
+
+Bloc 3 : Événement principal
+
+Type d’événement (funeral, wake, burial, memorial)
+
+Date/heure (datetime-local)
+
+Lieu : nom + adresse
+
+Validation : event.startsAt obligatoire
+
+Nouveauté liée au plan :
+
+Petit hint : plans.features.events.value avec { count: currentPlanFeatures.maxEvents }
+→ ex. “Jusqu’à 3 événements” pour Essentiel, etc.
+
+Bloc 4 : Contact famille
+
+Nom
+
+Téléphone
+
+WhatsApp
+
+Email
+
+Tout ceci est ensuite transformé en entrée contacts pour l’API si au moins 1 champ est rempli.
+
+Bloc 5 : Photo & publication
+
+URL de photo de couverture (pour l’instant simple coverImageUrl)
+
+Texte légal de publication
+
+Hints dynamiques :
+
+plans.features.media.value (photos/vidéos selon features du plan)
+
+plans.features.contacts.value (nombre de contacts max)
+
+c) Build du payload & envoi API
+
+Fonction buildPayload() :
+
+Mappe tous les champs du form vers les colonnes attendues par /api/obituaries :
+
+Infos défunt
+
+Contenu (title, content)
+
+Localisation
+
+Contact famille (plat + contacts[] détaillé)
+
+Plan (isFree, pricingTier, currency, amountPaid, publishDurationDays)
+
+events: tableau avec 1 event principal :
+
+eventType, startsAt normalisé en YYYY-MM-DD HH:mm:ss
+
+Lieu repris (venueName, venueAddress, city, region, country, countryCode)
+
+isMainEvent: true
+
+planCode brut (pour lookup côté serveur).
+
+Sur succès :
+
+Récupération du slug renvoyé par l’API
+
+Redirection systématique vers /obituary/confirm/${slug}
+
+En cas d’erreur :
+
+Log console + message user-friendly via i18n createObituary.errors.submitFailed.
+
+d) Bug PLAN_META corrigé
+
+On a brièvement introduit un doublon de indiv_prestige_60 dans PLAN_META (une version complète + une version “optionnelle simplifiée”).
+
+Ça a cassé le parsing SFC à cause d’un objet JS mal fermé, générant :
+
+[vue/compiler-sfc] Missing semicolon...
+
+Correction :
+
+Suppression de la seconde définition “optionnelle”
+
+On garde la version complète alignée avec pricingPlans.js.
+
+👁️ 3. Page de confirmation / récap
+
+pages/obituary/confirm/[slug].vue
+
+a) Fetch & plan client
+
+useFetch('/api/obituaries/:slug') pour récupérer l’annonce, ses events et contacts.
+
+PLAN_META allégé côté client pour :
+
+indiv_free_7
+
+indiv_basic_21
+
+indiv_essentiel_30
+
+indiv_prestige_60
+
+planCodeFromData lit planCode ou pricingTier depuis les données retour API.
+
+currentPlanMeta = lookup dans PLAN_META.
+
+planLabel via i18n plans.codes.*.
+
+planPrice :
+
+si plan gratuit → plans.price.free
+
+sinon → format à partir de basePriceCents ou amountPaid.
+
+b) Layout & sections
+
+Colonne gauche : carte principale avec sections :
+
+Informations sur le défunt
+
+Nom complet
+
+Genre (formatGender)
+
+Niveau d’identification (formatIdentityStatus)
+
+Dates naissance/décès (obituaryReview.fields.dates + sous-clés)
+
+Âge affiché
+
+Religion + dénomination (formatReligion)
+
+Localisation (ville, région, pays)
+
+Code pays
+
+Indicateur ruralité (“Oui/Non” selon obituaryReview.fields.ruralYes/No)
+
+Texte de l’annonce
+
+Titre
+
+Corps du texte
+
+Événements
+
+Liste events[] venant du back
+
+Pour chaque event :
+
+Type formaté (funeral/wake/burial/memorial via i18n)
+
+Badge “Événement principal” si isMainEvent
+
+Date/heure formatée via toLocaleString(locale) avec formatDateTime
+
+Lieu (nom + adresse)
+
+Message “aucun événement” si liste vide.
+
+Contacts
+
+Liste contacts[]
+
+Pour chaque contact :
+
+Nom / label + badge “contact principal”
+
+Téléphone, WhatsApp, email (icônes font-awesome)
+
+Message “aucun contact” si liste vide.
+
+Colonne droite : sidebar plan / actions
+
+Titre + sous-titre
+
+Récap :
+
+Plan (nom)
+
+Durée (via obituaryReview.planMeta + days)
+
+Prix (calculé via planPrice)
+
+Texte légal obituaryReview.side.legal :
+
+mention de vérification par l’équipe Matanga / possibilité de retrait en cas de signalement (à affiner côté locales).
+
+Boutons :
+
+“Modifier l’annonce” ➜ pour l’instant renvoie vers /obituary/create?plan=… (TODO vraie page /obituary/edit/[slug])
+
+Si plan gratuit → bouton “Publier gratuitement”
+
+Si plan payant → bouton “Confirmer et payer”
+
+onPay() et onConfirm() encore TODO pour brancher :
+
+POST /api/obituaries/:slug/publish (gratuit)
+
+Flow checkout (Stripe ou autre) (payant).
+
+UI :
+
+review-plan-banner harmonisé avec le bandeau de plan de la création, fond plus doux pour mode clair.
+
+Skeletons & messages d’erreur quand pending ou error.
+
+🔐 4. Auth global & middleware Nuxt
+
+a) Middleware backend global
+server/middleware/auth.global.js
+
+Rôle : remplir event.context.auth à partir de getAuthSession(event).
+
+En cas d’erreur (cookie, DB, etc.) :
+
+log de l’erreur
+
+event.context.auth = null mais on ne bloque pas la requête.
+
+b) Middleware Nuxt côté app
+app/middleware/auth.js
+
+Problème rencontré :
+
+Erreur Unterminated template due à un template string mal fermé.
+
+Boucle de redirection vers /login même en étant connecté.
+
+Version corrigée :
+
+Protège les routes marquées avec middleware: ['auth'] (ex : /obituary/create, /obituary/confirm/[slug]).
+
+Ne protège pas /login ni /register pour éviter les loops.
+
+Appelle /api/auth/me avec credentials: 'include'.
+
+Si non connecté :
+
+redirection vers /login?redirect=<fullPath>&reason=auth_required.
+
+Résultat :
+
+Quand tu es connecté, tu peux aller sur /obituary/create?... et /obituary/confirm/[slug] normalement.
+
+Quand tu ne l’es pas, tu es renvoyé vers login avec un message clair.
+
+✅ 5. À faire / prochaines étapes
+
+Builder multi-événements sur la page create :
+
+Transformer le bloc “Événement principal” en répéteur (events[]) limité par currentPlanFeatures.maxEvents.
+
+Flag isMainEvent sur un event au moins.
+
+Gestion des médias :
+
+UI pour uploader / lier plusieurs photos (et vidéos) selon maxPhotos, maxVideos, maxExternalVideoLinks.
+
+Contacts multiples :
+
+Permettre plusieurs contacts jusqu’à currentPlanFeatures.maxContacts.
+
+Endpoints de publication & paiement :
+
+/api/obituaries/:slug/publish pour finaliser les gratuites.
+
+Checkout pour les plans payants (préparer les routes + UI).
+
+Plans mémoriels & pro :
+
+Pour l’instant, on n’utilise que les plans individuels par annonce (INDIVIDUAL_PLANS scope obituary).
+
+Intégrer les plans “memorial” et les plans “pro” plus tard (autres écrans / flows).

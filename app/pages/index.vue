@@ -18,22 +18,32 @@
             <p class="text-md mb-4">
               {{ t('home.hero.body') }}
             </p>
+<div class="flex flex-row flex-wrap items-center gap-3 mt-4">
+  <!-- Créer une annonce gratuite = plan indiv_free_7 -->
+  <NuxtLink
+    to="/obituary/create"
+    class="btn btn-primary btn-lg"
+  >
+    {{ t('home.hero.primaryCta') }}
+  </NuxtLink>
 
-            <div class="flex flex-row items-center gap-3 mt-4">
-              <NuxtLink
-                to="/obituary/create"
-                class="btn btn-primary btn-lg"
-              >
-                {{ t('home.hero.primaryCta') }}
-              </NuxtLink>
+  <!-- Voir les plans = redirige vers /plans -->
+  <NuxtLink
+    to="/plans"
+    class="btn btn-secondary btn-lg"
+  >
+    {{ t('home.hero.viewPlansCta') }}
+  </NuxtLink>
 
-              <NuxtLink
-                to="/obituaries"
-                class="btn btn-secondary btn-lg"
-              >
-                {{ t('home.hero.secondaryCta') }}
-              </NuxtLink>
-            </div>
+  <!-- Voir les annonces existantes, en style plus léger -->
+  <NuxtLink
+    to="/obituaries"
+    class="btn btn-ghost btn-sm"
+  >
+    {{ t('home.hero.secondaryCta') }}
+  </NuxtLink>
+</div>
+
 
             <p class="text-xs text-soft mt-3">
               {{ t('home.hero.helperText') }}

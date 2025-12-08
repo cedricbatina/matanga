@@ -1,0 +1,340 @@
+📅 Session du 8 décembre 2025 — Flow annonces nécrologiques (création / confirmation / édition)
+1. API obituaries — normalisation & statuts
+
+Fichiers concernés :
+
+server/api/obituaries/index.get.js
+
+server/api/obituaries/[slug].get.js
+
+Ce qu’on a fait :
+
+Mise en place d’une structure de réponse normalisée pour une annonce :
+
+{
+  obituary: { ... },   // méta & contenu de l’annonce
+  events: [ ... ],     // événements associés
+  contacts: [ ... ],   // contacts famille / organisation
+  media: [ ... ]       // future extension
+}
+
+
+mapObituaryRow(row) construit désormais un objet obituary riche, avec sous-blocs :
+
+deceased: fullName, dateOfBirth, dateOfDeath, ageDisplay, gender, identityStatus, religion, denomination…
+
+location: city, region, country, countryCode, isRuralArea
+
+monetization: isFree, pricingTier, currency, amountPaid, publishDurationDays
+
+status, visibility, verificationStatus, moderationStatus, publishedAt, expiresAt, deletedAt, etc.
+
+index.get.js :
+
+Liste par défaut uniquement les annonces publiées et visibles publiquement :
+
+status = 'published'
+
+moderation_status != 'removed'
+
+visibility = 'public'
+
+published_at <= NOW() et (si présent) expires_at > NOW()
+
+Prépare le terrain pour filtrer plus finement à l’avenir (owner, admin, moderator…).
+
+events et contacts sont renvoyés sous forme de tableaux normalisés (startsAt, venueName, venueAddress, isMainEvent, whatsappNumber, isPrimary, etc.).
+
+✅ Résultat : la page publique, la page de confirmation et la page d’édition parlent maintenant toutes le même “langage JSON”.
+
+2. Page de confirmation /obituary/confirm/[slug].vue
+
+Ce qu’on a fait :
+
+Passage à l’utilisation de la payload normalisée :
+
+obituary → obituary.deceased, obituary.location, obituary.monetization, obituary.content
+
+events → timeline simple (type, date/heure, lieu, adresse)
+
+contacts → liste des contacts avec phone, whatsappNumber, email
+
+Section “Informations sur le défunt” :
+
+Affiche désormais proprement :
+
+Nom complet
+
+Genre (avec mapping vers les labels i18n)
+
+Niveau d’identification
+
+Dates de naissance / décès
+
+Âge affiché
+
+Religion + dénomination
+
+Localisation + code pays
+
+Indication “zone rurale / village” (Oui / Non)
+
+Bloc “Texte de l’annonce” :
+
+Utilise obituary.content.title et obituary.content.body au lieu des anciens champs plats.
+
+Bloc événements :
+
+Utilise les clés d’API normalisées (eventType, startsAt, venueName, venueAddress, isMainEvent).
+
+Formatage de la date/heure côté front.
+
+Bloc contacts :
+
+Liste des contacts avec name/label + canaux : téléphone, WhatsApp, email.
+
+Plan & monétisation côté colonne droite :
+
+Mini PLAN_META côté front, aligné sur les plans individuels :
+
+indiv_free_7, indiv_basic_21, indiv_essentiel_30, indiv_prestige_60
+
+Logique de résolution du plan :
+
+On privilégie obituary.monetization.pricingTier.
+
+Fallback sur ?plan= dans l’URL si nécessaire.
+
+effectivePublishDays :
+
+Priorité aux jours définis dans PLAN_META.
+
+Sinon fallback sur ce que renvoie l’API (publishDurationDays).
+
+Pour les plans gratuits, on force une durée cohérente avec indiv_free_7 (7 jours) tant que la DB n’est pas corrigée.
+
+planPrice :
+
+Si on connaît le plan : on calcule à partir de basePriceCents.
+
+Sinon : fallback sur le montant amountPaid éventuellement renvoyé par l’API.
+
+Si gratuit → affiche plans.price.free.
+
+Sinon montant inconnu → —.
+
+Boutons d’action :
+
+Modifier l’annonce → redirige vers /obituary/edit/[slug].
+
+Publier gratuitement (plan gratuit) :
+
+Pour l’instant : stub qui déclenchera plus tard un appel à un endpoint /publish.
+
+Confirmer et payer (plan payant) :
+
+Stub branché sur un futur flow de paiement.
+
+3. Page d’édition /obituary/edit/[slug].vue
+
+Ce qu’on a fait :
+
+Nouvelle page protégée par middleware: ['auth'].
+
+Chargement des données via useFetch('/api/obituaries/:slug'), en exploitant la même payload que la page de confirmation.
+
+Formulaire d’édition aligné sur le formulaire de création (/obituary/create) :
+
+Bloc défunt (nom, dates, âge, genre, identité, religion, dénomination).
+
+Localisation (ville, région, pays, code pays, zone rurale).
+
+Texte de l’annonce (titre, body).
+
+Événement principal (type, date/heure, lieu, adresse).
+
+Contact famille (nom, téléphone, WhatsApp, email).
+
+Hydratation du formulaire :
+
+watch(obituary) pour remplir form dès que l’annonce arrive.
+
+Récupération :
+
+val.deceased → champs défunt,
+
+val.location → city, region, country, countryCode, isRuralArea,
+
+val.content/val.body → titre + texte,
+
+events[0] ou event avec isMainEvent → événement à éditer,
+
+contact primaire (isPrimary) → contact famille.
+
+Validation :
+
+Nom du défunt obligatoire.
+
+Titre min 8 caractères.
+
+Body min 40 caractères.
+
+Date/heure de l’événement principal obligatoire.
+
+Soumission :
+
+PUT /api/obituaries/:slug avec payload “éditable” uniquement :
+
+infos défunt,
+
+contenu,
+
+localisation,
+
+événement principal,
+
+contact principal.
+
+Pas de modification de la monétisation / plan à ce stade.
+
+Retour après succès :
+
+Redirection vers /obituary/confirm/:slug.
+
+4. Toasts & messages d’erreur
+
+Plugins / composables :
+
+Utilisation du plugin vue-toastification existant (app/plugins/toastification.js).
+
+Dans l’édition :
+
+Après un PUT réussi → toast de succès (editObituary.toasts.updated).
+
+En cas d’erreurs (génériques) → toast d’erreur.
+
+i18n proposé (à ajouter côté fr.json, par ex.) :
+
+{
+  "editObituary": {
+    "toasts": {
+      "updated": "L’annonce a été mise à jour avec succès."
+    },
+    "errors": {
+      "generic": "Une erreur est survenue lors de la mise à jour de l’annonce.",
+      "forbidden": "Vous n’êtes pas autorisé à modifier cette annonce.",
+      "notFound": "Annonce introuvable ou supprimée.",
+      "loadFailed": "Impossible de charger l’annonce pour le moment."
+    },
+    "actions": {
+      "retry": "Réessayer",
+      "cancel": "Annuler",
+      "save": "Enregistrer les modifications",
+      "saving": "Enregistrement en cours…"
+    }
+  },
+  "toasts": {
+    "obituary": {
+      "paymentTodo": "Le paiement en ligne n’est pas encore disponible sur cette version.",
+      "publishFreeTodo": "La publication définitive des annonces gratuites sera branchée sur un endpoint dédié."
+    }
+  }
+}
+
+5. Date utils & formats
+
+Composant concerné : composables/useDateUtils.js
+
+Rappel : on dispose déjà de helpers pour l’affichage :
+
+formatDate, formattedDate, formattedDateTimeWithSeconds, formattedHourMinute, timeAgo, etc.
+
+Session du jour :
+
+Décision de centraliser la logique de conversion pour :
+
+datetime-local (événements),
+
+date (dates de naissance / décès).
+
+Helpers prévus / utilisés dans la page d’édition :
+
+toDateInput(date) → YYYY-MM-DD pour <input type="date">.
+
+toDateTimeLocalInput(date) → YYYY-MM-DDTHH:mm pour <input type="datetime-local">.
+
+normalizeDateTimeLocal(value) → repasser en YYYY-MM-DD HH:mm:ss pour l’API.
+
+✅ Résultat : moins de code ad hoc dans les pages, moins de bugs “13h30 vs 14h30” liés aux conversions de fuseaux / formats.
+
+6. Soft delete / hard delete — design (à finaliser)
+
+Éléments en place / en réflexion :
+
+Composant de confirmation générique : components/LkConfirmModal.vue + useConfirmStore.
+
+Objectif : réutiliser pour :
+
+soft delete d’une annonce (la rendre non publique),
+
+hard delete (suppression définitive par admin/moderator).
+
+Côté API :
+
+Route DELETE /api/obituaries/:slug existante :
+
+à confirmer / adapter pour faire soft delete par défaut (deleted_at + statut “deleted”) ;
+
+hard delete éventuellement réservé aux administrateurs (flag ou route dédiée).
+
+Côté UI (à brancher dans une prochaine session) :
+
+Boutons “Supprimer l’annonce” dans :
+
+/obituary/[slug] (détail public, pour l’owner via zone privée),
+
+/obituary/confirm/[slug],
+
+/obituary/edit/[slug].
+
+Utilisation de LkConfirmModal pour demander confirmation à l’utilisateur avant toute suppression.
+
+7. TODO / prochaines étapes
+
+Endpoint de publication :
+
+Créer POST /api/obituaries/:slug/publish :
+
+vérifie owner / admin / moderator ;
+
+passe l’annonce en published, renseigne published_at et la durée de visibilité.
+
+Brancher le bouton “Publier gratuitement” sur ce endpoint.
+
+Upload d’image de couverture :
+
+Ajouter un champ d’upload dans create et edit :
+
+upload vers stockage externe (Cloudinary, S3 pré-signé…),
+
+récupération d’une URL publique → remplissage de coverImageUrl.
+
+Afficher cette image dans :
+
+/obituary/[slug] (hero),
+
+/obituary/confirm/[slug].
+
+Soft delete / hard delete côté UI :
+
+Ajouter les boutons d’action + modales de confirmation.
+
+Brancher sur DELETE /api/obituaries/:slug (soft par défaut) et, plus tard, une route de hard delete pour les admins.
+
+Multi-événements / multi-contacts / médias par plan :
+
+Builder d’événements (jusqu’à maxEvents selon le plan).
+
+Gestion de plusieurs contacts (maxContacts).
+
+Préparer la structure pour plusieurs photos / vidéos (alignée s

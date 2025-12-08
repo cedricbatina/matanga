@@ -1,0 +1,412 @@
+mode “architecte paiement” 👷🏽‍♂️💳
+Je te fais un plan complet avant qu’on touche à la moindre ligne de code.
+
+1. Ce qu’on veut exactement
+
+Pour un plan payant (Basic / Essentiel / Prestige) :
+
+L’annonce est créée en brouillon (draft) via /api/obituaries (ce qu’on a déjà).
+
+L’utilisateur arrive sur /obituary/confirm/[slug].
+
+S’il clique sur “Confirmer et payer” :
+
+On l’emmène sur une page de checkout propre (pas un pauvre bouton qui lance un POST).
+
+Il choisit un moyen de paiement :
+
+Carte / Stripe
+
+PayPal
+
+Virement bancaire (paiement offline)
+
+Une fois le paiement validé (ou confirmé par un humain pour le virement), l’annonce passe en :
+
+published, visibility = public, published_at rempli.
+
+Monétisation mise à jour (payment_provider, payment_reference, amount_paid, etc.).
+
+Les changements critiques (publication, paiement ok) sont pilotés par webhook côté serveur, pas par le front.
+
+2. Modèle de données / tables
+2.1. Table obituaries (existant)
+
+On exploite ce qu’on a déjà (ou ce qu’on a prévu) :
+
+id
+
+slug
+
+user_id (owner)
+
+is_free (bool)
+
+pricing_tier (indiv_essentiel_30, …)
+
+currency
+
+amount_paid (montant total déjà payé, en EUR)
+
+publish_duration_days
+
+status (draft, published, archived, …) – si tu as ça
+
+visibility (public, private, deleted soft, etc.)
+
+published_at (datetime)
+
+payment_provider (nullable : stripe, paypal, bank_transfer)
+
+payment_reference (id Stripe, id PayPal, ref virement)
+
+timestamps…
+
+On ne rajoute pas 10 colonnes : ça suffit pour savoir si une annonce est payée & publiée.
+
+2.2. Nouvelle table obituary_payments (clean)
+
+Pour gérer les tentatives de paiement proprement et tracer l’historique :
+
+obituary_payments
+-----------------
+id                BIGINT PK
+obituary_id       BIGINT (FK obituary_obituaries.id)
+provider          ENUM('stripe','paypal','bank_transfer')
+status            ENUM('pending','requires_action','succeeded','failed','cancelled')
+amount            DECIMAL(10,2)   -- montant en monnaie humaine (EUR)
+currency          CHAR(3)         -- 'EUR' etc.
+provider_session_id   VARCHAR(191) NULL  -- stripe checkout session id, paypal order id…
+provider_payment_id   VARCHAR(191) NULL  -- stripe payment_intent, capture id…
+reference         VARCHAR(191)    -- ex: MAT-OBIT-1234-XYZ
+metadata_json     TEXT NULL       -- pour stocker du JSON brut si besoin
+created_at        DATETIME
+updated_at        DATETIME
+
+
+Chaque paiement correspond à une annonce.
+
+On peut avoir plusieurs lignes (tentatives échouées, paiement final).
+
+La source de vérité sur le “payé ou pas” reste obituaries.amount_paid + status.
+
+3. Flow fonctionnel global
+3.1. Création de l’annonce
+
+Sur /obituary/create, l’utilisateur choisit un plan.
+
+POST /api/obituaries crée l’annonce en :
+
+status = 'draft'
+
+visibility = 'private' (ou draft)
+
+is_free + pricing_tier + publish_duration_days cohérents avec le plan
+
+Redirection → /obituary/confirm/[slug] (déjà en place).
+
+3.2. Page de confirmation /obituary/confirm/[slug]
+
+Si plan gratuit :
+
+Bouton “Publier gratuitement” → appel /api/obituaries/:slug/publish (POST).
+
+L’API :
+
+Vérifie owner,
+
+Vérifie is_free === true,
+
+Met status='published', visibility='public', published_at=NOW().
+
+Si plan payant :
+
+Bouton “Confirmer et payer” → redirection vers
+
+/obituary/checkout/[slug]
+
+ou /checkout/obituary/[slug] (à choisir, mais restons cohérents avec le reste).
+
+3.3. Page checkout /obituary/checkout/[slug]
+
+Objectif : étape unique de finalisation.
+
+Charge l’annonce (comme confirm) + infos de plan (tiers, prix, durée).
+
+Affiche :
+
+Récap annonce + plan + montant.
+
+Choix du moyen de paiement (radio / tabs) :
+
+Stripe (carte)
+
+PayPal
+
+Virement bancaire
+
+En bas : bouton “Payer maintenant” (ou “Générer mon bon de virement” selon le choix).
+
+3.3.1. Cas Stripe
+
+Front appelle :
+
+POST /api/obituaries/:slug/pay/stripe
+
+Backend :
+
+Vérifie auth + owner + plan payant + status draft.
+
+Calcule le montant à partir de la config serveur (pas depuis le front).
+
+Crée (ou réutilise) une ligne obituary_payments en pending.
+
+Crée une Stripe Checkout Session (ou PaymentIntent + URLs success/cancel).
+
+Sauvegarde provider_session_id et la reference.
+
+Retourne { url: 'https://checkout.stripe.com/...' }.
+
+Front :
+
+window.location = url.
+
+Stripe :
+
+Redirige vers success_url ou cancel_url (ex: /obituary/payment/stripe/success / /obituary/payment/stripe/cancel).
+
+Webhook Stripe (source de vérité) :
+
+Endpoint : POST /api/payments/stripe/webhook.
+
+Évènements intéressants : checkout.session.completed, payment_intent.succeeded.
+
+Vérifie la signature.
+
+Récupère obituary_id depuis metadata (mis au moment de la création).
+
+Met à jour obituary_payments.status = 'succeeded'.
+
+Met à jour l’obituary :
+
+amount_paid = montant
+
+payment_provider = 'stripe'
+
+payment_reference = <payment_intent_id / charge_id>
+
+status='published'
+
+visibility='public'
+
+published_at=NOW()
+
+Idempotent (si le webhook est reçu 2x, aucun souci).
+
+3.3.2. Cas PayPal
+
+Logique très proche :
+
+POST /api/obituaries/:slug/pay/paypal.
+
+Backend :
+
+Vérifie owner, plan, etc.
+
+Crée paiement obituary_payments en pending.
+
+Crée PayPal Order via API (server-side).
+
+Sauvegarde provider_session_id = paypal_order_id.
+
+Retourne l’URL d’approbation.
+
+Front → redirection vers PayPal.
+
+Au retour, PayPal appelle un return_url (ex: /obituary/payment/paypal/success?token=...).
+
+Important : on ne publie pas juste sur le retour front → on appelle côté serveur l’API PayPal pour capturer l’ordre puis on valide.
+
+Webhook PayPal :
+
+POST /api/payments/paypal/webhook.
+
+Vérifie signature / cert.
+
+Trouve obituary_payment via order_id / capture_id.
+
+Marque succeeded, met à jour l’obituary (comme pour Stripe).
+
+3.3.3. Cas Virement bancaire
+
+Sur /obituary/checkout/[slug], user choisit “Virement bancaire”.
+
+Front → POST /api/obituaries/:slug/pay/bank-transfer.
+
+Backend :
+
+Crée obituary_payments en status='pending', provider='bank_transfer'.
+
+Génère une reference claire : MATANGA-<obituary_id>-<shortid>.
+
+Retourne :
+
+{
+  "provider": "bank_transfer",
+  "status": "pending",
+  "reference": "MATANGA-1234-ABCD",
+  "amount": 25.00,
+  "currency": "EUR",
+  "bank": {
+    "iban": "...",
+    "bic": "...",
+    "holder": "Matanga",
+    "bankName": "…"
+  }
+}
+
+
+Front :
+
+Affiche bloc “Instructions virement” (IBAN + BIC + référence, bouton copier).
+
+Possibilité d’envoyer un mail de récap (plus tard).
+
+Quand le virement est reçu (dans ton back-office) :
+
+Admin clique module interne → action “Marquer comme payé”.
+
+Ça déclenche côté API la même logique que les webhooks :
+
+obituary_payments.status = 'succeeded'
+
+mise à jour de obituaries (amount_paid, provider, published, etc.).
+
+4. API à prévoir (côté server/api)
+
+Pour rester dans ta convention server/api/... :
+
+Checkout + choix moyen de paiement
+
+Page : /obituary/checkout/[slug].vue consommera :
+
+GET /api/obituaries/:slug (existant)
+
+POST /api/obituaries/:slug/pay/stripe
+
+POST /api/obituaries/:slug/pay/paypal
+
+POST /api/obituaries/:slug/pay/bank-transfer
+
+Webhooks :
+
+POST /api/payments/stripe/webhook
+
+POST /api/payments/paypal/webhook
+
+Publication gratuite (déjà esquissé)
+
+POST /api/obituaries/:slug/publish
+
+Vérifie is_free
+
+Publie l’annonce.
+
+Optionnel : endpoint de statut
+
+GET /api/obituaries/:slug/payment-status
+
+Donne l’état pour permettre au front de rafraîchir après redirection.
+
+5. Permissions & sécurité
+
+Toutes les routes utilisateurs (pay/stripe, pay/paypal, pay/bank-transfer, publish) :
+
+Middleware auth (token JWT validé).
+
+Backend re-vérifie que obituary.user_id === user.id ou role in (admin, moderator).
+
+Vérifie que l’annonce est encore en status='draft' et pas déjà published.
+
+Webhooks :
+
+Pas d’auth utilisateur (évidemment), mais :
+
+Vérification stricte de la signature / secret (Stripe) ou certificat (PayPal).
+
+Idempotence : on ne repasse pas une annonce publiée en autre chose.
+
+Montants / plan :
+
+Le montant utilisé pour le paiement vient :
+
+soit de la config serveur (pricingPlans côté backend),
+
+soit des champs déjà en DB (pricing_tier, is_free...), mais jamais d’une valeur envoyée par le front.
+
+6. UX / pages côté Nuxt
+
+Pour que tout soit cohérent avec ce qu’on a déjà :
+
+/obituary/confirm/[slug].vue
+
+On modifie juste onPay() :
+
+au lieu de toast “TODO”, fait :
+router.push({ path: /obituary/checkout/${slug.value} }).
+
+Nouvelle page /obituary/checkout/[slug].vue
+
+Layout proche de confirm :
+
+Colonne gauche : mini-récap annonce + plan.
+
+Colonne droite : sélection moyen de paiement + bouton.
+
+États :
+
+loading, error, choix method, creatingSession.
+
+Intègre déjà les toasts ($useToast) pour :
+
+erreurs d’API,
+
+message “Redirection vers Stripe…”, etc.
+
+Pages de retour (facultatif au début) :
+
+/obituary/payment/success (affiche “Merci, on finalise votre paiement” + poll sur /payment-status).
+
+/obituary/payment/cancel (permet de relancer un paiement ou de revenir au récap).
+
+7. Ordre de mise en œuvre proposé
+
+Modèle & DB
+
+Créer obituary_payments.
+
+Vérifier/ajuster les champs monétisation sur obituaries.
+
+Backend “métier” commun
+
+Helper genre publishObituary(obituaryId, { provider, amount, reference })
+
+utilisé par :
+
+POST /api/obituaries/:slug/publish (gratuit)
+
+Stripe webhook
+
+PayPal webhook
+
+Action admin “marquer virement reçu”
+
+Routes “pay” sans provider réel (mock)
+
+D’abord, faire marcher /obituary/checkout/[slug] avec des endpoints qui retournent des URLs fictives, juste pour valider le flow.
+
+Puis brancher Stripe (test mode).
+
+Puis PayPal.
+
+Puis les instructions de virement.

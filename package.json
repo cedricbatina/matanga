@@ -3,16 +3,19 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
     "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "build": "nuxt build",
+    "start": "nuxt start",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "generate:sitemap": "node scripts/generate-sitemap.cjs",
+    "prebuild": "npm run generate:sitemap"
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
     "@nuxtjs/i18n": "^10.2.1",
+    "@nuxtjs/sitemap": "^7.4.9",
     "@pinia/nuxt": "^0.11.3",
+    "@vite-pwa/nuxt": "^1.1.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.2",

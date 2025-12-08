@@ -22,7 +22,18 @@
             {{ globalError }}
           </div>
         </div>
-
+ 
+      <!-- Message si la connexion est requise pour une action -->
+      <div
+        v-if="authReason === 'auth_required'"
+        class="login-alert"
+        role="status"
+        aria-live="polite"
+      >
+        <p class="login-alert__text">
+          {{ t('auth.messages.loginRequiredForObituary') }}
+        </p>
+      </div>
         <!-- Formulaire de connexion -->
         <form class="form" @submit.prevent="onSubmit">
           <!-- Email -->
@@ -152,7 +163,8 @@ import { useI18n } from 'vue-i18n';
 const router = useRouter();
 const route = useRoute();
 const { t } = useI18n();
-
+// Raison de la redirection (auth_required, etc.)
+const authReason = computed(() => route.query.reason || null);
 // on ne fetch pas /me automatiquement ici, on laisse le composable tel quel
 const { auth, isAuthenticated, error: authErrorRef } = useAuth({ fetchUser: false });
 
@@ -296,4 +308,19 @@ async function resendVerificationEmail() {
     resendLoading.value = false;
   }
 }
+
 </script>
+<style lang="css" scoped>
+.login-alert {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(59, 130, 246, 0.6);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.login-alert__text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+</style>
