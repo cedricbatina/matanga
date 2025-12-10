@@ -1,0 +1,124 @@
+{
+  "contribute": {
+    "page": {
+      "eyebrow": "Soutenir Lexikongo",
+      "title": "Contribuer à Lexikongo",
+      "subtitle": "Vos contributions nous aident à maintenir, enrichir et faire rayonner le dictionnaire Kikongo.",
+      "meta": "Choisissez le moyen de soutien qui vous convient : carte bancaire, PayPal, virement ou Mobile Money."
+    },
+
+    "meta": {
+      "title": "Soutenir Lexikongo | Contributions & dons",
+      "description": "Soutenez le dictionnaire Lexikongo (Kikongo – Français/Anglais & phonétique) via carte bancaire, PayPal, virement bancaire ou Mobile Money."
+    },
+
+    "payments": {
+      "title": "Soutien en ligne",
+      "subtitle": "Un petit montant régulier ou ponctuel a un impact réel sur l’hébergement, la maintenance et les nouvelles fonctionnalités.",
+
+      "amountLabel": "Montant de votre soutien",
+      "amountPlaceholder": "Choisissez ou saisissez un montant…",
+      "amountHint": "Vous pouvez ajuster le montant à tout moment. À partir de 1 €.",
+
+      "methodLabel": "Moyen de paiement",
+      "methodHelp": "Sélectionnez la méthode qui vous convient le mieux.",
+      "notAvailable": "Ce moyen de paiement n’est pas disponible pour le moment.",
+
+      "methods": {
+        "stripe": "Carte bancaire (Stripe)",
+        "paypal": "PayPal",
+        "bank": "Virement bancaire",
+        "mobile": "Mobile Money"
+      },
+
+      "stripe": {
+        "title": "Paiement par carte bancaire",
+        "text": "Réglez votre contribution par carte bancaire via notre partenaire Stripe.",
+        "processing": "Traitement du paiement…",
+        "cta": "Payer {amount} € avec Stripe",
+        "secure": "Paiement 100 % sécurisé via Stripe.",
+        "misconfigured": "Le paiement par carte bancaire n’est pas disponible pour le moment (configuration manquante).",
+        "initError": "Impossible d’initialiser le formulaire de carte bancaire. Veuillez réessayer plus tard.",
+        "missing": "Le formulaire de carte n’est pas correctement initialisé. Rafraîchissez la page et réessayez.",
+        "success": "Merci pour votre soutien ! Votre paiement par carte a été confirmé.",
+        "unknownStatus": "Le paiement a été créé mais son statut est inconnu. Merci de vérifier votre relevé bancaire.",
+        "serverError": "Une erreur est survenue lors de la création du paiement. Veuillez réessayer dans quelques instants.",
+        "invalidAmount": "Merci d’indiquer un montant valide (au moins 1 €)."
+      },
+
+      "paypal": {
+        "title": "Paiement avec PayPal",
+        "text": "Utilisez votre compte PayPal pour soutenir Lexikongo en quelques clics.",
+        "misconfigured": "PayPal n’est pas disponible pour le moment (configuration manquante).",
+        "loadError": "Impossible de charger les boutons PayPal. Veuillez réessayer plus tard.",
+        "success": "Merci pour votre soutien, {name} ! Votre paiement PayPal a été confirmé.",
+        "error": "Une erreur est survenue avec PayPal. Veuillez réessayer."
+      }
+    },
+
+    "bank": {
+      "title": "Virement bancaire",
+      "subtitle": "Vous pouvez effectuer un virement depuis votre banque vers notre compte dédié aux contributions.",
+
+      "beneficiaryLabel": "Bénéficiaire",
+      "ibanLabel": "IBAN",
+      "bicLabel": "BIC",
+      "copyIban": "Copier l’IBAN",
+      "copyBic": "Copier le BIC",
+      "referenceLabel": "Référence du virement",
+      "referenceValue": "Votre email ou identifiant utilisateur Lexikongo",
+      "afterTransfer": "Une fois votre virement effectué, merci de nous envoyer un email avec les détails de votre paiement à",
+      "ibanCopied": "IBAN copié dans le presse-papiers.",
+      "bicCopied": "BIC copié dans le presse-papiers."
+    },
+
+    "mobile": {
+      "title": "Paiement par Mobile Money",
+      "subtitle": "Pour les pays d’Afrique centrale (RDC, Congo, Angola, etc.), vous pouvez nous envoyer une demande de contribution via Mobile Money.",
+
+      "nameLabel": "Nom / Prénom",
+      "phoneLabel": "Numéro de téléphone Mobile Money",
+      "countryLabel": "Pays",
+      "operatorLabel": "Opérateur (Orange Money, Airtel Money, M-Pesa…)",
+      "amountLabel": "Montant (devise locale ou €)",
+      "noteLabel": "Message (facultatif)",
+
+      "hint": "Nous vous répondrons par email ou message (WhatsApp / SMS) avec les instructions précises pour finaliser votre contribution.",
+      "cta": "Envoyer une demande Mobile Money",
+      "processing": "Envoi de votre demande…",
+
+      "missingFields": "Merci de renseigner au minimum votre nom et votre numéro de téléphone.",
+      "success": "Merci ! Votre demande Mobile Money a bien été transmise. Nous reviendrons vers vous pour finaliser le paiement.",
+      "error": "Une erreur est survenue lors de l’envoi de la demande Mobile Money. Veuillez réessayer plus tard."
+    },
+
+    "other": {
+      "title": "Autres façons de soutenir",
+      "subtitle": "Même sans contribution financière, vous pouvez beaucoup aider Lexikongo.",
+
+      "blocks": {
+        "contact": {
+          "title": "Nous contacter",
+          "text": "Vous représentez une institution, une association, une école ou un partenaire potentiel ? Parlons-en.",
+          "cta": "Écrire à l’équipe Lexikongo",
+          "aria": "Contacter l’équipe Lexikongo pour discuter d’un partenariat ou d’un soutien."
+        },
+
+        "share": {
+          "title": "Partager Lexikongo",
+          "text": "Parlez de Lexikongo autour de vous, sur les réseaux sociaux, dans vos groupes et communautés.",
+          "facebookAria": "Partager Lexikongo sur Facebook",
+          "twitterAria": "Partager Lexikongo sur X (Twitter)",
+          "linkedinAria": "Partager Lexikongo sur LinkedIn"
+        },
+
+        "contributors": {
+          "title": "Rejoindre les contributeurs",
+          "text": "Vous pouvez aussi contribuer en proposant de nouveaux mots, verbes ou exemples en Kikongo.",
+          "cta": "Créer un compte contributeur",
+          "aria": "Créer un compte pour contribuer au dictionnaire Lexikongo."
+        }
+      }
+    }
+  }
+}

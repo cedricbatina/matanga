@@ -1,0 +1,246 @@
+l’étude de marché + positionnement + marketing + stratégie de lancement pour Madizi.
+C’est un document que tu peux garder comme référence.
+
+⭐️ RÉSUMÉ COMPLET – MADIZI (Annuaire d’obsèques / Pages mémorielles)
+
+(positionnement, marché, forces, stratégie, croissance)
+
+1. Contexte & Vision
+
+Madizi (madizi.com) est un service en ligne permettant de créer une page unique qui rassemble tout le programme des obsèques :
+
+annonce du décès
+
+événements (obsèques, veillées, inhumation, messes, etc.)
+
+lieux / horaires
+
+contacts
+
+éventuel livestream
+
+photos et hommages
+
+options mémorielles (durées prolongées)
+
+Objectif : rendre la communication simple pour les familles et éviter les informations dispersées sur WhatsApp, SMS, etc.
+
+2. Étude du marché – les 4 types de concurrents
+A – Plateformes françaises “presse & avis de décès”
+
+Exemples : Dans Nos Cœurs, Libra Memoria, Avis-de-deces.com
+
+Fonction : centraliser les avis publiés dans la presse + espaces souvenirs.
+
+Avantages : énorme SEO, crédibilité presse.
+
+Limites : interface datée, France-only, pas de multi-événements, pas adapté aux familles dispersées.
+
+Madizi ne joue PAS sur ce terrain : elles sont presse-centrées.
+
+B – Plateformes modernes “funeral tech” (US / global)
+
+Exemples : Ever Loved, Legacy.com
+
+Très UX : multi-événements, RSVPs, livestream, collecte de dons.
+
+Monétisation : freemium + services.
+
+Avantages : simplicité, design, expérience moderne.
+
+Limites : culturellement US, pas pensé pour les rites africains, latinos, portugais, etc.
+
+Inspiration d’UX pour Madizi, mais marché différent.
+
+C – Plateformes africaines locales
+
+Exemples : Abidjan.net Nécrologie, RestinLove.africa, The Departed Kenya
+
+Portails d’annonces classiques, cahier de condoléances.
+
+Avantages : notoriété locale.
+
+Limites : UX faible, pas multi-pays, pas multi-événements, pas moderne.
+
+Là où Madizi peut réellement surpasser la concurrence.
+
+D – Plateformes d’hommages / mémoriaux
+
+Exemples : Kudoboard, mémoriaux indépendants
+
+Axés sur le souvenir, pas sur les obsèques.
+
+Limites : ne gèrent pas les opérations pratiques (planning, lieux, horaires).
+
+Complémentaires mais pas concurrent direct.
+
+3. Positionnement unique de Madizi
+
+Madizi occupe un espace non servi par les acteurs existants :
+
+🧩 1. Plateforme universelle, moderne, claire
+
+Non limitée à l’Afrique, même si inspirée par les besoins de familles dispersées.
+
+🧩 2. Une seule page pour tout le programme des obsèques
+
+— Unicité de l’information
+— Multi-événements, multi-lieux, multi-pays
+— Liens livestream
+— Contacts
+
+🧩 3. Partage ultra simple (WhatsApp, email, réseaux)
+
+C’est ta force :
+→ Quand une famille crée une page, elle la diffuse, et Madizi se propage seul.
+
+🧩 4. Pages mémorielles en option
+
+Durées prolongées (semaines, mois, 1 an), albums photos, hommages.
+
+🧩 5. Plans famille & plans pro
+
+Pour associations, paroisses, pompes funèbres.
+
+4. Le slogan & la promesse centrale
+🎯 “Tout le programme des obsèques sur une seule page.”
+
+Promesse émotionnelle :
+
+“Pour que chacun puisse dire adieu, où qu’il soit.”
+
+Promesse fonctionnelle :
+
+“Annonce, horaires, lieux, contacts, livestream – tout est clair, tout est à la même adresse.”
+
+5. Structure des offres (business model simplifié)
+Plan 1 – Annonce simple
+
+Durée courte (7–15 jours)
+
+Événement principal
+
+Quelques contacts
+
+Idéal pour familles qui veulent juste une annonce propre
+
+Plan 2 – Page mémorielle (le plan “coeur”)
+
+Durée 3 mois / 6 mois / 1 an
+
+Multi-événements
+
+Photos, hommages
+
+Mise à jour facile
+
+Page qui peut rester en ligne comme souvenir
+
+Plan 3 – Pro (plus tard)
+
+X annonces par mois
+
+Logo du pro
+
+Page profil
+
+Abonnement mensuel ou annuel
+
+6. Stratégie pour faire connaître Madizi
+
+(la partie la plus importante)
+
+PILIER 1 — Réseau personnel & communautés
+
+Contacter 10–20 personnes dans :
+
+Églises
+
+Associations
+
+Groupes WhatsApp
+
+Communautés portugaises, africaines, latinos, antillaises
+
+Offrir un test gratuit ou une création guidée
+
+➡️ Objectif : les 10–20 premiers vrais cas.
+
+PILIER 2 — Partenariats locaux (pompes funèbres, paroisses, assos)
+
+Cible : petits indépendants + responsables communautaires.
+
+Proposition :
+
+“Pour vos familles, je crée gratuitement 2–3 pages de test. Moins d’appels, plus de clarté.”
+
+➡️ Objectif : produit réel dans le terrain + premiers ambassadeurs.
+
+PILIER 3 — Madizi qui se diffuse automatiquement
+
+Grâce à ton bouton de partage :
+
+Chaque page = mini publicité
+
+Ajouter en bas : “Créé avec Madizi – Créer une page”
+
+Prévoir un bon OpenGraph (aperçu WhatsApp propre)
+
+➡️ Objectif : effet boule de neige.
+
+PILIER 4 — Contenus utiles (SEO + valeur)
+
+À mettre sur madizi.com / Aide :
+
+“Exemple de texte pour annoncer un décès”
+
+“Comment organiser plusieurs cérémonies dans plusieurs villes ?”
+
+“Comment prévenir toute la famille sans se répéter ?”
+
+➡️ Objectif : attirer des gens au moment exact où ils en ont besoin.
+
+7. Conseils pour le paiement (Stripe / PayPal / virement)
+
+Page récap avant paiement : prix + plan + nom du défunt + phrase “paiement sécurisé”
+
+Page de succès avec bouton “Partager la page”
+
+Page virement = instructions claires + statut “En attente de paiement”
+
+Logs / analytics minimum : payment_started, payment_success, payment_failed
+
+➡️ Objectif : éviter les abandons + comprendre le comportement des utilisateurs.
+
+8. Priorités pour les 6 prochains mois
+
+Lancer les paiements avec 2 plans (simple + mémoriel)
+
+Trouver 10–20 familles utilisatrices réelles
+
+Signer 2–5 partenaires pilotes (pro)
+
+Stabiliser l’UX + publier 2–3 articles d’aide
+
+Améliorer le partage / OpenGraph
+
+Ajouter progressivement PT + ES si la demande arrive
+
+Mettre en place un petit tableau de bord interne (analytics simple)
+
+9. Ce qui distingue Madizi immédiatement
+
+✔️ Page unique avec tout le programme des obsèques
+✔️ Multi-événements, multi-pays, multi-horaires
+✔️ Design moderne, lisible, sans pub
+✔️ Partage WhatsApp / email ultra simple
+✔️ Pages mémorielles en option
+✔️ Adapté à tous (Français, Africains, Portugais, Latinos, Antillais…)
+✔️ Ouvert aux professionnels (plus tard)
+✔️ Nom international (Madizi)
+
+Personne sur le marché ne combine tout ça.
+
+10. Phrase finale qui résume TOUT
+
+Madizi simplifie le deuil : une seule page claire pour tout le programme des obsèques, facile à partager avec tous les proches, où qu’ils soient.

@@ -78,7 +78,114 @@
         </article>
       </div>
     </section>
+   <!-- FILTRES / RECHERCHE (zone de tri sous la liste) -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">
+          {{ t('home.search.title') }}
+        </h2>
+        <p class="section-subtitle">
+          {{ t('home.search.subtitle') }}
+        </p>
+      </div>
 
+      <form class="card form" @submit.prevent="onSubmitFilters">
+        <!-- Ligne pays + ville -->
+        <div class="form-row form-row-inline">
+          <div class="form-field">
+            <label class="form-label" for="country">
+              {{ t('home.search.country.label') }}
+            </label>
+            <input
+              id="country"
+              v-model="localFilters.countryCode"
+              class="form-control"
+              type="text"
+              maxlength="2"
+              :placeholder="t('home.search.country.placeholder')"
+            />
+            <p class="form-hint">
+              {{ t('home.search.country.hint') }}
+            </p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="city">
+              {{ t('home.search.city.label') }}
+            </label>
+            <input
+              id="city"
+              v-model="localFilters.city"
+              class="form-control"
+              type="text"
+              :placeholder="t('home.search.city.placeholder')"
+            />
+          </div>
+        </div>
+
+        <!-- Ligne q + sort -->
+        <div class="form-row form-row-inline">
+          <div class="form-field">
+            <label class="form-label" for="q">
+              {{ t('home.search.q.label') }}
+            </label>
+            <input
+              id="q"
+              v-model="localFilters.q"
+              class="form-control"
+              type="text"
+              :placeholder="t('home.search.q.placeholder')"
+            />
+            <p class="form-hint">
+              {{ t('home.search.q.hint') }}
+            </p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="sort">
+              {{ t('home.search.sort.label') }}
+            </label>
+            <select
+              id="sort"
+              v-model="localFilters.sort"
+              class="form-control"
+            >
+              <option value="recent">
+                {{ t('home.search.sort.options.recent') }}
+              </option>
+              <option value="oldest">
+                {{ t('home.search.sort.options.oldest') }}
+              </option>
+              <option value="popular">
+                {{ t('home.search.sort.options.popular') }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            @click="onResetFilters"
+          >
+            {{ t('home.search.reset') }}
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            :disabled="obituaries.loading"
+          >
+            {{
+              obituaries.loading
+                ? t('home.search.loading')
+                : t('home.search.submit')
+            }}
+          </button>
+        </div>
+      </form>
+    </section>
     <!-- LISTE DES ANNONCES RÉCENTES (avec miniatures) -->
     <section class="section">
       <div class="section-header">
@@ -254,114 +361,7 @@
       </div>
     </section>
 
-    <!-- FILTRES / RECHERCHE (zone de tri sous la liste) -->
-    <section class="section">
-      <div class="section-header">
-        <h2 class="section-title">
-          {{ t('home.search.title') }}
-        </h2>
-        <p class="section-subtitle">
-          {{ t('home.search.subtitle') }}
-        </p>
-      </div>
-
-      <form class="card form" @submit.prevent="onSubmitFilters">
-        <!-- Ligne pays + ville -->
-        <div class="form-row form-row-inline">
-          <div class="form-field">
-            <label class="form-label" for="country">
-              {{ t('home.search.country.label') }}
-            </label>
-            <input
-              id="country"
-              v-model="localFilters.countryCode"
-              class="form-control"
-              type="text"
-              maxlength="2"
-              :placeholder="t('home.search.country.placeholder')"
-            />
-            <p class="form-hint">
-              {{ t('home.search.country.hint') }}
-            </p>
-          </div>
-
-          <div class="form-field">
-            <label class="form-label" for="city">
-              {{ t('home.search.city.label') }}
-            </label>
-            <input
-              id="city"
-              v-model="localFilters.city"
-              class="form-control"
-              type="text"
-              :placeholder="t('home.search.city.placeholder')"
-            />
-          </div>
-        </div>
-
-        <!-- Ligne q + sort -->
-        <div class="form-row form-row-inline">
-          <div class="form-field">
-            <label class="form-label" for="q">
-              {{ t('home.search.q.label') }}
-            </label>
-            <input
-              id="q"
-              v-model="localFilters.q"
-              class="form-control"
-              type="text"
-              :placeholder="t('home.search.q.placeholder')"
-            />
-            <p class="form-hint">
-              {{ t('home.search.q.hint') }}
-            </p>
-          </div>
-
-          <div class="form-field">
-            <label class="form-label" for="sort">
-              {{ t('home.search.sort.label') }}
-            </label>
-            <select
-              id="sort"
-              v-model="localFilters.sort"
-              class="form-control"
-            >
-              <option value="recent">
-                {{ t('home.search.sort.options.recent') }}
-              </option>
-              <option value="oldest">
-                {{ t('home.search.sort.options.oldest') }}
-              </option>
-              <option value="popular">
-                {{ t('home.search.sort.options.popular') }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="card-footer">
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            @click="onResetFilters"
-          >
-            {{ t('home.search.reset') }}
-          </button>
-
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :disabled="obituaries.loading"
-          >
-            {{
-              obituaries.loading
-                ? t('home.search.loading')
-                : t('home.search.submit')
-            }}
-          </button>
-        </div>
-      </form>
-    </section>
+ 
   </main>
 </template>
 

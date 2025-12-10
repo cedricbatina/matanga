@@ -432,51 +432,68 @@
               {{ t('obituaryReview.side.legal') }}
             </p>
 <div class="review-side__actions">
-  <!-- Modifier : bouton neutre / secondaire -->
+  <!-- Modifier -->
   <button
     type="button"
     class="btn btn-ghost btn-sm"
     @click="onEdit"
+    :disabled="isPublishing || isPaying"
   >
     {{ t('obituaryReview.actions.edit') }}
   </button>
 
-  <!-- Confirmer : bouton principal (plein) -->
+  <!-- Publier (gratuit) -->
   <button
     v-if="isFreePlan"
     type="submit"
-    class="btn btn-primary btn-sm"
+    class="btn btn-primary"
+    :disabled="isPublishing || isPaying"
   >
-    {{ t('obituaryReview.actions.publishFree') }}
+    <span v-if="isPublishing">
+      {{ t('obituaryReview.actions.publishing') }}
+    </span>
+    <span v-else>
+      {{ t('obituaryReview.actions.publishFree') }}
+    </span>
   </button>
 
+  <!-- Payer (plan payant) -->
   <button
     v-else
     type="button"
-    class="btn btn-primary btn-sm"
+    class="btn btn-primary"
     @click="onPay"
+    :disabled="isPublishing || isPaying"
   >
-    {{ t('obituaryReview.actions.confirmAndPay') }}
+    <span v-if="isPaying">
+      {{ t('obituaryReview.actions.redirectingToPayment') }}
+    </span>
+    <span v-else>
+      {{ t('obituaryReview.actions.confirmAndPay') }}
+    </span>
   </button>
 
-  <!-- Retirer du site : bouton ghost mais en « warning » -->
+  <!-- Retirer du site (soft delete) -->
   <button
     type="button"
-    class="btn btn-ghost btn-sm btn-ghost-warning"
+    class="btn btn-ghost btn-sm"
     @click="onSoftDeleteClick"
+    :disabled="isPublishing || isPaying"
   >
-    🗂 {{ t('obituaryReview.actions.archive') || 'Retirer du site' }}
+    🗂 {{ t('obituaryReview.actions.archive') }}
   </button>
 
-  <!-- Supprimer définitivement : vrai bouton danger -->
+  <!-- Supprimer définitivement (hard delete) -->
   <button
     type="button"
     class="btn btn-danger btn-sm"
     @click="onHardDeleteClick"
+    :disabled="isPublishing || isPaying"
   >
-    🗑 {{ t('obituaryReview.actions.hardDelete') || 'Supprimer définitivement' }}
+    🗑 {{ t('obituaryReview.actions.hardDelete') }}
   </button>
 </div>
+
 
 
           </div>
@@ -513,7 +530,8 @@ const { t, locale } = useI18n();
 // Toastification (plugin : provide("useToast", ...))
 const { $useToast } = useNuxtApp();
 const toast = $useToast ? $useToast() : null;
-
+const isPublishing = ref(false);
+const isPaying = ref(false);
 // Store de confirmation (LkConfirmModal)
 const confirmStore = useConfirmStore();
 
@@ -808,26 +826,22 @@ const onEdit = () => {
   });
 };
 
-const onPay = () => {
-  // On laisse le choix du moyen de paiement sur la page de checkout
-  const plan = planCodeFromData.value || undefined;
-
-  router.push({
-    path: `/checkout/obituary/${slug.value}`,
-    query: plan ? { plan } : {},
-  });
-};
-
-
+/**
+ * Publier une annonce gratuite :
+ * - appelle POST /api/obituaries/:slug/publish
+ * - met à jour statut/visibilité côté DB
+ * - redirige vers la page publique de l’annonce
+ */
 const onConfirm = async () => {
-  // Si ce n’est pas un plan gratuit, on laisse le bouton "Confirmer et payer"
   if (!isFreePlan.value) {
-    onPay();
+    // sécurité : on ne publie ici que les plans gratuits
     return;
   }
+  if (isPublishing.value) return;
+
+  isPublishing.value = true;
 
   try {
-    // Appel réel à l’endpoint de publication (plan gratuit)
     await $fetch(`/api/obituaries/${slug.value}/publish`, {
       method: 'POST',
     });
@@ -836,12 +850,67 @@ const onConfirm = async () => {
       toast.success(t('toasts.obituary.published'));
     }
 
-    // Rediriger vers la page publique de l’annonce
-    await router.push(`/obituary/${slug.value}`);
+    const targetSlug = obituary.value?.slug || slug.value;
+    await router.push(`/obituary/${targetSlug}`);
   } catch (err) {
     console.error('Publish free obituary error', err);
+
+    const message =
+      err?.data?.message ||
+      err?.statusMessage ||
+      t('toasts.obituary.publishError');
+
     if (toast) {
-      toast.error(t('toasts.obituary.publishError'));
+      toast.error(message);
+    }
+  } finally {
+    isPublishing.value = false;
+  }
+};
+
+/**
+ * Créer une transaction de paiement :
+ * - appelle POST /api/payments/checkout
+ * - reçoit paymentId
+ * - redirige vers /checkout/[paymentId]
+ * 
+ * On reste très sobre sur les infos retournées pour éviter
+ * d’exposer des données sensibles (pas d’IDs externes Stripe/PayPal ici).
+ */
+const onPay = async () => {
+  if (!obituary.value) return;
+
+  try {
+    const res = await $fetch("/api/payments/checkout", {
+      method: "POST",
+      body: {
+        obituarySlug: slug.value,
+        paymentMethod: "card",
+      },
+    });
+
+    if (toast) {
+      toast.success(t("toasts.payment.redirecting"));
+    }
+
+    if (res && res.paymentId) {
+      await router.push(`/checkout/${res.paymentId}`);
+    } else if (toast) {
+      toast.error(t("toasts.payment.missingId"));
+    }
+  } catch (err) {
+    console.error("Checkout error", err);
+
+    const backendMsg =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      err?.message ||
+      "";
+
+    if (toast) {
+      toast.error(
+        backendMsg || t("toasts.payment.checkoutError")
+      );
     }
   }
 };

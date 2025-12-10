@@ -1,4 +1,6 @@
 // nuxt.config.js
+const isProd = process.env.NODE_ENV === "production";
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
@@ -11,7 +13,12 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/main.css"],
 
-  modules: ["@pinia/nuxt", "@nuxtjs/i18n", "@vite-pwa/nuxt"],
+  modules: [
+    "@pinia/nuxt",
+    "@nuxtjs/i18n",
+    // PWA uniquement en production
+    ...(isProd ? ["@vite-pwa/nuxt"] : []),
+  ],
 
   i18n: {
     locales: [
@@ -29,9 +36,7 @@ export default defineNuxtConfig({
 
   // =======================
   // PWA / VitePWA
-  // =======================
-  // =======================
-  // PWA / VitePWA
+  // (actif seulement quand isProd === true)
   // =======================
   pwa: {
     registerType: "autoUpdate", // MAJ du SW dès qu’un nouveau build est dispo
@@ -115,9 +120,9 @@ export default defineNuxtConfig({
       navigateFallback: "/offline",
     },
 
-    // ✅ La SEULE place où on utilise "enabled" pour la PWA
+    // En prod, c'est le build qui gère le SW, on laisse à false par sécurité
     devOptions: {
-      enabled: process.env.NODE_ENV === "development",
+      enabled: false,
       suppressWarnings: true,
       type: "module",
     },

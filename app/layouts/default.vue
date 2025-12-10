@@ -2,56 +2,76 @@
   <div class="app-shell">
     <!-- Skip link pour les lecteurs d'écran / clavier -->
     <a href="#main-content" class="skip-link">
-      Passer au contenu principal
+      {{ $t('layout.skipLink') }}
     </a>
 
-    <!-- HEADER ORIGINAL -->
+    <!-- HEADER -->
     <header class="app-header" role="banner">
       <div class="app-header-inner">
         <NuxtLink
           to="/"
           class="app-logo"
-          aria-label="Retour à la page d’accueil Matanga"
+          :aria-label="$t('layout.logoAria')"
         >
-          <span class="app-logo-name">Matanga</span>
-          <span class="app-logo-tagline">Annonces &amp; veillées</span>
+          <!-- Logo image -->
+          <img
+            src="/images/logo-madizi.png"
+            :alt="$t('layout.logoAlt')"
+            class="app-logo-mark"
+          />
+
+          <!-- Texte logo -->
+          <span class="app-logo-text">
+            <span class="app-logo-name">
+              {{ $t('layout.logoName') }}
+            </span>
+            <span class="app-logo-tagline">
+              {{ $t('layout.logoTagline') }}
+            </span>
+          </span>
         </NuxtLink>
 
-        <nav class="app-nav-actions" aria-label="Navigation principale">
+        <nav
+          class="app-nav-actions"
+          :aria-label="$t('layout.navMain')"
+        >
           <!-- Toggle thème accessible -->
-      <button
-  type="button"
-  class="btn btn-ghost btn-sm"
-  @click="toggleTheme"
-  :aria-pressed="theme === 'dark'"
-  :aria-label="
-    theme === 'dark'
-      ? 'Activer le thème clair'
-      : 'Activer le thème sombre'
-  "
->
-  <i
-    v-if="theme === 'dark'"
-    class="fa-regular fa-sun theme-toggle-icon"
-    aria-hidden="true"
-  ></i>
-  <i
-    v-else
-    class="fa-regular fa-moon theme-toggle-icon"
-    aria-hidden="true"
-  ></i>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            @click="toggleTheme"
+            :aria-pressed="theme === 'dark'"
+            :aria-label="
+              theme === 'dark'
+                ? $t('layout.themeToggleToLight')
+                : $t('layout.themeToggleToDark')
+            "
+          >
+            <i
+              v-if="theme === 'dark'"
+              class="fa-regular fa-sun theme-toggle-icon"
+              aria-hidden="true"
+            ></i>
+            <i
+              v-else
+              class="fa-regular fa-moon theme-toggle-icon"
+              aria-hidden="true"
+            ></i>
 
-  <span class="theme-toggle-label">
-    <span v-if="theme === 'dark'">Thème clair</span>
-    <span v-else>Thème sombre</span>
-  </span>
-</button>
-
+            <span class="theme-toggle-label">
+              <span v-if="theme === 'dark'">
+                {{ $t('layout.themeLabelLight') }}
+              </span>
+              <span v-else>
+                {{ $t('layout.themeLabelDark') }}
+              </span>
+            </span>
+          </button>
 
           <!-- Plus tard : login / profil dans la nav principale si tu veux -->
           <!--
           <NuxtLink to="/login" class="btn btn-secondary btn-sm">
-            Se connecter
+            {{ $t('auth.login') }}
           </NuxtLink>
           -->
         </nav>
@@ -76,6 +96,7 @@
     <main id="main-content" class="app-main" role="main">
       <slot />
     </main>
+
     <LkConfirmModal />
   </div>
 </template>
@@ -88,6 +109,7 @@ import { useTheme } from '~/composables/useTheme';
 import { useAuthStore } from '~/stores/auth';
 import UserInlineCard from '~/components/UserInlineCard.vue';
 import LkConfirmModal from '~/components/LkConfirmModal.vue';
+
 const { theme, toggleTheme } = useTheme();
 const authStore = useAuthStore();
 const router = useRouter();
@@ -135,6 +157,7 @@ const onRegister = () => {
   margin: 0 auto;
   padding: 0.3rem var(--space-4, 1.25rem) 0.4rem;
 }
+
 .theme-toggle-icon {
   font-size: 0.95rem;
   margin-right: 0.35rem;
@@ -150,6 +173,40 @@ const onRegister = () => {
   .theme-toggle-label {
     display: none;
   }
+}
+
+/* Logo Madizi */
+.app-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.app-logo-mark {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+.app-logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.app-logo-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.app-logo-tagline {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.btn[aria-pressed="true"] .theme-toggle-icon {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
 }
 
 </style>

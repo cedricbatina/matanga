@@ -517,6 +517,23 @@
     }
   },
   
+
+  "layout": {
+    "skipLink": "Passer au contenu principal",
+    "logoAria": "Retour à la page d’accueil Madizi",
+    "logoAlt": "Logo Madizi",
+    "logoName": "Madizi",
+    "logoTagline": "Annonces & veillées",
+    "navMain": "Navigation principale",
+    "themeToggleToLight": "Activer le thème clair",
+    "themeToggleToDark": "Activer le thème sombre",
+    "themeLabelLight": "Thème clair",
+    "themeLabelDark": "Thème sombre"
+  }
+
+
+,
+
 "userInline": {
   "guestLabel": "Visiteur – vous n’êtes pas encore connecté",
   "guestHelper": "Connectez-vous ou créez un compte pour publier et gérer vos annonces.",
@@ -714,11 +731,12 @@
     },
 
   "actions": {
-    "edit": "Modifier l’annonce",
-    "publishFree": "Confirmer et envoyer en validation",
-    "confirmAndPay": "Confirmer et payer",
-    "delete": "Supprimer l’annonce",
-    "archive": "Retirer l’annonce du site",
+       "edit": "Modifier l’annonce",
+      "publishFree": "Confirmer et envoyer en validation",
+      "publishing": "Publication en cours…",
+      "confirmAndPay": "Confirmer et payer",
+      "redirectingToPayment": "Redirection vers le paiement…",
+      "archive": "Retirer l’annonce du site",
       "hardDelete": "Supprimer définitivement"
   },
    "features": {
@@ -730,6 +748,31 @@
     },
     "contacts": {
       "value": "Jusqu’à {count} contact(s) affiché(s)"
+    }
+  },
+   "common": {
+    "actions": {
+      "archive": "Retirer",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    }
+  },
+  "toasts": {
+    "obituary": {
+      "published": "Votre annonce a été envoyée en validation / publication.",
+      "publishError": "Impossible de publier cette annonce pour le moment."
+    }
+  },
+  "payments": {
+    "toasts": {
+      "checkoutCreated": "Votre commande a été créée, redirection vers la page de paiement…",
+      "checkoutError": "Impossible de créer la commande de paiement pour cette annonce.",
+      "payment": {
+      "redirecting": "Redirection vers la page de paiement…",
+      "missingId": "Impossible de créer la transaction de paiement.",
+      "checkoutError": "Erreur lors de l’initiation du paiement.",
+      "flowTodo": "Le flux de paiement réel (Stripe, PayPal, virement ou mobile money) sera branché ici."
+    }
     }
   }
 }
@@ -820,7 +863,71 @@
       "paid": "{amount} €"
     }
   }
-}
+},
+  "checkoutPayment": {
+    "meta": {
+      "title": "Paiement annonce",
+      "description": "Finaliser le paiement et la mise en ligne de votre annonce Matanga."
+    },
+
+    "title": "Finaliser le paiement",
+    "subtitle": "Vérifiez le récapitulatif de votre commande avant de procéder au paiement sécurisé.",
+
+    "sections": {
+      "obituary": {
+        "title": "Annonce concernée",
+        "subtitle": "Vous êtes sur le point de régler la mise en ligne de cette annonce."
+      },
+      "plan": {
+        "title": "Détails du plan"
+      }
+    },
+
+    "fields": {
+      "deceasedName": "Défunt(e)",
+      "obituaryTitle": "Titre de l’annonce",
+      "obituaryStatus": "Statut actuel",
+      "planType": "Type de plan",
+      "planTypeFallback": "Plan payant",
+      "publishDuration": "Durée de publication"
+    },
+
+    "publishDurationDays": "Publication {days} jours",
+
+    "side": {
+      "status": "Paiement sécurisé",
+      "title": "Montant à régler",
+      "methodPrefix": "Moyen de paiement sélectionné :",
+      "hint": "Le règlement s’effectuera via un prestataire de paiement sécurisé (Stripe, PayPal, virement bancaire ou mobile money selon votre choix).",
+      "legal": "En cliquant sur « Procéder au paiement », vous serez redirigé(e) vers une page de paiement sécurisée. Aucune donnée de carte bancaire n’est stockée sur Matanga."
+    },
+
+    "methods": {
+      "card": "Carte bancaire (Stripe)",
+      "paypal": "PayPal",
+      "bank_transfer": "Virement bancaire",
+      "mobile_money": "Mobile Money"
+    },
+
+    "obituaryStatus": {
+      "draft": "Brouillon (non publié)",
+      "pending_review": "En attente de validation",
+      "published": "Publié",
+      "archived": "Archivé"
+    },
+
+    "actions": {
+      "retry": "Réessayer",
+      "backToReview": "Retour au récapitulatif",
+      "proceed": "Procéder au paiement",
+      "processing": "Initialisation du paiement…"
+    },
+
+    "errors": {
+      "generic": "Une erreur est survenue lors du chargement du paiement."
+    }
+  }
+
 
 
 
