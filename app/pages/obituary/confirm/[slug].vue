@@ -877,7 +877,7 @@ const onConfirm = async () => {
  * On reste très sobre sur les infos retournées pour éviter
  * d’exposer des données sensibles (pas d’IDs externes Stripe/PayPal ici).
  */
-const onPay = async () => {
+/*const onPay = async () => {
   if (!obituary.value) return;
 
   try {
@@ -913,8 +913,22 @@ const onPay = async () => {
       );
     }
   }
-};
+};*/
 
+const onPay = () => {
+  if (!slug.value) return;
+
+  const target = {
+    path: `/checkout/obituary/${slug.value}`,
+  };
+
+  // optionnel : si tu veux passer le plan
+  if (planCodeFromData.value) {
+    target.query = { plan: planCodeFromData.value };
+  }
+
+  router.push(target);
+};
 
 // 🔻 Soft delete (archive / rendre privé)
 const softDelete = async () => {

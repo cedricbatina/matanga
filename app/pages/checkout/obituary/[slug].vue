@@ -328,6 +328,7 @@ const loadingProvider = ref(null);
 const bankInstructions = ref(null);
 
 // démarrage paiement
+// démarrage paiement
 const startPayment = async (provider) => {
   if (!obituary.value) return;
   if (loadingProvider.value) return;
@@ -336,14 +337,22 @@ const startPayment = async (provider) => {
   bankInstructions.value = null;
 
   try {
-    const res = await $fetch(`/api/obituaries/${slug.value}/checkout`, {
+    const res = await $fetch('/api/payments/checkout', {
       method: 'POST',
       body: {
         provider,
+        // on envoie le slug *et* un id si dispo
+        obituarySlug: slug.value,
+        obituaryId:
+          obituary.value?.id ??
+          obituary.value?.obituaryId ??
+          obituary.value?.obituary_id ??
+          null,
         planCode: planCodeFromData.value,
       },
     });
 
+    // 🏦 Virement bancaire : on affiche les instructions
     if (provider === 'bank_transfer') {
       if (!res?.ok || !res.bankTransfer) {
         throw new Error('Invalid bank transfer response');
@@ -363,17 +372,20 @@ const startPayment = async (provider) => {
       return;
     }
 
-    // Stripe / PayPal non encore configurés
+    // 💳 / 🅿️ Stripe / PayPal non configurés
     if (res?.notConfigured) {
       if (toast) {
-        toast.info(res.message || t('checkoutObituary.methods.notConfigured'));
+        toast.info(
+          res.message ||
+            t('checkoutObituary.methods.notConfigured'),
+        );
       } else {
         console.info('Payment provider not configured', provider, res);
       }
       return;
     }
 
-    // Plus tard : redirection vers redirectUrl (Stripe / PayPal)
+    // Plus tard : redirection vers une URL de checkout (Stripe / PayPal)
     if (res?.redirectUrl) {
       window.location.href = res.redirectUrl;
       return;
@@ -385,13 +397,17 @@ const startPayment = async (provider) => {
     if (toast) {
       toast.error(
         t('checkoutObituary.methods.error') ||
-          'Erreur lors de l’initialisation du paiement.'
+          'Erreur lors de l’initialisation du paiement.',
       );
     }
   } finally {
     loadingProvider.value = null;
   }
 };
+
+
+
+
 </script>
 <style scoped>
 /* Layout principal */

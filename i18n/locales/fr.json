@@ -2,7 +2,7 @@
   "auth": {
     "register": {
       "title": "Créer un compte",
-      "subtitle": "Rejoignez Matanga pour publier des annonces de décès et de veillées en toute dignité.",
+      "subtitle": "Rejoignez Madizi pour publier des annonces de décès et de veillées en toute dignité.",
       "account_type": {
         "label": "Type de compte",
         "individual": "Particulier",
@@ -68,7 +68,7 @@
       },
       "hints": {
         "phone": "Utilisé uniquement pour la vérification ou en cas de besoin lié à vos annonces.",
-        "terms": "En créant un compte, vous confirmez fournir des informations exactes et accepter nos conditions d’utilisation. Matanga est un espace privé et modéré, dédié aux annonces de décès et veillées."
+        "terms": "En créant un compte, vous confirmez fournir des informations exactes et accepter nos conditions d’utilisation. Madizi est un espace privé et modéré, dédié aux annonces de décès et veillées."
       },
       "resend": {
         "help": "Vous n'avez pas reçu l'email de confirmation ? Vérifiez vos spams ou renvoyez un email.",
@@ -87,7 +87,7 @@
     },
     "login": {
   "title": "Connexion",
-  "subtitle": "Accédez à votre espace Matanga pour gérer vos annonces et veillées.",
+  "subtitle": "Accédez à votre espace Madizi pour gérer vos annonces et veillées.",
   "fields": {
     "email": "Email",
     "password": "Mot de passe"
@@ -130,7 +130,7 @@
 ,
 "verify": {
   "title": "Vérification de l’email",
-  "subtitle": "Nous vérifions votre lien de confirmation pour activer votre compte Matanga.",
+  "subtitle": "Nous vérifions votre lien de confirmation pour activer votre compte Madizi.",
   "loading": "Vérification en cours... Merci de patienter quelques instants.",
   "messages": {
     "success": "Votre email a été vérifié avec succès. Votre compte est maintenant actif."
@@ -145,7 +145,7 @@
     "go_home": "Retour à l’accueil"
   },
   "hints": {
-    "contact": "Si le problème persiste, vous pouvez demander un nouveau lien de confirmation depuis la page de connexion ou contacter le support Matanga."
+    "contact": "Si le problème persiste, vous pouvez demander un nouveau lien de confirmation depuis la page de connexion ou contacter le support Madizi."
   },
   "footer_info": "Pour votre sécurité, les liens de vérification expirent après un certain délai."
 },
@@ -156,12 +156,12 @@
   },
    "home": {
     "meta": {
-      "title": "Matanga – Annonces nécrologiques & avis de décès en ligne",
+      "title": "Madizi – Annonces nécrologiques & avis de décès en ligne",
       "description": "Publiez une annonce nécrologique en quelques minutes, partagez les programmes de veillées et d’obsèques avec la famille, les proches et la diaspora."
     },
     "hero": {
       "title": "Annoncer un décès, informer sans oublier personne.",
-      "subtitle": "Matanga aide les familles et la diaspora à partager une information claire et fiable.",
+      "subtitle": "Madizi aide les familles et la diaspora à partager une information claire et fiable.",
       "body": "Créez une annonce nécrologique structurée, ajoutez les veillées, la messe, l’inhumation, et partagez facilement le lien par WhatsApp, SMS ou réseaux sociaux.",
       
       
@@ -317,7 +317,7 @@
     "obituary": {
       "defaultName": "la personne défunte",
       "titlePattern": "Annonce de décès – {name}",
-      "textPattern": "La famille partage cette annonce nécrologique pour {name}. Retrouvez les informations sur les cérémonies et les contacts sur Matanga.",
+      "textPattern": "La famille partage cette annonce nécrologique pour {name}. Retrouvez les informations sur les cérémonies et les contacts sur Madizi.",
       "shareButton": "Partager l’annonce",
       "clipboardSuccess": "Le lien de l’annonce a été copié dans le presse-papiers.",
       "clipboardError": "Impossible de copier le lien. Vous pouvez le copier manuellement depuis la barre d’adresse.",
@@ -548,7 +548,7 @@
   "role": {
     "individual": "Compte particulier",
     "pro": "Compte professionnel",
-    "generic": "Compte Matanga"
+    "generic": "Compte Madizi"
   },
   "todayLabel": "Aujourd’hui : {date}"
 }
@@ -653,7 +653,7 @@
       "billing": "Facturation claire et adaptée à votre activité (mensuelle ou à l’usage)."
     },
     "ctaDisabled": "Sur demande",
-    "helper": "L’espace pro Matanga sera bientôt ouvert aux opérateurs funéraires. Contactez-nous pour être prévenu de son lancement."
+    "helper": "L’espace pro Madizi sera bientôt ouvert aux opérateurs funéraires. Contactez-nous pour être prévenu de son lancement."
   }
 },
 "obituaryReview": {
@@ -718,10 +718,10 @@
     "price": "Montant",
     "planUnknown": "Non renseignée",
 
-    "statusFree": "Plan gratuit : l’annonce sera envoyée à l’équipe Matanga pour validation avant mise en ligne.",
+    "statusFree": "Plan gratuit : l’annonce sera envoyée à l’équipe Madizi pour validation avant mise en ligne.",
     "statusPayment": "Plan payant : vous allez être redirigé vers l’étape de paiement pour finaliser la publication.",
 
-    "legal": "En confirmant, vous certifiez que les informations fournies sont exactes et que vous avez le droit de les publier. L’équipe Matanga peut retirer l’annonce en cas de signalement ou de non-respect des règles."
+    "legal": "En confirmant, vous certifiez que les informations fournies sont exactes et que vous avez le droit de les publier. L’équipe Madizi peut retirer l’annonce en cas de signalement ou de non-respect des règles."
   },
     "delete": {
       "softTitle": "Retirer cette annonce du site ?",
@@ -782,7 +782,7 @@
     "subtitle": "Corrigez ou complétez les informations avant la publication.",
     "meta": {
       "title": "Modifier l’annonce nécrologique",
-      "description": "Modifiez les informations de l’avis de décès avant la publication sur la plateforme Matanga."
+      "description": "Modifiez les informations de l’avis de décès avant la publication sur la plateforme Madizi."
     },
     "sections": {
       "events": {
@@ -867,7 +867,7 @@
   "checkoutPayment": {
     "meta": {
       "title": "Paiement annonce",
-      "description": "Finaliser le paiement et la mise en ligne de votre annonce Matanga."
+      "description": "Finaliser le paiement et la mise en ligne de votre annonce Madizi."
     },
 
     "title": "Finaliser le paiement",
@@ -899,7 +899,7 @@
       "title": "Montant à régler",
       "methodPrefix": "Moyen de paiement sélectionné :",
       "hint": "Le règlement s’effectuera via un prestataire de paiement sécurisé (Stripe, PayPal, virement bancaire ou mobile money selon votre choix).",
-      "legal": "En cliquant sur « Procéder au paiement », vous serez redirigé(e) vers une page de paiement sécurisée. Aucune donnée de carte bancaire n’est stockée sur Matanga."
+      "legal": "En cliquant sur « Procéder au paiement », vous serez redirigé(e) vers une page de paiement sécurisée. Aucune donnée de carte bancaire n’est stockée sur Madizi."
     },
 
     "methods": {
@@ -925,8 +925,105 @@
 
     "errors": {
       "generic": "Une erreur est survenue lors du chargement du paiement."
+    },
+    
+  "ok": false,
+  "notConfigured": true,
+  "message": "Ce moyen de paiement n’est pas encore configuré..."
+
+
+  },
+  "payments": {
+    "providers": {
+      "stripe": "Stripe",
+      "paypal": "PayPal",
+      "bankTransfer": "Virement bancaire",
+      "generic": "le prestataire de paiement"
+    },
+    "return": {
+      "title": "Paiement bien reçu",
+      "subtitle": "Votre paiement a été pris en compte. Merci de votre confiance.",
+      "successTitle": "Paiement confirmé via {provider}",
+      "successText": "Nous allons finaliser la validation de votre annonce. Vous recevrez une notification dès qu’elle sera publiée.",
+      "hint": "Vous pouvez d’ores et déjà revenir à la liste de vos annonces.",
+      "goToObituaries": "Voir mes annonces",
+      "goHome": "Retour à l’accueil",
+      "meta": {
+        "title": "Paiement confirmé",
+        "description": "Confirmation de votre paiement pour une annonce nécrologique."
+      }
+    },
+    "cancel": {
+      "title": "Paiement annulé",
+      "subtitle": "Le paiement n’a pas été finalisé.",
+      "infoTitle": "Paiement interrompu sur {provider}",
+      "infoText": "Aucun montant n’a été débité. Vous pouvez réessayer plus tard ou choisir un autre moyen de paiement.",
+      "hint": "Si le problème persiste, vous pouvez nous contacter pour obtenir de l’aide.",
+      "backToCheckout": "Revenir au paiement",
+      "goToObituaries": "Retour à mes annonces",
+      "meta": {
+        "title": "Paiement annulé",
+        "description": "Retour après annulation d’un paiement d’annonce."
+      }
+    },
+     "paymentsReturn": {
+    "meta": {
+      "title": "Confirmation de paiement",
+      "description": "Votre paiement a bien été pris en compte. Votre annonce sera vérifiée par un·e modérateur·rice avant publication."
+    },
+    "title": "Merci, votre paiement a bien été enregistré",
+    "subtitle": "Votre règlement a été pris en compte. La publication de l’annonce reste soumise à validation.",
+    "status": {
+      "waitingModeration": "En attente de validation par notre équipe",
+      "explainer": "Votre paiement via {provider} a bien été reçu. Nous allons vérifier votre annonce avant de la rendre visible au public.",
+      "slugHint": "Annonce concernée : {slug}",
+      "moderationNote": "Un·e modérateur·rice vérifiera le contenu (identité, ton, respect de la charte) avant de mettre l’annonce en ligne. Vous pourrez ensuite la partager autour de vous."
+    },
+    "providers": {
+      "stripe": "Stripe (carte bancaire)",
+      "paypal": "PayPal",
+      "bankTransfer": "virement bancaire",
+      "other": "ce moyen de paiement"
+    },
+    "buttons": {
+      "viewObituary": "Voir l’annonce",
+      "backToList": "Retour aux annonces"
     }
   }
+  },
+  "checkoutStripeSuccess": {
+  "meta": {
+    "title": "Paiement confirmé",
+    "description": "Votre paiement a bien été confirmé par Stripe."
+  },
+  "title": "Paiement confirmé",
+  "subtitle": "Merci, votre règlement a bien été pris en compte.",
+  "loading": "Validation de votre paiement en cours…",
+  "errorTitle": "Impossible de confirmer le paiement",
+  "errorText": "Nous n’avons pas pu confirmer ce paiement. Si le problème persiste, contactez le support en indiquant le numéro de transaction Stripe.",
+  "paidBadge": "Paiement confirmé",
+  "successTitle": "Merci pour votre confiance",
+  "successText": "Votre paiement a été validé par notre partenaire Stripe. Votre annonce sera traitée conformément aux paramètres choisis.",
+  "amount": "Montant réglé",
+  "obituary": "Annonce concernée",
+  "paymentId": "Référence interne",
+  "viewObituary": "Voir l’annonce",
+  "backToList": "Retour aux annonces"
+}
+,
+"checkoutStripeCancel": {
+  "meta": {
+    "title": "Paiement annulé",
+    "description": "Vous avez annulé le paiement Stripe pour cette annonce."
+  },
+  "title": "Paiement annulé",
+  "subtitle": "Le paiement Stripe n’a pas été finalisé.",
+  "badge": "Paiement annulé",
+  "text": "Aucun montant n’a été débité. Vous pouvez relancer le paiement ou revenir à la liste des annonces.",
+  "retry": "Reprendre le paiement",
+  "backToList": "Retour aux annonces"
+}
+
 
 
 

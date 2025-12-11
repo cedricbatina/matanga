@@ -1,28 +1,29 @@
 // server/api/payments/checkout.post.js
 import { defineEventHandler, readBody, createError } from "h3";
 import { requireAuth } from "../../utils/authSession.js";
-import { transaction } from "../../utils/db.js";
+import { query, transaction } from "../../utils/db.js";
 import { logInfo, logError } from "../../utils/logger.js";
-import { findPlanByCode } from "../../utils/pricingPlans.js";
+// 🆕 Stripe + Buffer
+import Stripe from "stripe";
+import { Buffer } from "node:buffer";
 
-function isNonEmptyString(v) {
-  return typeof v === "string" && v.trim().length > 0;
+const SUPPORTED_PROVIDERS = ["stripe", "paypal", "bank_transfer"];
+
+// Instance Stripe (si clé présente)
+const stripe =
+  process.env.STRIPE_SECRET_KEY
+    ? new Stripe(process.env.STRIPE_SECRET_KEY)
+    : null;
+
+function normalizeMethod(provider, rawMethod) {
+  if (provider === "bank_transfer") return "bank_transfer";
+  if (provider === "stripe" || provider === "paypal") return "card";
+  return rawMethod || "other";
 }
 
-// petit helper pour mapper la méthode vers un provider par défaut
-function resolveProviderForMethod(method) {
-  switch (method) {
-    case "card":
-      return "stripe"; // par défaut, CB via Stripe
-    case "paypal":
-      return "paypal";
-    case "bank_transfer":
-      return "bank_transfer";
-    case "mobile_money":
-      return "mobile_money";
-    default:
-      return "stripe";
-  }
+function generatePaymentReference(obituaryId) {
+  const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `MAT-${obituaryId}-${random}`;
 }
 
 export default defineEventHandler(async (event) => {
@@ -30,123 +31,211 @@ export default defineEventHandler(async (event) => {
   const requestId =
     event.context.requestId || Math.random().toString(36).slice(2, 10);
 
-  const body = await readBody(event);
+  const body = (await readBody(event)) || {};
+  const {
+    provider,
+    method: rawMethod,
+    obituarySlug,
+    slug, // au cas où le front envoie "slug"
+    obituaryId, // optionnel
+    planCode,
+  } = body;
 
-  const { obituarySlug, paymentMethod, provider: providerInput } = body || {};
+  const effectiveSlug = slug || obituarySlug || null;
 
-  // ---------- Validation input ----------
-  if (!isNonEmptyString(obituarySlug)) {
+  if (!effectiveSlug && !obituaryId) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Invalid request.",
-      data: { fieldErrors: { obituarySlug: "Missing obituary slug." } },
+      statusMessage: "Slug or obituaryId is required for checkout.",
     });
   }
 
-  const allowedMethods = ["card", "paypal", "bank_transfer", "mobile_money"];
-  const method = allowedMethods.includes(paymentMethod)
-    ? paymentMethod
-    : "card";
+  if (!provider || !SUPPORTED_PROVIDERS.includes(provider)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Unsupported payment provider.",
+    });
+  }
 
-  const provider = isNonEmptyString(providerInput)
-    ? providerInput
-    : resolveProviderForMethod(method);
+  const method = normalizeMethod(provider, rawMethod);
 
   logInfo("Checkout create attempt", {
     userId: session.userId,
     email: session.email,
-    obituarySlug,
+    obituarySlug: effectiveSlug,
+    obituaryId: obituaryId || null,
     method,
     provider,
     requestId,
   });
 
   try {
-    const result = await transaction(async (tx) => {
-      // 1) Récupérer l’annonce par slug, vérifier propriétaire et plan payant
-      const [rows] = await tx.query(
+    // 1) Récupérer l’annonce (par id, puis par slug)
+    let obituaryRow = null;
+
+    // a) si on a un id, on tente d’abord par id
+    if (obituaryId) {
+      const rowsById = await query(
         `
         SELECT
-          o.id,
-          o.user_id,
-          o.slug,
-          o.is_free,
-          o.pricing_tier,
-          o.currency,
-          o.amount_paid,
-          o.publish_duration_days
-        FROM obituaries o
-        WHERE o.slug = ?
+          id,
+          user_id,
+          account_type,
+          status,
+          visibility,
+          is_free,
+          pricing_tier,
+          currency,
+          amount_paid,
+          publish_duration_days,
+          payment_provider,
+          payment_reference
+        FROM obituaries
+        WHERE id = ?
         LIMIT 1
       `,
-        [obituarySlug]
+        [obituaryId],
+        { requestId }
       );
 
-      if (!rows || rows.length === 0) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: "Obituary not found.",
-        });
+      if (rowsById && rowsById.length > 0) {
+        obituaryRow = rowsById[0];
+      }
+    }
+
+    // b) sinon (ou si id non trouvé), on tente par slug
+    if (!obituaryRow && effectiveSlug) {
+      const rowsBySlug = await query(
+        `
+        SELECT
+          id,
+          user_id,
+          account_type,
+          status,
+          visibility,
+          is_free,
+          pricing_tier,
+          currency,
+          amount_paid,
+          publish_duration_days,
+          payment_provider,
+          payment_reference
+        FROM obituaries
+        WHERE slug = ?
+        LIMIT 1
+      `,
+        [effectiveSlug],
+        { requestId }
+      );
+
+      if (rowsBySlug && rowsBySlug.length > 0) {
+        obituaryRow = rowsBySlug[0];
+      }
+    }
+
+    if (!obituaryRow) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Obituary not found for checkout.",
+      });
+    }
+
+    // 2) Vérif ownership (ou admin/modo)
+    const roles = Array.isArray(session.roles) ? session.roles : [];
+    const isAdminOrModerator =
+      roles.includes("admin") || roles.includes("moderator");
+
+    if (!isAdminOrModerator && obituaryRow.user_id !== session.userId) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: "You are not allowed to pay for this obituary.",
+      });
+    }
+
+    // 3) Vérif qu’il y a bien quelque chose à payer
+    const isFree = !!obituaryRow.is_free;
+    if (isFree) {
+      throw createError({
+        statusCode: 400,
+        statusMessage:
+          "This obituary is on a free plan, no payment is required.",
+      });
+    }
+
+    let amount = null;
+    if (
+      obituaryRow.amount_paid != null &&
+      obituaryRow.amount_paid !== "" &&
+      Number(obituaryRow.amount_paid) > 0
+    ) {
+      amount = Number(obituaryRow.amount_paid);
+    }
+
+    const currency = obituaryRow.currency || "EUR";
+
+    if (amount == null || !(amount > 0)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage:
+          "No valid payment amount found for this obituary (amount <= 0).",
+      });
+    }
+
+    // 4) Cas spécial : virement bancaire (bank_transfer)
+
+    const SUPPORTED_PROVIDERS = ["stripe", "paypal", "bank_transfer"];
+
+    // Instance Stripe (si clé présente)
+    const stripe = process.env.STRIPE_SECRET_KEY
+      ? new Stripe(process.env.STRIPE_SECRET_KEY)
+      : null;
+
+    // 5) Stripe : création d'une Checkout Session
+    // 5) Stripe : création d'une Checkout Session
+    if (provider === "stripe") {
+      const baseUrl = process.env.PUBLIC_BASE_URL || "http://localhost:3004";
+
+      if (!stripe || !process.env.STRIPE_SECRET_KEY) {
+        return {
+          ok: false,
+          notConfigured: true,
+          provider,
+          method,
+          message:
+            "Stripe n’est pas encore configuré sur cet environnement. Utilisez le virement bancaire.",
+        };
       }
 
-      const obituary = rows[0];
+      // On crée une Checkout Session (qui crée un PaymentIntent en interne)
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency,
+              unit_amount: Math.round(amount * 100), // en centimes
+              product_data: {
+                name: `Annonce nécrologique – ${effectiveSlug}`,
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        customer_email: session.email || undefined,
+        metadata: {
+          obituary_id: String(obituaryRow.id),
+          user_id: String(session.userId),
+          plan_code: planCode || obituaryRow.pricing_tier || "",
+        },
+        success_url: `${baseUrl}/checkout/stripe-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/checkout/stripe-cancel?obituary=${effectiveSlug}`,
+      });
 
-      // sécurité de base : owner ou plus tard admin/moderator
-      if (Number(obituary.user_id) !== Number(session.userId)) {
-        throw createError({
-          statusCode: 403,
-          statusMessage: "You are not allowed to pay for this obituary.",
-        });
-      }
-
-      if (obituary.is_free) {
-        throw createError({
-          statusCode: 400,
-          statusMessage:
-            "This obituary is linked to a free plan. No payment required.",
-        });
-      }
-
-      // 2) Calculer amount / currency à partir du plan
-      let amount = null;
-      let currency = obituary.currency || "EUR";
-
-      if (obituary.pricing_tier) {
-        const plan = findPlanByCode(obituary.pricing_tier);
-        if (plan && typeof plan.basePriceCents === "number") {
-          amount = plan.basePriceCents / 100;
-          if (plan.currency) {
-            currency = plan.currency;
-          }
-        }
-      }
-
-      // fallback sur amount_paid si présent
-      if (amount == null || amount <= 0) {
-        if (obituary.amount_paid != null && Number(obituary.amount_paid) > 0) {
-          amount = Number(obituary.amount_paid);
-        }
-      }
-
-      if (amount == null || amount <= 0) {
-        throw createError({
-          statusCode: 400,
-          statusMessage:
-            "Unable to determine payment amount for this obituary.",
-        });
-      }
-
-      // 3) Créer la ligne dans payment_transactions en "pending"
-      const metadata = {
-        requestId,
-        obituarySlug: obituary.slug,
-        pricingTier: obituary.pricing_tier || null,
-        publishDurationDays: obituary.publish_duration_days || null,
-        method,
-        provider,
-      };
-
-      const insertSql = `
+      // Enregistrer la transaction côté DB
+      await transaction(
+        async (tx) => {
+          const insertPaymentSql = `
         INSERT INTO payment_transactions (
           user_id,
           obituary_id,
@@ -159,70 +248,252 @@ export default defineEventHandler(async (event) => {
           external_charge_id,
           external_customer_id,
           metadata,
-          error_code,
-          error_message,
-          completed_at,
           created_at,
           updated_at
         )
         VALUES (
-          ?, ?, ?, ?, 'pending',
-          ?, ?,
-          NULL, NULL, NULL,
-          ?,
-          NULL, NULL,
-          NULL,
-          NOW(), NOW()
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
         )
       `;
 
-      const [paymentRes] = await tx.query(insertSql, [
-        session.userId,
-        obituary.id,
-        provider,
-        method,
+          const metadata = {
+            type: "stripe_checkout",
+            planCode: planCode || obituaryRow.pricing_tier || null,
+          };
+
+          await tx.query(insertPaymentSql, [
+            session.userId,
+            obituaryRow.id,
+            "stripe",
+            method, // "card"
+            "pending",
+            amount,
+            currency,
+            checkoutSession.id, // ex: cs_test_...
+            checkoutSession.payment_intent || null, // PaymentIntent ID si déjà connu
+            checkoutSession.customer || null, // customer id si existant
+            JSON.stringify(metadata),
+          ]);
+        },
+        { requestId }
+      );
+
+      logInfo("Checkout created (stripe)", {
+        userId: session.userId,
+        obituaryId: obituaryRow.id,
+        provider: "stripe",
         amount,
         currency,
-        JSON.stringify(metadata),
-      ]);
+        checkoutSessionId: checkoutSession.id,
+        requestId,
+      });
 
-      const paymentId = paymentRes.insertId;
-
-      // 4) Retourner les infos nécessaires au front
-      // (on laissera Stripe/PayPal/Bank Transfer gérés par d’autres routes/webhooks)
+      // 👉 le front redirige vers cette URL, Stripe affiche son form
       return {
-        paymentId,
+        ok: true,
+        provider: "stripe",
+        method,
+        redirectUrl: checkoutSession.url,
+      };
+    }
+
+    // 6) PayPal : création d'un Order + lien d’approval
+    // 6) PayPal : création d'un Order + lien d’approval
+    if (provider === "paypal") {
+      const clientId = process.env.PAYPAL_CLIENT_ID || "";
+      const secret = process.env.PAYPAL_SECRET || "";
+      const env = process.env.PAYPAL_ENV || "sandbox";
+      const baseUrl = process.env.PUBLIC_BASE_URL || "http://localhost:3004";
+
+      if (!clientId || !secret) {
+        return {
+          ok: false,
+          notConfigured: true,
+          provider,
+          method,
+          message:
+            "PayPal n’est pas encore configuré sur cet environnement. Utilisez le virement bancaire.",
+        };
+      }
+
+      const apiBase =
+        env === "live"
+          ? "https://api-m.paypal.com"
+          : "https://api-m.sandbox.paypal.com";
+
+      // 1) Récupérer un access_token
+      const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
+
+      const tokenResp = await fetch(`${apiBase}/v1/oauth2/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${auth}`,
+        },
+        body: "grant_type=client_credentials",
+      });
+
+      if (!tokenResp.ok) {
+        const text = await tokenResp.text();
+        throw createError({
+          statusCode: 500,
+          statusMessage: "Failed to get PayPal access token.",
+          data: { response: text },
+        });
+      }
+
+      const tokenJson = await tokenResp.json();
+      const accessToken = tokenJson.access_token;
+
+      // 2) Créer un order
+      const orderResp = await fetch(`${apiBase}/v2/checkout/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          intent: "CAPTURE",
+          purchase_units: [
+            {
+              amount: {
+                currency_code: currency,
+                value: amount.toFixed(2),
+              },
+              custom_id: String(obituaryRow.id),
+            },
+          ],
+          application_context: {
+            brand_name: "Matanga",
+            landing_page: "NO_PREFERENCE",
+            user_action: "PAY_NOW",
+            return_url: `${baseUrl}/checkout/paypal-success?obituary=${effectiveSlug}`,
+            cancel_url: `${baseUrl}/checkout/paypal-cancel?obituary=${effectiveSlug}`,
+          },
+        }),
+      });
+
+      if (!orderResp.ok) {
+        const text = await orderResp.text();
+        throw createError({
+          statusCode: 500,
+          statusMessage: "Failed to create PayPal order.",
+          data: { response: text },
+        });
+      }
+
+      const orderJson = await orderResp.json();
+      const approvalLink =
+        (orderJson.links || []).find((l) => l.rel === "approve") || null;
+
+      if (!approvalLink) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: "Missing PayPal approval link.",
+        });
+      }
+
+      // Enregistrer la transaction
+      await transaction(
+        async (tx) => {
+          const insertPaymentSql = `
+        INSERT INTO payment_transactions (
+          user_id,
+          obituary_id,
+          provider,
+          method,
+          status,
+          amount,
+          currency,
+          external_payment_id,
+          metadata,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+        )
+      `;
+
+          const metadata = {
+            type: "paypal_order",
+            planCode: planCode || obituaryRow.pricing_tier || null,
+            environment: env,
+          };
+
+          await tx.query(insertPaymentSql, [
+            session.userId,
+            obituaryRow.id,
+            "paypal",
+            method,
+            "pending",
+            amount,
+            currency,
+            orderJson.id, // ex: PAYPAL_ORDER_ID
+            JSON.stringify(metadata),
+          ]);
+        },
+        { requestId }
+      );
+
+      logInfo("Checkout created (paypal)", {
+        userId: session.userId,
+        obituaryId: obituaryRow.id,
+        provider: "paypal",
         amount,
         currency,
+        orderId: orderJson.id,
+        requestId,
+      });
+
+      // 👉 le front redirige vers cette URL, PayPal affiche son form
+      return {
+        ok: true,
+        provider: "paypal",
         method,
-        provider,
+        redirectUrl: approvalLink.href,
       };
-    });
+    }
 
-    logInfo("Checkout created successfully", {
-      ...result,
-      userId: session.userId,
-      requestId,
-    });
+    // 5) Stripe / PayPal non configurés : on ne plante pas, on informe
+    let hasConfig = false;
+    if (provider === "stripe" && process.env.STRIPE_SECRET_KEY) {
+      hasConfig = true;
+    }
+    if (
+      provider === "paypal" &&
+      process.env.PAYPAL_CLIENT_ID &&
+      process.env.PAYPAL_SECRET
+    ) {
+      hasConfig = true;
+    }
 
+    if (!hasConfig) {
+      // Pas de crash → on renvoie un message neutre pour le toast
+      return {
+        ok: false,
+        notConfigured: true,
+        provider,
+        method,
+        message:
+          "Ce moyen de paiement n’est pas encore configuré sur cet environnement. Vous pouvez utiliser le virement bancaire.",
+      };
+    }
+
+    // 6) Plus tard : vraie intégration Stripe / PayPal (checkout session, liens, etc.)
     return {
-      ok: true,
-      paymentId: result.paymentId,
-      amount: result.amount,
-      currency: result.currency,
-      method: result.method,
-      provider: result.provider,
-      // On pourra plus tard renvoyer :
-      // - soit une URL externe (PayPal, Stripe Checkout)
-      // - soit juste l’id pour une page /checkout/[paymentId]
+      ok: false,
+      notConfigured: true,
+      provider,
+      method,
+      message:
+        "L’intégration complète de ce moyen de paiement sera disponible prochainement.",
     };
   } catch (err) {
     if (err.statusCode) {
-      // erreurs métier / validations volontaires
-      logError("Checkout create failed (controlled)", {
+      logError("Checkout create failed", {
         error: err.message,
         statusCode: err.statusCode,
-        data: err.data,
         userId: session.userId,
         requestId,
       });

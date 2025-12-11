@@ -1,3 +1,4 @@
+<!--D:\works\lectures\Matanga\matanga\app\pages\payments\[paymentId].vue-->
 <template>
   <main class="app-main fade-in">
     <PageNavBar
