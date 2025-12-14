@@ -107,7 +107,7 @@
 
 <script setup>
 definePageMeta({
-  middleware: ['auth'], // si tu veux forcer l’auth sur cette page
+  middleware: ['auth'], // on garde l'auth obligatoire sur cette page
 });
 
 import { computed } from 'vue';
@@ -122,29 +122,44 @@ import PageNavBar from '~/components/PageNavBar.vue';
 const route = useRoute();
 const { t } = useI18n();
 
-const sessionId = computed(() => route.query.session_id || route.query.sessionId || null);
+const sessionId = computed(
+  () => route.query.session_id || route.query.sessionId || null,
+);
 
 // Appel API pour confirmer la session Stripe
 const {
   data,
   pending,
   error,
-} = await useFetch(() =>
-  sessionId.value
-    ? `/api/payments/stripe/confirm?session_id=${encodeURIComponent(
-        sessionId.value,
-      )}`
-    : null,
+} = await useFetch(
+  () =>
+    sessionId.value
+      ? `/api/payments/stripe/confirm?session_id=${encodeURIComponent(
+          sessionId.value,
+        )}`
+      : null,
   {
     key: () => `stripe-success-${sessionId.value || 'none'}`,
+    // ✅ important pour que les cookies d'auth soient bien envoyés
+    server: false,
+    credentials: 'include',
   },
 );
 
 const result = computed(() => data.value || null);
 
 const backendMessage = computed(() => {
-  if (!result.value) return '';
-  return result.value.message || '';
+  // Si l'API a renvoyé une erreur H3 (createError), Nuxt met les infos ici
+  if (error.value && error.value.data) {
+    const dataErr = error.value.data;
+    return dataErr.statusMessage || dataErr.message || '';
+  }
+
+  if (result.value && result.value.message) {
+    return result.value.message;
+  }
+
+  return '';
 });
 
 // SEO
