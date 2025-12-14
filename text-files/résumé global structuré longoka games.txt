@@ -1,0 +1,580 @@
+Je te fais un résumé structuré que tu pourras presque coller tel quel dans ton journal de dev.
+
+1️⃣ Vision globale (rappel)
+
+Longoka / Lexikongo / Lexilingala, c’est :
+
+Un écosystème autour des langues (Kikongo d’abord, Lingala ensuite).
+
+Une base lexicale sérieuse (DB MySQL : mots, verbes, classes nominales, définitions FR/EN, etc.).
+
+Des jeux pédagogiques :
+
+mots mêlés, QCM, quiz de classes nominales, verbes, nombres, séries d’exercices…
+
+Des produits dérivés :
+
+applis (web/mobile),
+
+livres de jeux (InDesign),
+
+ressources pour profs / écoles,
+
+plus tard : moteur de jeux plus costaud (C++, etc.).
+
+L’idée centrale :
+
+Une seule base lexicale, plusieurs sorties : jeux, livres, apps.
+
+2️⃣ État actuel du backend Java (backend-java)
+🔹 Base de données
+
+On s’appuie sur deux bases structurellement identiques :
+
+6i695q_lexikongo (Kikongo)
+
+6i695q_lingala (Lingala)
+
+Tables principales :
+
+verbs : verb_id, name, root, suffix, flags (active, derived…), liens user, dates…
+
+words : word_id, singular, plural, root, class_id, number_variability, etc.
+
+word_meanings : sens d’un mot avec language_code (fr, etc.)
+
+verb_meanings : idem pour les verbes.
+
+slugs : slugs uniques word / verb.
+
+nominal_classes : class_id, class_name (n-zi, ki-bi, mu-ba, etc.)
+
+Tu as confirmé que Lexikongo et Lexilingala utilisent la même structure, ce qui est parfait pour factoriser le code.
+
+🔹 Modèles Java (lexique)
+
+Dans com.longoka.games.lexikongo, on a maintenant :
+
+LexWord
+
+id, singular, plural, root
+
+NominalClass (class_id + class_name)
+
+slug
+
+liste de LexMeaning
+
+LexVerb
+
+id, name, root, suffix
+
+flags (active, derived…)
+
+liste de LexMeaning
+
+LexMeaning
+
+meaningId, languageCode, meaning
+
+NominalClass
+
+classId, className
+
+NumberVariability
+
+enum pour singular_only, plural_only, invariable, variable
+
+Ces classes représentent proprement ce qui est en DB et servent de base commune à tous les jeux.
+
+🔹 Repositories lexicaux
+
+Toujours dans com.longoka.games.lexikongo :
+
+LexikongoWordRepository
+
+findRandomWords(int limit, String languageCode)
+
+findRandomWordsByClassId(int classId, int limit, String languageCode)
+
+LexikongoVerbRepository
+
+findRandomVerbsByLength(int minRootLength, int maxRootLength, int limit, String languageCode)
+
+Ces méthodes :
+
+font les bons JOIN avec word_meanings / verb_meanings,
+
+priorisent les sens dans une langue donnée (ex : "fr"),
+
+remontent des LexWord / LexVerb déjà enrichis avec leurs LexMeaning.
+
+🔹 Outils CLI “de debug” (app)
+
+Dans com.longoka.games.app :
+
+DbConfig
+
+gère les connexions vers :
+
+openKikongoLexConnection()
+
+openLingalaLexConnection()
+
+lit config/db-local.properties avec lex.kg.* et lex.ln.*.
+
+KikongoWordsTool
+
+se connecte à 6i695q_lexikongo
+
+affiche 20 mots aléatoires + toutes leurs définitions [fr] ....
+
+LingalaWordsTool
+
+se connecte à 6i695q_lingala
+
+affiche des mots Lingala + définitions FR.
+
+Tu as configuré l’exécution avec :
+
+chcp 65001
+$env:JAVA_TOOL_OPTIONS = "-Dfile.encoding=UTF-8"
+mvn compile
+mvn exec:java "-Dexec.mainClass=..."
+
+
+ce qui te donne du UTF-8 correct dans la console.
+
+3️⃣ Moteur de mots mêlés opérationnel
+🔹 Lib de puzzles
+
+Dans com.longoka.games.puzzles.wordsearch (déjà existant) :
+
+WordSearchGenerator
+
+WordSearchPuzzle
+
+WordToFind
+
+Tu l’utilises maintenant branché sur le vrai lexique.
+
+🔹 Services Kikongo basés sur le lexique
+1. KikongoWordSearchService
+
+Génère un mot mêlé de noms Kikongo à partir de la DB lexikongo.
+
+Deux variantes :
+
+WordSearchPuzzle generateRandomKikongoWordSearch(
+    int rows,
+    int cols,
+    int maxWords,
+    String meaningLanguageCode
+)
+
+WordSearchPuzzle generateKikongoWordSearchForClass(
+    int classId,
+    int rows,
+    int cols,
+    int maxWords,
+    String meaningLanguageCode
+)
+
+
+Utilise LexikongoWordRepository pour récupérer les mots + définitions.
+
+Transforme les LexWord en WordToFind avec :
+
+baseForm = forme choisie (singulier/pluriel/root)
+
+translation = première déf FR (ou fallback)
+
+extraInfo = class nominale (n-zi, ki-bi, etc.).
+
+2. KikongoVerbWordSearchService
+
+Génère un mot mêlé de verbes Kikongo :
+
+WordSearchPuzzle generateRandomKikongoVerbWordSearch(
+    int rows,
+    int cols,
+    int maxWords,
+    String meaningLanguageCode
+)
+
+
+Utilise LexikongoVerbRepository (racines, déf FR).
+
+Place les verbes dans la grille + déf FR comme “indices” côté liste.
+
+3. KikongoMixedWordSearchService
+
+Nouveau service : mots mêlés mixtes noms + verbes.
+
+Fonction typique :
+
+WordSearchPuzzle generateMixedWordSearch(
+    int rows,
+    int cols,
+    int nounCount,
+    int verbCount,
+    String meaningLanguageCode
+)
+
+
+Combine :
+
+quelques noms (via LexikongoWordRepository),
+
+quelques verbes (via LexikongoVerbRepository),
+
+en une seule grille homogène.
+
+🔹 Tools CLI pour les mots mêlés
+
+Dans com.longoka.games.app :
+
+KikongoWordSearchTool
+
+affiche une grille de noms + liste des WordToFind.
+
+KikongoWordSearchByClassTool
+
+idem, mais pour une classe nominale (ex : classe 1 -> n-zi).
+
+KikongoVerbWordSearchTool
+
+affiche une grille de verbes Kikongo.
+
+KikongoMixedWordSearchTool
+
+affiche une grille mixte noms + verbes et la liste :
+
+Mosi [noun] {di-ma} : Un
+
+Sasuna [verb] : Expliquer
+
+etc.
+
+✅ Tout ça compile et tourne (BUILD SUCCESS)
+✅ Tu vois bien les grilles + les mots à trouver + les définitions.
+
+4️⃣ Ce qui manque encore / limitations actuelles
+
+Pas encore de :
+
+JSON d’export “officiel” pour les puzzles,
+
+API HTTP / serveur web,
+
+intégration Nuxt,
+
+pipeline automatique vers InDesign.
+
+Pas encore :
+
+de notion de difficulté,
+
+de thème lexical (nourriture, corps, famille…),
+
+de niveau (débutant / avancé),
+
+de scores / règles de jeu (c’est juste la génération de puzzle pour l’instant).
+
+Côté Lingala :
+
+on lit déjà les mots + déf FR,
+
+mais on n’a pas encore de WordSearchService pour Lingala, ni de jeux associés.
+
+5️⃣ Roadmap proposée
+🟢 Court terme (prochaines sessions)
+
+Standardiser le JSON pour un puzzle de mots mêlés
+Exemple de format cible :
+
+{
+  "language": "kg",
+  "type": "wordsearch",
+  "title": "Mots mêlés Kikongo (noms + verbes)",
+  "theme": "Noms + verbes",
+  "rows": 12,
+  "cols": 12,
+  "grid": ["KYEPLIGURAYT", "..."],
+  "entries": [
+    {
+      "baseForm": "Mosi",
+      "partOfSpeech": "noun",
+      "nominalClass": "di-ma",
+      "translation": "Un",
+      "slug": "mosi"
+    },
+    {
+      "baseForm": "Sasuna",
+      "partOfSpeech": "verb",
+      "translation": "Expliquer",
+      "slug": "sasuna"
+    }
+  ]
+}
+
+
+Créer un outil d’export JSON côté Java
+Dans com.longoka.games.app :
+
+KikongoWordSearchJsonExportTool
+
+KikongoVerbWordSearchJsonExportTool
+
+KikongoMixedWordSearchJsonExportTool
+
+Chaque tool :
+
+génère plusieurs puzzles (ex : 20 grilles),
+
+les met dans un objet WordSearchPack,
+
+écrit un fichier target/kikongo-wordsearch-mixed-pack.json.
+
+Nettoyage léger / cohérence des noms
+
+Garder l’idée :
+
+KikongoWordSearchService → noms,
+
+KikongoVerbWordSearchService → verbes,
+
+KikongoMixedWordSearchService → mixte.
+
+Plus tard, si tu veux, on pourra renommer proprement en ...PuzzleService / ...GameService.
+
+🟡 Moyen terme (1–3 mois)
+
+Brancher une app Nuxt / Front JS
+
+Petit front Nuxt qui :
+
+charge un pack JSON de puzzles,
+
+affiche la grille de mots mêlés,
+
+permet de surligner des mots trouvés,
+
+montre les définitions FR (ou les cache pour mode “plus dur”).
+
+Pipeline InDesign
+
+Script (JSX) qui :
+
+lit le JSON,
+
+place la grille dans une page InDesign,
+
+place la liste des mots / définitions,
+
+génère un livret de mots mêlés Kikongo prêt à imprimer.
+
+Enrichir les métadonnées des puzzles
+
+Ajouter dans le JSON :
+
+difficulty (easy/medium/hard),
+
+tags (thèmes : “corps”, “famille”, “école”),
+
+sourceLesson (liens avec tes leçons).
+
+Porter les services vers Lingala
+
+LingalaWordSearchService,
+
+puis à terme verbes Lingala si DB prête.
+
+🔵 Long terme (vision)
+
+Écosystème multi-jeux Longoka
+
+Mots mêlés,
+
+QCM verbes / classes nominales,
+
+jeux de nombres,
+
+memory / matching Kikongo–Français,
+
+futurs puzzles (mots croisés, anagrammes…).
+
+Standard “Longoka Game Format” (LGF)
+
+Un format JSON stable pour l’ensemble des jeux (pas seulement wordsearch).
+
+Utilisable par :
+
+backend Java,
+
+front Nuxt,
+
+scripts InDesign,
+
+futures apps mobiles,
+
+futur moteur C++.
+
+Moteur C++ (plus tard)
+
+Un LongokaGameEngine en C++ qui lit les fichiers LGF (JSON).
+
+Pour :
+
+apps desktop / offline très performantes,
+
+intégration dans d’autres environnements (devices éducatifs, etc.).
+
+Produits
+
+Livres de jeux (Kikongo / Lingala) pour enfants/adultes.
+
+Apps ludiques (Android, web).
+
+Packs pour enseignants / écoles (puzzles par thème / niveau).
+
+Potentiellement un petit “shop” Longoka avec ces contenus.
+🗓 2025-12-12 – Notes de conception
+Gestion des noms kikongo dans les grilles de mots mêlés
+
+Contexte
+
+Dans la base words, la morphologie nominale kikongo est modélisée avec :
+
+singular : forme de base / lemme (toujours renseignée dans tes données).
+
+plural : forme plurielle (quand elle existe).
+
+number_variability ∈
+
+variable
+
+singular_only
+
+plural_only
+
+invariable
+
+Objectif : définir une forme canonique à utiliser dans les puzzles “mots mêlés” (WordSearch) pour éviter :
+
+les doublons (singulier + pluriel du même lexème dans la même grille),
+
+les usages non naturels (utiliser un “faux singulier” pour un mot qui est en fait uniquement pluriel),
+
+les incohérences avec ton travail lexicographique existant.
+
+Règle générale : 1 lexème = 1 forme dans la grille
+
+Un enregistrement words.word_id représente un lexème.
+Dans une grille de mots mêlés :
+
+on n’utilise qu’une seule forme par lexème,
+
+le choix de cette forme dépend de number_variability.
+
+On ne met jamais singulier + pluriel du même mot dans la même grille.
+
+Détail des cas selon number_variability
+1️⃣ variable
+
+Cas classique : le mot a un vrai singulier + un vrai pluriel (ex. diisu / maisu).
+
+Décision : la forme canonique pour les puzzles = le singulier.
+
+Raison :
+
+cohérence : un seul point d’entrée par lexème,
+
+plus simple pour la mémorisation (on peut toujours présenter le pluriel dans la définition / dans un autre contexte).
+
+👉 Pour variable :
+
+forme pour la grille : singular
+
+plural reste disponible pour l’affichage dans l’appli, mais pas utilisé comme mot à chercher en WordSearch.
+
+2️⃣ plural_only
+
+Cas où le mot ne s’emploie qu’au pluriel en usage réel,
+même si tu as renseigné singular comme lemme technique dans la DB.
+
+Décision : pour la grille, on respecte l’usage natif, donc on prend le pluriel.
+
+👉 Pour plural_only :
+
+forme pour la grille : plural
+
+singular = lemme technique, non utilisé dans les puzzles.
+
+3️⃣ singular_only
+
+Cas où le mot ne s’emploie qu’au singulier.
+
+Décision : la forme puzzle = singular (c’est l’usage réel).
+
+👉 Pour singular_only :
+
+forme pour la grille : singular
+
+plural devrait en pratique être vide ou non significatif.
+
+4️⃣ invariable
+
+Cas des mots qui ne varient pas en nombre :
+conjonctions, certaines qualités / défauts, etc.
+
+Tu as quand même rempli singular pour ces entrées (forme de base / lemme).
+
+Décision : la forme puzzle = singular, considéré comme forme canonique neutre.
+
+👉 Pour invariable :
+
+forme pour la grille : singular
+
+il n’y a pas de variation à gérer.
+
+Résumé des règles (vue dev)
+
+Pour un LexWord w :
+
+Si number_variability = variable
+→ baseForm = singular
+
+Si number_variability = plural_only
+→ baseForm = plural
+
+Si number_variability = singular_only
+→ baseForm = singular
+
+Si number_variability = invariable
+→ baseForm = singular
+
+Si number_variability est null / inconnu (cas de sécurité)
+→ fallback = singular, mais à surveiller / logger.
+
+Et en plus :
+
+Jamais singulier + pluriel du même word_id dans une même grille.
+
+La définition FR reste libre :
+elle peut mentionner l’autre forme (ex. “diisu (sg.), maisu (pl.)”).
+
+Impact pour les futurs livres de mots mêlés
+
+Les livres “Mots mêlés – Noms Kikongo” utilisent ces formes canoniques.
+
+On pourra faire des variantes par :
+
+classes nominales (les 11 classes),
+
+longueur de mot,
+
+plus tard, thématique (via les traductions FR/EN, ou via des tags calculés).
+
+Les données restent fidèles à ta grammaire kikongo :
+aucun “faux” singulier/pluriel n’est introduit par la logique de jeu.

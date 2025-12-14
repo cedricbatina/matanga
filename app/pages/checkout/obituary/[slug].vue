@@ -337,25 +337,28 @@ const startPayment = async (provider) => {
   bankInstructions.value = null;
 
   try {
-    const res = await $fetch('/api/payments/checkout', {
-      method: 'POST',
+    const res = await $fetch("/api/payments/checkout", {
+      method: "POST",
       body: {
         provider,
-        // on envoie le slug *et* un id si dispo
         obituarySlug: slug.value,
-        obituaryId:
-          obituary.value?.id ??
-          obituary.value?.obituaryId ??
-          obituary.value?.obituary_id ??
-          null,
+        obituaryId: obituary.value?.id || null,
         planCode: planCodeFromData.value,
       },
     });
 
-    // 🏦 Virement bancaire : on affiche les instructions
-    if (provider === 'bank_transfer') {
-      if (!res?.ok || !res.bankTransfer) {
-        throw new Error('Invalid bank transfer response');
+    // ✅ Stripe / PayPal: redirection si URL
+    if (res?.redirectUrl) {
+      window.location.assign(res.redirectUrl);
+      return;
+    }
+
+    // ✅ Bank transfer: affichage instructions
+    if (provider === "bank_transfer") {
+      if (!res?.ok || !res?.bankTransfer) {
+        // Affiche le payload pour comprendre au lieu d'un message trompeur
+        console.error("Bank transfer payload unexpected:", res);
+        throw new Error("Bank transfer response missing bankTransfer");
       }
 
       bankInstructions.value = {
@@ -366,44 +369,33 @@ const startPayment = async (provider) => {
         amountFormatted: res.amountFormatted,
       };
 
-      if (toast) {
-        toast.success(t('checkoutObituary.bank.toastSuccess'));
-      }
+      toast?.success(t("checkoutObituary.bank.toastSuccess"));
       return;
     }
 
-    // 💳 / 🅿️ Stripe / PayPal non configurés
+    // ✅ Providers non configurés: toast info
     if (res?.notConfigured) {
-      if (toast) {
-        toast.info(
-          res.message ||
-            t('checkoutObituary.methods.notConfigured'),
-        );
-      } else {
-        console.info('Payment provider not configured', provider, res);
-      }
+      toast?.info(res.message || t("checkoutObituary.methods.notConfigured"));
       return;
     }
 
-    // Plus tard : redirection vers une URL de checkout (Stripe / PayPal)
-    if (res?.redirectUrl) {
-      window.location.href = res.redirectUrl;
-      return;
-    }
-
-    throw new Error('Unsupported payment response');
+    console.error("Unsupported payment response:", res);
+    throw new Error("Unsupported payment response");
   } catch (err) {
-    console.error('startPayment error', err);
-    if (toast) {
-      toast.error(
-        t('checkoutObituary.methods.error') ||
-          'Erreur lors de l’initialisation du paiement.',
-      );
-    }
+    console.error("startPayment error", err);
+
+    const backendMsg =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      err?.message ||
+      "";
+
+    toast?.error(backendMsg || t("checkoutObituary.methods.error"));
   } finally {
     loadingProvider.value = null;
   }
 };
+
 
 
 

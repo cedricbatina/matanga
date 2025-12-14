@@ -1,0 +1,175 @@
+🧠 Journal de développement — Matanga
+
+Date : 12 décembre 2025
+Sujet principal : Paiements (Bank transfer, Stripe, PayPal) + checkout flow
+
+✅ Avancées réalisées
+1. Architecture paiement (backend)
+
+Création et validation de la table payment_transactions
+
+Support multi-provider : bank_transfer, stripe, paypal
+
+Champs clés : provider, method, status, amount, currency,
+external_payment_id, external_charge_id, metadata, timestamps
+
+Mise en place d’un endpoint unique :
+
+POST /api/payments/checkout
+
+Responsabilités :
+
+vérifier ownership (owner / admin / moderator)
+
+vérifier que l’annonce est payante
+
+créer une transaction de paiement
+
+retourner soit :
+
+des instructions bancaires (bank transfer)
+
+une redirectUrl (Stripe / PayPal)
+
+2. Bank transfer (✅ fonctionnel)
+
+Génération d’une référence unique (MAT-{obituaryId}-{random})
+
+Insertion transaction pending en DB
+
+Mise à jour de l’annonce (payment_provider, payment_reference)
+
+Retour au front d’un payload complet :
+
+iban, bic, holder, reference, amountFormatted
+
+Affichage correct des instructions côté UI
+
+3. Stripe (quasi OK)
+
+Création correcte d’une Stripe Checkout Session
+
+Enregistrement de la transaction Stripe en DB (pending)
+
+URLs configurées :
+
+success_url = /checkout/stripe-success?session_id=...
+
+cancel_url = /checkout/stripe-cancel?...
+
+Endpoint backend valide, logs OK (Checkout created (stripe))
+
+4. PayPal (préparé)
+
+Flow OAuth2 + création d’Order PayPal
+
+Récupération du lien approve
+
+Enregistrement de la transaction PayPal en DB
+
+Retour d’une redirectUrl vers PayPal
+
+⚠️ Difficultés rencontrées (importantes)
+1. Confusion front ↔ backend sur les réponses
+
+Erreur front trompeuse : Invalid bank transfer response
+
+causée par :
+
+res vide
+
+ou Failed to fetch
+
+ou redirection Stripe non gérée correctement
+
+Correction : rendre le startPayment plus robuste
+
+vérifier redirectUrl avant tout
+
+ne pas throw trop tôt
+
+logger les payloads inattendus
+
+2. Redirection Stripe non visible côté UI
+
+Backend créait bien la session Stripe
+
+MAIS le front ne redirigeait pas toujours
+
+Causes probables identifiées :
+
+rebuild Nitro / HMR au moment du fetch
+
+Service Worker / PWA encore actif en dev
+
+Failed to fetch masqué par le code front
+
+Solution :
+
+window.location.assign(res.redirectUrl)
+
+désactiver / unregister SW en dev
+
+tester via http://localhost:3004 uniquement
+
+3. Incohérences DB / query()
+
+Selon les helpers DB :
+
+parfois query() retourne rows
+
+parfois [rows, fields]
+
+Correction :
+
+normalisation systématique des résultats (normalizeRows)
+
+4. Fatigue cognitive / complexité
+
+Beaucoup d’aller-retours entre :
+
+pages confirm, checkout, stripe-success
+
+API obituaries, payments, publish
+
+Décision : s’arrêter ici, tout est prêt structurellement
+
+🧱 État actuel du système
+
+✅ Bank transfer : OK
+
+🟡 Stripe : session créée, redirection à finaliser/stabiliser
+
+🟡 PayPal : order créé, redirection prête
+
+❌ Pas encore fait :
+
+webhook Stripe (payment_intent.succeeded)
+
+confirmation PayPal (capture)
+
+mise à jour automatique payment_transactions.status
+
+publication automatique de l’annonce après paiement
+
+pages paypal-success / paypal-cancel
+
+factures / reçus
+
+notifications (admin / user)
+
+🧭 Prochaine étape (pour le prochain chat)
+
+Stabiliser définitivement le front startPayment
+
+Finaliser :
+
+/checkout/stripe-success
+
+/api/payments/stripe/confirm
+
+Ajouter les webhooks Stripe
+
+Publier automatiquement l’annonce après paiement confirmé
+
+Ensuite seulement : UX, mails, notifications, factures

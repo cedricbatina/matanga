@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
     let obituaryRow = null;
 
     // a) par external_payment_id (on a stocké checkoutSession.id)
-    const [rowsPayment] = await query(
+    const rowsPayment = await query(
       `
       SELECT *
       FROM payment_transactions
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
 
     // b) si on a un obituary_id dans le metadata, on récupère l’annonce
     if (obituaryIdMeta) {
-      const [rowsObituary] = await query(
+      const rowsObituary = await query(
         `
         SELECT id, slug, title
         FROM obituaries

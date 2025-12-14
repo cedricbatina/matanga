@@ -3,17 +3,18 @@ import { defineEventHandler, readBody, createError } from "h3";
 import { requireAuth } from "../../utils/authSession.js";
 import { query, transaction } from "../../utils/db.js";
 import { logInfo, logError } from "../../utils/logger.js";
-// 🆕 Stripe + Buffer
+
+// 🧾 Stripe + Buffer (pour PayPal)
 import Stripe from "stripe";
 import { Buffer } from "node:buffer";
 
+// Providers supportés
 const SUPPORTED_PROVIDERS = ["stripe", "paypal", "bank_transfer"];
 
-// Instance Stripe (si clé présente)
-const stripe =
-  process.env.STRIPE_SECRET_KEY
-    ? new Stripe(process.env.STRIPE_SECRET_KEY)
-    : null;
+// Instance Stripe (si la clé existe)
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 function normalizeMethod(provider, rawMethod) {
   if (provider === "bank_transfer") return "bank_transfer";
@@ -181,17 +182,102 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // 4) Cas spécial : virement bancaire (bank_transfer)
+    // 4) Cas spécial : virement bancaire (bank_transfer) ✅
+    if (provider === "bank_transfer") {
+      const BANK_IBAN = process.env.PAYMENT_BANK_IBAN || "";
+      const BANK_BIC = process.env.PAYMENT_BANK_BIC || "";
+      const BANK_HOLDER = process.env.PAYMENT_BANK_HOLDER || "Matanga";
 
-    const SUPPORTED_PROVIDERS = ["stripe", "paypal", "bank_transfer"];
+      const paymentReference = generatePaymentReference(obituaryRow.id);
 
-    // Instance Stripe (si clé présente)
-    const stripe = process.env.STRIPE_SECRET_KEY
-      ? new Stripe(process.env.STRIPE_SECRET_KEY)
-      : null;
+      await transaction(
+        async (tx) => {
+          const insertPaymentSql = `
+            INSERT INTO payment_transactions (
+              user_id,
+              obituary_id,
+              provider,
+              method,
+              status,
+              amount,
+              currency,
+              external_payment_id,
+              metadata,
+              created_at,
+              updated_at
+            )
+            VALUES (
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+            )
+          `;
 
-    // 5) Stripe : création d'une Checkout Session
-    // 5) Stripe : création d'une Checkout Session
+          const metadata = {
+            type: "bank_transfer",
+            planCode: planCode || obituaryRow.pricing_tier || null,
+          };
+
+          await tx.query(insertPaymentSql, [
+            session.userId,
+            obituaryRow.id,
+            "bank_transfer",
+            "bank_transfer",
+            "pending",
+            amount,
+            currency,
+            paymentReference,
+            JSON.stringify(metadata),
+          ]);
+
+          const updateObituarySql = `
+            UPDATE obituaries
+            SET
+              payment_provider = ?,
+              payment_reference = ?,
+              updated_at = NOW()
+            WHERE id = ?
+          `;
+
+          await tx.query(updateObituarySql, [
+            "bank_transfer",
+            paymentReference,
+            obituaryRow.id,
+          ]);
+        },
+        { requestId }
+      );
+
+      const amountFormatted = new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency,
+      }).format(amount);
+
+      logInfo("Checkout created (bank transfer)", {
+        userId: session.userId,
+        obituaryId: obituaryRow.id,
+        provider: "bank_transfer",
+        amount,
+        currency,
+        requestId,
+      });
+
+      // 👉 C'est exactement ce que ta page checkout attend
+      return {
+        ok: true,
+        provider: "bank_transfer",
+        method: "bank_transfer",
+        amount,
+        currency,
+        amountFormatted,
+        bankTransfer: {
+          iban: BANK_IBAN || "—",
+          bic: BANK_BIC || "",
+          holder: BANK_HOLDER,
+          reference: paymentReference,
+        },
+      };
+    }
+
+    // 5) Stripe : création d'une Checkout Session ✅
     if (provider === "stripe") {
       const baseUrl = process.env.PUBLIC_BASE_URL || "http://localhost:3004";
 
@@ -199,14 +285,13 @@ export default defineEventHandler(async (event) => {
         return {
           ok: false,
           notConfigured: true,
-          provider,
+          provider: "stripe",
           method,
           message:
             "Stripe n’est pas encore configuré sur cet environnement. Utilisez le virement bancaire.",
         };
       }
 
-      // On crée une Checkout Session (qui crée un PaymentIntent en interne)
       const checkoutSession = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
@@ -214,7 +299,7 @@ export default defineEventHandler(async (event) => {
           {
             price_data: {
               currency,
-              unit_amount: Math.round(amount * 100), // en centimes
+              unit_amount: Math.round(amount * 100),
               product_data: {
                 name: `Annonce nécrologique – ${effectiveSlug}`,
               },
@@ -232,29 +317,28 @@ export default defineEventHandler(async (event) => {
         cancel_url: `${baseUrl}/checkout/stripe-cancel?obituary=${effectiveSlug}`,
       });
 
-      // Enregistrer la transaction côté DB
       await transaction(
         async (tx) => {
           const insertPaymentSql = `
-        INSERT INTO payment_transactions (
-          user_id,
-          obituary_id,
-          provider,
-          method,
-          status,
-          amount,
-          currency,
-          external_payment_id,
-          external_charge_id,
-          external_customer_id,
-          metadata,
-          created_at,
-          updated_at
-        )
-        VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
-        )
-      `;
+            INSERT INTO payment_transactions (
+              user_id,
+              obituary_id,
+              provider,
+              method,
+              status,
+              amount,
+              currency,
+              external_payment_id,
+              external_charge_id,
+              external_customer_id,
+              metadata,
+              created_at,
+              updated_at
+            )
+            VALUES (
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+            )
+          `;
 
           const metadata = {
             type: "stripe_checkout",
@@ -269,9 +353,9 @@ export default defineEventHandler(async (event) => {
             "pending",
             amount,
             currency,
-            checkoutSession.id, // ex: cs_test_...
-            checkoutSession.payment_intent || null, // PaymentIntent ID si déjà connu
-            checkoutSession.customer || null, // customer id si existant
+            checkoutSession.id,
+            checkoutSession.payment_intent || null,
+            checkoutSession.customer || null,
             JSON.stringify(metadata),
           ]);
         },
@@ -288,7 +372,6 @@ export default defineEventHandler(async (event) => {
         requestId,
       });
 
-      // 👉 le front redirige vers cette URL, Stripe affiche son form
       return {
         ok: true,
         provider: "stripe",
@@ -297,8 +380,7 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // 6) PayPal : création d'un Order + lien d’approval
-    // 6) PayPal : création d'un Order + lien d’approval
+    // 6) PayPal : création d'un Order + approval URL ✅
     if (provider === "paypal") {
       const clientId = process.env.PAYPAL_CLIENT_ID || "";
       const secret = process.env.PAYPAL_SECRET || "";
@@ -309,7 +391,7 @@ export default defineEventHandler(async (event) => {
         return {
           ok: false,
           notConfigured: true,
-          provider,
+          provider: "paypal",
           method,
           message:
             "PayPal n’est pas encore configuré sur cet environnement. Utilisez le virement bancaire.",
@@ -321,7 +403,6 @@ export default defineEventHandler(async (event) => {
           ? "https://api-m.paypal.com"
           : "https://api-m.sandbox.paypal.com";
 
-      // 1) Récupérer un access_token
       const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
 
       const tokenResp = await fetch(`${apiBase}/v1/oauth2/token`, {
@@ -345,7 +426,6 @@ export default defineEventHandler(async (event) => {
       const tokenJson = await tokenResp.json();
       const accessToken = tokenJson.access_token;
 
-      // 2) Créer un order
       const orderResp = await fetch(`${apiBase}/v2/checkout/orders`, {
         method: "POST",
         headers: {
@@ -393,27 +473,26 @@ export default defineEventHandler(async (event) => {
         });
       }
 
-      // Enregistrer la transaction
       await transaction(
         async (tx) => {
           const insertPaymentSql = `
-        INSERT INTO payment_transactions (
-          user_id,
-          obituary_id,
-          provider,
-          method,
-          status,
-          amount,
-          currency,
-          external_payment_id,
-          metadata,
-          created_at,
-          updated_at
-        )
-        VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
-        )
-      `;
+            INSERT INTO payment_transactions (
+              user_id,
+              obituary_id,
+              provider,
+              method,
+              status,
+              amount,
+              currency,
+              external_payment_id,
+              metadata,
+              created_at,
+              updated_at
+            )
+            VALUES (
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+            )
+          `;
 
           const metadata = {
             type: "paypal_order",
@@ -429,7 +508,7 @@ export default defineEventHandler(async (event) => {
             "pending",
             amount,
             currency,
-            orderJson.id, // ex: PAYPAL_ORDER_ID
+            orderJson.id,
             JSON.stringify(metadata),
           ]);
         },
@@ -446,7 +525,6 @@ export default defineEventHandler(async (event) => {
         requestId,
       });
 
-      // 👉 le front redirige vers cette URL, PayPal affiche son form
       return {
         ok: true,
         provider: "paypal",
@@ -455,39 +533,12 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // 5) Stripe / PayPal non configurés : on ne plante pas, on informe
-    let hasConfig = false;
-    if (provider === "stripe" && process.env.STRIPE_SECRET_KEY) {
-      hasConfig = true;
-    }
-    if (
-      provider === "paypal" &&
-      process.env.PAYPAL_CLIENT_ID &&
-      process.env.PAYPAL_SECRET
-    ) {
-      hasConfig = true;
-    }
-
-    if (!hasConfig) {
-      // Pas de crash → on renvoie un message neutre pour le toast
-      return {
-        ok: false,
-        notConfigured: true,
-        provider,
-        method,
-        message:
-          "Ce moyen de paiement n’est pas encore configuré sur cet environnement. Vous pouvez utiliser le virement bancaire.",
-      };
-    }
-
-    // 6) Plus tard : vraie intégration Stripe / PayPal (checkout session, liens, etc.)
+    // fallback théorique (ne devrait pas arriver car on a filtré SUPPORTED_PROVIDERS)
     return {
       ok: false,
-      notConfigured: true,
       provider,
       method,
-      message:
-        "L’intégration complète de ce moyen de paiement sera disponible prochainement.",
+      message: "Unsupported payment provider.",
     };
   } catch (err) {
     if (err.statusCode) {
