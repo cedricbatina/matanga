@@ -84,7 +84,10 @@
         <UserInlineCard
           :user="user"
           :is-authenticated="isAuthenticated"
-          @go-dashboard="onGoDashboard"
+          @go-dashboard="onGoToProfile"
+            @go-obituaries="onGoToObituaries"
+             @go-admin-obituaries="onGoToAdminObituaries"
+  @go-moderator-obituaries="onGoToModeratorObituaries"
           @logout="onLogout"
           @login="onLogin"
           @register="onRegister"
@@ -124,8 +127,8 @@ onMounted(() => {
   authStore.ensureAuthLoaded();
 });
 
-const onGoDashboard = () => {
-  router.push('/dashboard'); // adapte si ton espace client a un autre chemin
+const onGoToProfile = () => {
+  router.push('/profile'); // adapte si ton espace client a un autre chemin
 };
 
 const onLogout = async () => {
@@ -140,8 +143,18 @@ const onLogin = () => {
   router.push('/login');
 };
 
+const onGoToObituaries = () => {
+  router.push('/profile/obituaries')
+}
 const onRegister = () => {
   router.push('/register');
+};
+const onGoToAdminObituaries = () => {
+  router.push('/admin/obituaries');
+};
+
+const onGoToModeratorObituaries = () => {
+  router.push('/moderator/obituaries');
 };
 </script>
 

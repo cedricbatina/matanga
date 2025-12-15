@@ -1,3 +1,4 @@
+<!-- components/UserInlineCard.vue -->
 <template>
   <div class="user-inline-card" aria-live="polite">
     <div class="user-inline-main">
@@ -36,8 +37,9 @@
 
       <!-- Actions compactes -->
       <div class="user-inline-actions">
-        <!-- Authentifié : dashboard + logout -->
+        <!-- Authentifié : dashboard + logout + (admin / modération) -->
         <template v-if="isAuthenticated">
+          <!-- Espace utilisateur -->
           <button
             type="button"
             class="btn btn-ghost btn-sm user-inline-btn"
@@ -47,6 +49,39 @@
             <span>{{ t('userInline.dashboard') }}</span>
           </button>
 
+          <!-- Lien “Mes annonces” (familial) -->
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm user-inline-btn"
+            @click="$emit('go-obituaries')"
+          >
+            <i class="fa-regular fa-scroll" aria-hidden="true"></i>
+            <span>{{ t('userInline.myObituaries') }}</span>
+          </button>
+
+          <!-- Bouton admin (visible uniquement admin) -->
+          <button
+            v-if="isAdmin"
+            type="button"
+            class="btn btn-ghost btn-sm user-inline-btn"
+            @click="$emit('go-admin-obituaries')"
+          >
+            <i class="fa-regular fa-shield" aria-hidden="true"></i>
+            <span>{{ t('userInline.adminObituaries') }}</span>
+          </button>
+
+          <!-- Bouton modération (visible admin + moderator) -->
+          <button
+            v-if="isModeratorOrAdmin"
+            type="button"
+            class="btn btn-ghost btn-sm user-inline-btn"
+            @click="$emit('go-moderator-obituaries')"
+          >
+            <i class="fa-regular fa-gavel" aria-hidden="true"></i>
+            <span>{{ t('userInline.moderatorObituaries') }}</span>
+          </button>
+
+          <!-- Logout -->
           <button
             type="button"
             class="btn btn-ghost btn-sm user-inline-btn"
@@ -106,7 +141,15 @@ const props = defineProps({
   },
 });
 
-defineEmits(['go-dashboard', 'logout', 'login', 'register']);
+defineEmits([
+  'go-dashboard',
+  'go-obituaries',
+  'go-admin-obituaries',
+  'go-moderator-obituaries',
+  'logout',
+  'login',
+  'register',
+]);
 
 const { t } = useI18n();
 const { formattedDateTimeWithSeconds } = useDateUtils();
@@ -131,7 +174,19 @@ const formattedNow = computed(() => formattedDateTimeWithSeconds(now.value));
 const onlineLabel = computed(() =>
   props.isAuthenticated
     ? t('userInline.status.online')
-    : t('userInline.status.offline')
+    : t('userInline.status.offline'),
+);
+
+// rôles
+const roles = computed(() => {
+  const u = props.user;
+  return Array.isArray(u?.roles) ? u.roles : [];
+});
+
+const isAdmin = computed(() => roles.value.includes('admin'));
+const isModerator = computed(() => roles.value.includes('moderator'));
+const isModeratorOrAdmin = computed(
+  () => isAdmin.value || isModerator.value,
 );
 
 // Utilise les champs enrichis par /api/auth/me
@@ -158,6 +213,13 @@ const displayName = computed(() => {
 const primaryRoleLabel = computed(() => {
   const u = props.user;
   if (!u) return t('userInline.role.generic');
+
+  if (isAdmin.value) {
+    return t('userInline.role.admin');
+  }
+  if (isModerator.value) {
+    return t('userInline.role.moderator');
+  }
 
   if (u.accountType === 'individual') {
     return t('userInline.role.individual');
@@ -269,19 +331,27 @@ const primaryRoleLabel = computed(() => {
   font-size: 0.9em;
 }
 
-@media (max-width: 520px) {
+/* Mobile : on empile le texte et les boutons */
+@media (max-width: 640px) {
   .user-inline-card {
     border-radius: 0.6rem;
     padding: 0.4rem 0.6rem;
   }
 
   .user-inline-main {
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: flex-start;
+    gap: 0.4rem;
   }
 
   .user-inline-actions {
-    margin-left: auto;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .user-inline-btn {
+    flex: 0 0 auto;
   }
 }
 </style>

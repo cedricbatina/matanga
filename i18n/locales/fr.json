@@ -539,16 +539,21 @@
   "guestHelper": "Connectez-vous ou créez un compte pour publier et gérer vos annonces.",
   "login": "Se connecter",
   "register": "Créer un compte",
-  "dashboard": "Mon espace",
+    "dashboard": "Mon espace",
+  "myObituaries": "Mes annonces",
   "logout": "Se déconnecter",
   "status": {
     "online": "Connecté",
-    "offline": "Non connecté"
+    "offline": "Hors ligne"
   },
   "role": {
     "individual": "Compte particulier",
     "pro": "Compte professionnel",
-    "generic": "Compte Madizi"
+    "generic": "Compte Madizi",
+    
+    "admin": "Administrateur",
+    "moderator": "Modérateur"
+  
   },
   "todayLabel": "Aujourd’hui : {date}"
 }
@@ -679,11 +684,29 @@
     "ruralYes": "Annonce pour une zone rurale ou village",
     "ruralNo": "Annonce pour une zone urbaine ou ville"
   },
-
+"documents": {
+  "idCardTitle": "Pièce d’identité du déclarant",
+  "idCardHelp": "Carte nationale d’identité, passeport ou titre de séjour en cours de validité.",
+  "deathCertTitle": "Certificat de décès",
+  "deathCertHelp": "Certificat ou acte de décès délivré par les autorités compétentes (dans la limite de la législation en vigueur).",
+  "uploadIdCard": "Téléverser la pièce d’identité",
+  "uploadDeathCert": "Téléverser le certificat de décès",
+  "uploading": "Téléversement en cours…",
+  "alreadyUploaded": "Document déjà transmis pour cette annonce.",
+  "uploadSuccess": "Document transmis. Merci.",
+  "uploadError": "Impossible de téléverser le document pour le moment.",
+  "selectFileFirst": "Veuillez d’abord choisir un fichier.",
+  "missingWarning": "Merci de téléverser la pièce d’identité et le certificat de décès avant de procéder au paiement.",
+  "sideHint": "Pour des raisons légales, nous devons vérifier vos documents avant de publier votre annonce."
+},
   "sections": {
     "deceased": {
       "title": "Informations sur le défunt",
-      "subtitle": "Nom, dates, ville principale et autres éléments d'identité."
+      "subtitle": "Nom, dates, ville principale et autres éléments d'identité.",
+        "documents": {
+    "title": "Documents justificatifs",
+    "subtitle": "Ces documents sont nécessaires pour que notre équipe puisse valider et publier votre annonce."
+  }
     },
     "content": {
       "title": "Texte de l'annonce",
@@ -1022,7 +1045,178 @@
   "text": "Aucun montant n’a été débité. Vous pouvez relancer le paiement ou revenir à la liste des annonces.",
   "retry": "Reprendre le paiement",
   "backToList": "Retour aux annonces"
+},
+"checkoutPaypalSuccess": {
+  "title": "Paiement PayPal",
+  "subtitle": "Retour sur Madizi après votre règlement via PayPal.",
+  "loading": "Nous vérifions votre paiement PayPal…",
+  "errorTitle": "Impossible de confirmer le paiement",
+  "errorText": "Nous n’avons pas pu confirmer ce paiement. Si le problème persiste, contactez le support en indiquant la référence PayPal.",
+  "backToList": "Retour aux annonces",
+
+  "paidBadge": "Paiement confirmé",
+  "successTitle": "Merci pour votre confiance",
+  "successText": "Votre paiement a été validé par notre partenaire PayPal. Votre annonce sera traitée conformément aux paramètres choisis.",
+
+  "amount": "Montant réglé",
+  "obituary": "Annonce concernée",
+  "paymentId": "Référence interne",
+  "viewObituary": "Voir l’annonce",
+
+  "meta": {
+    "title": "Paiement PayPal confirmé",
+    "description": "Confirmation de votre paiement PayPal pour la publication d’une annonce nécrologique sur Madizi."
+  }
+},
+"myObituaries": {
+    "title": "Mes annonces",
+    "subtitle": "Consultez et gérez les annonces que vous avez créées sur Madizi.",
+
+    "meta": {
+      "title": "Mes annonces – Madizi",
+      "description": "Retrouvez l’ensemble de vos annonces nécrologiques, suivez leur statut et poursuivez leur rédaction."
+    },
+
+    "error": "Impossible de charger vos annonces pour le moment.",
+    "retry": "Réessayer",
+
+    "empty": "Vous n'avez aucune annonce dans cette catégorie pour le moment.",
+    "createFirst": "Créer une première annonce",
+
+    "searchLabel": "Rechercher dans vos annonces",
+    "searchPlaceholder": "Nom du défunt, titre de l’annonce…",
+
+    "sortLabel": "Trier les annonces",
+    "sort": {
+      "recent": "Plus récentes d’abord",
+      "oldest": "Plus anciennes d’abord",
+      "popular": "Les plus consultées"
+    },
+
+    "filters": {
+      "all": "Toutes",
+      "draft": "Brouillons",
+      "pending": "En attente",
+      "published": "Publiées",
+      "archived": "Archivées",
+      "rejected": "Refusées",
+      "expired": "Arrivées à expiration"
+    },
+
+    "status": {
+      "draft": "Brouillon",
+      "pending_review": "En attente de validation",
+      "draftPaid": "Payée – en attente de validation",
+      "published": "Publiée",
+      "archived": "Archivée",
+      "rejected": "Refusée",
+      "expired": "Expirée"
+    },
+
+    "verification": {
+      "not_required": "Pièces justificatives non demandées",
+    "pending": "Pièces justificatives en cours de vérification",
+    "verified": "Pièces justificatives vérifiées",
+    "rejected": "Pièces justificatives à corriger"
+    },
+
+    "createdAt": "Créée le {date}",
+    "publishedAt": "publiée le {date}",
+
+    "plan": "Formule\u00a0:",
+    "planFree": "gratuit",
+    "planUnknown": "Formule inconnue",
+
+    "payment": {
+      "paid": "Paiement confirmé ({amount} {currency})"
+    },
+
+    "actions": {
+      "continueDraft": "Continuer ce brouillon",
+      "viewPublic": "Voir la page publique",
+          "viewAfterPayment": "Suivre l’annonce payée",
+      "edit": "Modifier l’annonce",
+      "review": "Relire et confirmer"
+    },
+
+    "pagination": {
+      "prev": "Précédent",
+      "next": "Suivant",
+      "info": "Page {page} sur {pageCount}"
+    }
+  },
+  "adminObituaries": {
+  "title": "Annonces à vérifier",
+  "subtitle": "Validez les documents fournis par les familles avant publication.",
+  "meta": {
+    "title": "Modération des annonces",
+    "description": "Espace réservé aux administrateurs et modérateurs pour vérifier les annonces payées."
+  },
+  "filters": {
+    "all": "Toutes",
+    "pending": "À vérifier",
+    "verified": "Vérifiées",
+    "rejected": "Refusées"
+  },
+  "searchLabel": "Rechercher une annonce",
+  "searchPlaceholder": "Nom du défunt, titre ou email famille…",
+  "sortLabel": "Trier les annonces",
+  "sort": {
+    "recent": "Plus récentes d’abord",
+    "oldest": "Plus anciennes d’abord",
+    "popular": "Les plus consultées"
+  },
+  "error": "Une erreur est survenue lors du chargement des annonces.",
+  "errorForbidden": "Cet espace est réservé aux administrateurs et modérateurs.",
+  "retry": "Réessayer",
+  "empty": "Aucune annonce payée à vérifier pour le moment.",
+  "familyLabel": "Famille / compte :",
+  "createdAt": "Créée le {date}",
+  "publishedAt": "Publiée le {date}",
+  "plan": "Formule :",
+  "planFree": "gratuit",
+  "planUnknown": "Formule inconnue",
+  "payment": {
+    "paid": "{amount} {currency} réglés"
+  },
+  "status": {
+    "draft": "Brouillon",
+    "pending_review": "En attente de publication",
+    "published": "Publiée",
+    "archived": "Archivée",
+    "rejected": "Refusée",
+    "expired": "Arrivée à expiration"
+  },
+  "verification": {
+    "not_required": "Vérification non requise",
+    "pending": "À vérifier",
+    "verified": "Documents vérifiés",
+    "rejected": "Documents refusés"
+  },
+  "actions": {
+    "viewPublic": "Voir la page publique",
+    "viewConfirm": "Voir le récap famille",
+     "verify": "Valider les documents",
+    "verifyLoading": "Validation en cours…",
+    "reject": "Refuser les documents",
+    "rejectLoading": "Refus en cours…"
+  },
+  "pagination": {
+    "aria": "Pagination des annonces à vérifier"
+  },
+    "confirm": {
+    "verify": "Confirmer la validation des documents pour « {title} » ? L’annonce sera publiée.",
+    "reject": "Confirmer le refus des documents pour « {title} » ? L’annonce sera marquée comme refusée.",
+    "rejectNotePrompt": "Ajoutez un motif pour la famille (optionnel) :"
+  },
+  "toasts": {
+    "verifySuccess": "Documents vérifiés et annonce publiée.",
+    "rejectSuccess": "Annonce marquée comme refusée.",
+    "actionError": "Impossible d'appliquer cette action pour le moment."
+  }
 }
+
+
 
 
 

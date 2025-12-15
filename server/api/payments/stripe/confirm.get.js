@@ -193,18 +193,23 @@ export default defineEventHandler(async (event) => {
         }
 
         // b) obituaries : provider / reference / montant
+        // b) obituaries : provider / reference / montant / statut
         if (obituaryRow) {
           await tx.query(
             `
-            UPDATE obituaries
-            SET
-              payment_provider = 'stripe',
-              payment_reference = ?,
-              currency = ?,
-              amount_paid = COALESCE(amount_paid, ?),
-              updated_at = NOW()
-            WHERE id = ?
-          `,
+    UPDATE obituaries
+    SET
+      payment_provider = 'stripe',
+      payment_reference = ?,
+      currency = ?,
+      amount_paid = COALESCE(amount_paid, ?),
+      status = CASE
+        WHEN status = 'draft' THEN 'pending_review'
+        ELSE status
+      END,
+      updated_at = NOW()
+    WHERE id = ?
+  `,
             [
               paymentIntent && paymentIntent.id ? paymentIntent.id : sessionId,
               currency,

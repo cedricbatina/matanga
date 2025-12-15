@@ -379,6 +379,94 @@
             </section>
           </div>
         </section>
+              <!-- Bloc documents justificatifs -->
+            <section class="review-section">
+              <h2 class="review-section__title">
+                {{ t('obituaryReview.sections.documents.title') }}
+              </h2>
+              <p class="review-section__subtitle">
+                {{ t('obituaryReview.sections.documents.subtitle') }}
+              </p>
+
+              <div class="review-docs">
+                <!-- Pièce d’identité -->
+                <div class="review-docs__item">
+                  <h3 class="review-docs__item-title">
+                    {{ t('obituaryReview.documents.idCardTitle') }}
+                  </h3>
+                  <p class="review-docs__item-text">
+                    {{ t('obituaryReview.documents.idCardHelp') }}
+                  </p>
+
+                  <p v-if="hasIdCardDoc" class="review-docs__status review-docs__status--ok">
+                    ✅ {{ t('obituaryReview.documents.alreadyUploaded') }}
+                  </p>
+
+                  <div v-else class="review-docs__upload">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      @change="onSelectIdCard"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs"
+                      :disabled="docsUploading"
+                      @click="onUploadIdCard"
+                    >
+                      <span v-if="docsUploading && currentUploadType === 'id_card'">
+                        {{ t('obituaryReview.documents.uploading') }}
+                      </span>
+                      <span v-else>
+                        {{ t('obituaryReview.documents.uploadIdCard') }}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Certificat de décès -->
+                <div class="review-docs__item">
+                  <h3 class="review-docs__item-title">
+                    {{ t('obituaryReview.documents.deathCertTitle') }}
+                  </h3>
+                  <p class="review-docs__item-text">
+                    {{ t('obituaryReview.documents.deathCertHelp') }}
+                  </p>
+
+                  <p v-if="hasDeathCertDoc" class="review-docs__status review-docs__status--ok">
+                    ✅ {{ t('obituaryReview.documents.alreadyUploaded') }}
+                  </p>
+
+                  <div v-else class="review-docs__upload">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      @change="onSelectDeathCert"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs"
+                      :disabled="docsUploading"
+                      @click="onUploadDeathCert"
+                    >
+                      <span v-if="docsUploading && currentUploadType === 'death_certificate'">
+                        {{ t('obituaryReview.documents.uploading') }}
+                      </span>
+                      <span v-else>
+                        {{ t('obituaryReview.documents.uploadDeathCert') }}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <p
+                v-if="!hasAllRequiredDocs"
+                class="review-docs__warning"
+              >
+                {{ t('obituaryReview.documents.missingWarning') }}
+              </p>
+            </section>
 
         <!-- Colonne droite : encadré actions / paiement -->
         <aside
@@ -463,7 +551,7 @@
     type="button"
     class="btn btn-primary"
     @click="onPay"
-    :disabled="isPublishing || isPaying"
+    :disabled="isPublishing || isPaying || !hasAllRequiredDocs"
   >
     <span v-if="isPaying">
       {{ t('obituaryReview.actions.redirectingToPayment') }}
@@ -494,6 +582,12 @@
   </button>
 </div>
 
+<p
+  v-if="!hasAllRequiredDocs && !isFreePlan"
+  class="review-side__hint"
+>
+  {{ t('obituaryReview.documents.sideHint') }}
+</p>
 
 
           </div>
@@ -508,7 +602,7 @@ definePageMeta({
   middleware: ['auth'],
 });
 
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import {
   useRoute,
   useRouter,
@@ -588,6 +682,100 @@ const payload = computed(() => data.value || null);
 const obituary = computed(() => payload.value?.obituary || null);
 const events = computed(() => payload.value?.events || []);
 const contacts = computed(() => payload.value?.contacts || []);
+// 📎 Documents justificatifs
+const documents = ref([]); // liste depuis l'API (plus tard)
+const docsUploading = ref(false);
+const currentUploadType = ref(null);
+const selectedIdCardFile = ref(null);
+const selectedDeathCertFile = ref(null);
+
+// TODO plus tard : charger les docs existants via /api/obituaries/:slug/documents
+// pour l'instant, on part de "aucun doc" côté front.
+const hasIdCardDoc = computed(() =>
+  documents.value.some((d) => d.type === 'id_card'),
+);
+
+const hasDeathCertDoc = computed(() =>
+  documents.value.some((d) => d.type === 'death_certificate'),
+);
+
+const hasAllRequiredDocs = computed(() => {
+  // Pour l’instant : toujours exiger les 2 docs, même pour un plan gratuit.
+  // Tu pourras assouplir (par pays / type de compte) plus tard.
+  return hasIdCardDoc.value && hasDeathCertDoc.value;
+});
+const onSelectIdCard = (event) => {
+  const files = event.target?.files;
+  selectedIdCardFile.value = files && files[0] ? files[0] : null;
+};
+
+const onSelectDeathCert = (event) => {
+  const files = event.target?.files;
+  selectedDeathCertFile.value = files && files[0] ? files[0] : null;
+};
+const uploadDocument = async (type, file) => {
+  if (!file || !obituary.value) return;
+  if (docsUploading.value) return;
+
+  docsUploading.value = true;
+  currentUploadType.value = type;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    const res = await $fetch(`/api/obituaries/${slug.value}/documents`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    // On suppose que l’API renvoie la liste des docs à jour
+    if (Array.isArray(res?.documents)) {
+      documents.value = res.documents;
+    } else if (res?.document) {
+      // fallback si l’API renvoie un seul doc
+      const existing = documents.value.filter((d) => d.type !== type);
+      documents.value = [...existing, res.document];
+    }
+
+    if (toast) {
+      toast.success(t('obituaryReview.documents.uploadSuccess'));
+    }
+  } catch (err) {
+    console.error('Upload document error', err);
+    const msg =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      t('obituaryReview.documents.uploadError');
+    if (toast) {
+      toast.error(msg);
+    }
+  } finally {
+    docsUploading.value = false;
+    currentUploadType.value = null;
+  }
+};
+
+const onUploadIdCard = async () => {
+  if (!selectedIdCardFile.value) {
+    if (toast) {
+      toast.info(t('obituaryReview.documents.selectFileFirst'));
+    }
+    return;
+  }
+  await uploadDocument('id_card', selectedIdCardFile.value);
+};
+
+const onUploadDeathCert = async () => {
+  if (!selectedDeathCertFile.value) {
+    if (toast) {
+      toast.info(t('obituaryReview.documents.selectFileFirst'));
+    }
+    return;
+  }
+  await uploadDocument('death_certificate', selectedDeathCertFile.value);
+};
 
 // SEO dynamique
 useSeoMeta({
@@ -1346,6 +1534,88 @@ const onHardDeleteClick = async () => {
 .btn-ghost-warning:hover,
 .btn-ghost-warning:focus-visible {
   background: rgba(245, 158, 11, 0.08);
+}
+/* ============================
+   Bloc documents justificatifs
+   ============================ */
+
+.review-docs {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 800px) {
+  .review-docs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.review-docs__item {
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border-subtle);
+  background: rgba(148, 163, 184, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.review-docs__item-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.review-docs__item-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+}
+
+.review-docs__upload {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+/* Champ file un peu moins “brut” */
+.review-docs__upload input[type="file"] {
+  font-size: 0.8rem;
+  max-width: 100%;
+}
+
+/* Statut “ok, déjà uploadé” */
+.review-docs__status {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.review-docs__status--ok {
+  color: #15803d;
+}
+
+/* Alerte générale si docs manquants */
+.review-docs__warning {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px dashed rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.04);
+  color: rgba(127, 29, 29, 0.95);
+}
+
+/* Petit texte d’aide dans la colonne droite (si utilisé) */
+.review-side__hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-soft);
 }
 
 </style>

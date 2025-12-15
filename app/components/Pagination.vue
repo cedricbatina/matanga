@@ -101,18 +101,20 @@
               <span class="app-pagination__goto-label-text">
                 {{ t('pagination.gotoLabel') }}
               </span>
-              <input
-                v-model="inputPage"
-                type="number"
-                class="app-pagination__goto-input"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                min="1"
-                :max="totalPages"
-                :aria-label="t('pagination.gotoAria', { totalPages })"
-                @keydown.enter.prevent="applyInputPage"
-                @blur="applyInputPage"
-              />
+             <input
+  v-model="inputPage"
+  type="number"
+  class="app-pagination__goto-input"
+  inputmode="numeric"
+  pattern="[0-9]*"
+  min="1"
+  :max="totalPages"
+  :aria-label="t('pagination.gotoAria', { totalPages })"
+  @input="onInputPageChange"
+  @keydown.enter.prevent="applyInputPage"
+  @blur="applyInputPage"
+/>
+
               <span class="app-pagination__goto-total">
                 {{ t('pagination.gotoTotal', { totalPages }) }}
               </span>
@@ -276,6 +278,19 @@ function applyInputPage() {
   inputPage.value = page;
   goToPage(page);
 }
+function onInputPageChange(event) {
+  const raw = event.target.value;
+  const target = Number(raw);
+
+  inputPage.value = raw;
+
+  // On ne déclenche que si c’est un nombre valide dans la plage
+  if (!Number.isFinite(target)) return;
+  if (target < 1 || target > props.totalPages) return;
+
+  goToPage(target);
+}
+
 </script>
 
 <style scoped>
@@ -465,4 +480,35 @@ function applyInputPage() {
     width: 2.4rem;
   }
 }
+.app-pagination__btn--nav {
+  background: var(--color-surface-muted);
+  color: var(--color-text-main);
+}
+
+/* --- Chevrons de navigation toujours visibles --- */
+
+/* 1) Couleur de base des icônes (précédent / suivant) */
+.app-pagination__icon i {
+  color: var(--color-text-main);
+  opacity: 0.9; /* léger adoucissement, mais bien visible */
+}
+
+/* 2) Survol / focus : on garde la même couleur (on joue sur le fond / bordure) */
+.app-pagination__btn--nav:hover .app-pagination__icon i,
+.app-pagination__btn--nav:focus-visible .app-pagination__icon i {
+  color: var(--color-text-main);
+  opacity: 1;
+}
+
+/* 3) Boutons désactivés : on baisse juste un peu l’opacité */
+.app-pagination__btn--disabled .app-pagination__icon i {
+  opacity: 0.4;
+}
+
+.app-pagination__btn--nav {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-main);
+}
+
 </style>

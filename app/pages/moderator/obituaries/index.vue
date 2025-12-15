@@ -1,25 +1,24 @@
-<!-- pages/admin/obituaries/index.vue -->
+<!-- pages/moderator/obituaries/index.vue -->
 <template>
   <main class="app-main fade-in">
     <PageNavBar
-      aria-label="Navigation espace modération"
+      aria-label="Navigation modération"
       :show-back-home="true"
       :show-back-list="false"
       :show-create="false"
     />
 
     <section class="section">
-      <!-- Header -->
       <header class="section-header">
         <h1 class="section-title">
-          {{ t('adminObituaries.title') }}
+          {{ t('adminObituaries.titleModerator', 'Modération des annonces') }}
         </h1>
         <p class="section-subtitle">
-          {{ t('adminObituaries.subtitle') }}
+          {{ t('adminObituaries.subtitleModerator', 'Validez ou refusez les annonces payées avec leurs documents.') }}
         </p>
       </header>
 
-      <!-- Barre de filtres / recherche -->
+         <!-- Barre de filtres / recherche -->
       <div class="adminobits-toolbar">
         <!-- Filtres statut vérification -->
         <nav
@@ -284,6 +283,7 @@
   </main>
 </template>
 
+
 <script setup>
 definePageMeta({
   middleware: ['auth'], // + protection côté API pour roles admin/modo
@@ -300,11 +300,18 @@ import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
 import Pagination from '~/components/Pagination.vue';
 import { useDateUtils } from '~/composables/useDateUtils';
+import { useNuxtApp } from '#imports';
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { formattedDateTimeWithSeconds } = useDateUtils();
+const { $useToast } = useNuxtApp();
+const toast = $useToast ? $useToast() : null;
+
+// état pour désactiver les boutons pendant l'appel API
+const processingId = ref(null);
+const processingAction = ref(null);
 
 // Filtres "état de vérification"
 const verificationOptions = [
@@ -465,6 +472,69 @@ const onVerificationChange = (value) => {
 const changePage = (newPage) => {
   if (newPage === page.value || newPage < 1) return;
   page.value = newPage;
+};
+const callVerificationAction = async (itemId, action, note) => {
+  processingId.value = itemId;
+  processingAction.value = action;
+
+  try {
+    await $fetch(`/api/admin/obituaries/${itemId}/verification`, {
+      method: 'POST',
+      body: { action, note: note || null },
+    });
+
+    if (toast) {
+      if (action === 'verify') {
+        toast.success(t('adminObituaries.toasts.verifySuccess'));
+      } else if (action === 'reject') {
+        toast.success(t('adminObituaries.toasts.rejectSuccess'));
+      }
+    }
+
+    await refresh();
+  } catch (err) {
+    console.error('Admin verification action error', err);
+
+    if (toast) {
+      const msg =
+        err?.data?.statusMessage ||
+        err?.data?.message ||
+        t('adminObituaries.toasts.actionError');
+      toast.error(msg);
+    }
+  } finally {
+    processingId.value = null;
+    processingAction.value = null;
+  }
+};
+
+const onVerifyClick = async (item) => {
+  const confirmed = window.confirm(
+    t('adminObituaries.confirm.verify', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    })
+  );
+
+  if (!confirmed) return;
+
+  await callVerificationAction(item.id, 'verify', null);
+};
+
+const onRejectClick = async (item) => {
+  const confirmed = window.confirm(
+    t('adminObituaries.confirm.reject', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    })
+  );
+
+  if (!confirmed) return;
+
+  const note = window.prompt(
+    t('adminObituaries.confirm.rejectNotePrompt'),
+    ''
+  );
+
+  await callVerificationAction(item.id, 'reject', note || '');
 };
 
 // Sync query string (URL partageable)
@@ -781,3 +851,5 @@ watch(
   }
 }
 </style>
+
+

@@ -1,0 +1,270 @@
+Récap clair de l’état du projet / ce qui reste à faire
+
+Un bloc de journal prêt à coller dans “Journal de dev – Matanga”
+
+1️⃣ Où on en est vraiment (flow obituaries)
+Flow actuel (particulier)
+
+/plans → choix d’un plan
+indiv_free_7, indiv_basic_21, indiv_essentiel_30, indiv_prestige_60
+
+/obituary/create?plan=… → création d’annonce (brouillon en DB)
+
+/obituary/confirm/[slug] → récap complet
+
+plan / prix / durée
+
+défunt, texte, événements, contacts
+
+NOUVEAU : section “Documents justificatifs” (CNI + certificat de décès)
+
+actions :
+
+plan gratuit → publication directe via POST /api/obituaries/:slug/publish
+
+plan payant → redirection vers /checkout/obituary/[slug]
+
+/checkout/obituary/[slug] → choix du moyen de paiement
+
+Stripe (CB)
+
+PayPal
+
+Virement bancaire (instructions)
+
+Paiement :
+
+Stripe → /api/payments/checkout (provider stripe) → redirige vers Stripe
+
+PayPal → idem avec provider paypal
+
+Virement → renvoie les instructions (IBAN, BIC, montant, référence)
+
+Retour succès :
+
+Stripe → /checkout/stripe-success?session_id=…
+
+GET /api/payments/stripe/confirm :
+
+vérifie la session Stripe
+
+met à jour payment_transactions (status = 'succeeded', montants, ids Stripe)
+
+met à jour obituaries (payment_provider='stripe', amount_paid, currency)
+
+la page /checkout/stripe-success affiche :
+
+montant
+
+annonce concernée
+
+#payment_id interne
+
+PayPal → /checkout/paypal-success?...
+
+handler de confirm + page de succès déjà créés, mais encore à bien tester + traductions fr rajoutées (bloc checkoutPaypalSuccess).
+
+👉 Important :
+Pour les plans payants, après paiement, l’annonce reste :
+
+status = 'draft'
+
+verification_status restant à gérer (pour la modération)
+
+On a décidé que : rien ne doit se publier automatiquement → il faudra une validation admin.
+
+Documents justificatifs
+
+Nouvelle table (conceptuellement) obituary_documents
+
+id, obituary_id, user_id, type (id_card | death_certificate | other), file_url, status, admin_note, created_at, updated_at
+
+contrainte UNIQUE (obituary_id, type)
+
+Nouvelle section dans /obituary/confirm/[slug] :
+
+bloc “Pièce d’identité du déclarant”
+
+bloc “Certificat de décès”
+
+upload par input type="file" + bouton de téléversement
+
+le bouton “Confirmer et payer” est désactivé tant que les deux docs ne sont pas envoyés
+
+Nouveau handler :
+POST /api/obituaries/[slug]/documents
+
+requireAuth
+
+vérifie que session.userId === obituaries.user_id (sauf admin/moderator)
+
+lit le multipart/form-data
+
+contrôle size / type fichier (≤10 Mo, image ou PDF)
+
+upload dans Swiss Backup via S3 (appareil madizi-docs)
+
+enregistre l’URL (type s3://madizi-docs/obituary-documents/...)
+
+upsert dans obituary_documents
+
+renvoie la liste à jour des documents
+
+Infra :
+
+Swiss Backup (Sauvegarde Cloud) configuré
+
+Appareil S3 madizi-docs créé
+
+Clés S3 (Access + Secret) récupérées
+
+Variables d’environnement prévues :
+S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET=madizi-docs, S3_REGION=us-east-1
+
+2️⃣ Ce qui a été bâclé / à fiabiliser
+Paiement PayPal
+
+✅ Handler de confirm + page /checkout/paypal-success créés (copie du flow Stripe)
+
+✅ Traductions checkoutPaypalSuccess ajoutées / à vérifier dans fr.json
+
+⏳ À faire / tester :
+
+vérifier que payment_transactions est bien remplie (provider paypal)
+
+vérifier que obituaries.payment_provider = 'paypal', amount_paid, currency sont bien mis à jour
+
+tester le retour “Retour sur Madizi” depuis PayPal (URL, auth, erreurs)
+
+Virement bancaire
+
+✅ /api/payments/checkout renvoie un bloc bankTransfer avec IBAN, etc.
+
+✅ /checkout/obituary/[slug] affiche les instructions si provider bank_transfer
+
+⏳ Reste à faire :
+
+prévoir un process manuel admin : marquer la transaction comme succeeded quand le virement arrive, et mettre à jour l’annonce
+
+éventuellement un statut spécial : status = 'pending_review', verification_status = 'pending'
+
+Modération / publication après paiement
+
+Aujourd’hui :
+
+après paiement Stripe/PayPal, on enregistre le paiement mais on ne publie pas :
+
+status reste draft
+
+verification_status n’est pas encore piloté automatiquement
+
+À faire :
+
+quand docs + paiement OK :
+
+côté admin : passer verification_status à verified et status à published à la main (via une future interface).
+
+côté front (compte utilisateur) :
+
+afficher les annonces payées mais non publiées avec un badge “En attente de validation”.
+
+Accès admin aux documents
+
+on stocke file_url type s3://...
+
+on n’a pas encore :
+
+de route admin pour lister les documents,
+
+ni d’endpoint pour télécharger/streamer la CNI / certificat de décès.
+
+3️⃣ Roadmap courte (à garder sous les yeux)
+Court terme (avant d’ajouter de nouvelles features)
+
+Fiabiliser PayPal
+
+ Finir les traductions checkoutPaypalSuccess dans fr.json (si pas fait à 100%)
+
+ Tester un paiement PayPal complet (sandbox)
+
+ Vérifier l’update de payment_transactions + obituaries comme pour Stripe
+
+ Gérer le cas d’erreur proprement sur /checkout/paypal-success
+
+Affiner la page de confirmation
+
+ Charger les documents existants au mount (GET /api/obituaries/:slug/documents) pour afficher “✅ déjà transmis”
+
+ Vérifier que hasAllRequiredDocs se base bien sur la réponse API (et pas juste sur l’état local)
+
+ Afficher un petit badge “docs OK” dans la colonne de droite si les 2 sont présents
+
+Nettoyage UX / i18n
+
+ Vérifier tous les messages d’erreur / toasts pour :
+
+upload documents
+
+paiement Stripe
+
+paiement PayPal
+
+ S’assurer que les textes parlent bien de Madizi (et plus “Matanga”)
+
+Moyen terme (backoffice + statuts)
+
+Page “Mes annonces” (côté user)
+
+ Route /account/obituaries ou similaire
+
+ Liste des annonces de l’utilisateur avec :
+
+titre, ville, dates
+
+plan
+
+état : draft, en attente de validation, publiée, refusée, archivée
+
+badge “Paiement confirmé” si amount_paid > 0
+
+ Lien pour retourner :
+
+à la page de confirmation
+
+à la page publique quand published
+
+Backoffice admin / modération
+
+ Route /admin/obituaries (protégée par rôle admin/moderator)
+
+ Liste filtrable :
+
+annonces payées (amount_paid > 0)
+
+verification_status = pending
+
+ Page détail admin :
+
+infos défunt, texte, événements, contacts
+
+infos de paiement (provider, montant, currency, payment_id)
+
+documents justificatifs (liens vers une route /api/admin/obituaries/:id/documents/:docId/download)
+
+actions :
+
+“Valider et publier” → verification_status = 'verified', status = 'published', published_at = NOW()
+
+“Refuser” → verification_status = 'rejected', status = 'rejected', verification_note rempli
+
+Accès aux docs (admin only)
+
+ Endpoint admin pour lister les docs :
+
+GET /api/admin/obituaries/:id/documents
+
+ Endpoint admin pour télécharger :
+
+GET /api/admin/obituaries/:id/documents/:docId/download
+
+qui fait un GetObject S3 et stream le fichier vers le navigateur

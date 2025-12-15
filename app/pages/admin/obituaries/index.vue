@@ -239,6 +239,7 @@
             </p>
 
             <!-- Actions -->
+                       <!-- Actions -->
             <div class="adminobits-actions">
               <!-- Voir annonce publique -->
               <NuxtLink
@@ -258,8 +259,39 @@
                 {{ t('adminObituaries.actions.viewConfirm') }}
               </NuxtLink>
 
-              <!-- (Étapes suivantes : boutons Vérifier / Rejeter qui appellent une API admin) -->
+              <!-- Valider les documents -->
+              <button
+                v-if="item.verificationStatus !== 'verified'"
+                type="button"
+                class="btn btn-primary btn-sm"
+                :disabled="processingId === item.id"
+                @click="onVerifyClick(item)"
+              >
+                <span v-if="processingId === item.id && processingAction === 'verify'">
+                  {{ t('adminObituaries.actions.verifyLoading') }}
+                </span>
+                <span v-else>
+                  {{ t('adminObituaries.actions.verify') }}
+                </span>
+              </button>
+
+              <!-- Refuser les documents -->
+              <button
+                v-if="item.verificationStatus !== 'rejected'"
+                type="button"
+                class="btn btn-danger btn-sm"
+                :disabled="processingId === item.id"
+                @click="onRejectClick(item)"
+              >
+                <span v-if="processingId === item.id && processingAction === 'reject'">
+                  {{ t('adminObituaries.actions.rejectLoading') }}
+                </span>
+                <span v-else>
+                  {{ t('adminObituaries.actions.reject') }}
+                </span>
+              </button>
             </div>
+
           </div>
         </article>
 
@@ -300,11 +332,18 @@ import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
 import Pagination from '~/components/Pagination.vue';
 import { useDateUtils } from '~/composables/useDateUtils';
+import { useNuxtApp } from '#imports';
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { formattedDateTimeWithSeconds } = useDateUtils();
+const { $useToast } = useNuxtApp();
+const toast = $useToast ? $useToast() : null;
+
+// état pour désactiver les boutons pendant l'appel API
+const processingId = ref(null);
+const processingAction = ref(null);
 
 // Filtres "état de vérification"
 const verificationOptions = [
@@ -465,6 +504,69 @@ const onVerificationChange = (value) => {
 const changePage = (newPage) => {
   if (newPage === page.value || newPage < 1) return;
   page.value = newPage;
+};
+const callVerificationAction = async (itemId, action, note) => {
+  processingId.value = itemId;
+  processingAction.value = action;
+
+  try {
+    await $fetch(`/api/admin/obituaries/${itemId}/verification`, {
+      method: 'POST',
+      body: { action, note: note || null },
+    });
+
+    if (toast) {
+      if (action === 'verify') {
+        toast.success(t('adminObituaries.toasts.verifySuccess'));
+      } else if (action === 'reject') {
+        toast.success(t('adminObituaries.toasts.rejectSuccess'));
+      }
+    }
+
+    await refresh();
+  } catch (err) {
+    console.error('Admin verification action error', err);
+
+    if (toast) {
+      const msg =
+        err?.data?.statusMessage ||
+        err?.data?.message ||
+        t('adminObituaries.toasts.actionError');
+      toast.error(msg);
+    }
+  } finally {
+    processingId.value = null;
+    processingAction.value = null;
+  }
+};
+
+const onVerifyClick = async (item) => {
+  const confirmed = window.confirm(
+    t('adminObituaries.confirm.verify', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    })
+  );
+
+  if (!confirmed) return;
+
+  await callVerificationAction(item.id, 'verify', null);
+};
+
+const onRejectClick = async (item) => {
+  const confirmed = window.confirm(
+    t('adminObituaries.confirm.reject', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    })
+  );
+
+  if (!confirmed) return;
+
+  const note = window.prompt(
+    t('adminObituaries.confirm.rejectNotePrompt'),
+    ''
+  );
+
+  await callVerificationAction(item.id, 'reject', note || '');
 };
 
 // Sync query string (URL partageable)

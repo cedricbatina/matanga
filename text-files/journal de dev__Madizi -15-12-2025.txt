@@ -1,0 +1,55 @@
+Période : 14–15 décembre 2025
+
+🧾 4. Paiements Stripe / PayPal
+
+- Flow Stripe finalisé :
+  - POST /api/payments/checkout crée la session Checkout Stripe.
+  - Retour Stripe sur /checkout/stripe-success?session_id=… .
+  - GET /api/payments/stripe/confirm :
+    - récupère la session Stripe (expand payment_intent),
+    - vérifie payment_status/status,
+    - met à jour payment_transactions (status = 'succeeded', ids Stripe),
+    - met à jour obituaries (payment_provider = 'stripe', amount_paid, currency).
+  - Page /checkout/stripe-success affiche un récap clair (montant, annonce, #payment_id).
+
+- Flow PayPal :
+  - Copie du modèle Stripe (handler /api/payments/paypal/confirm + page /checkout/paypal-success).
+  - À fiabiliser / tester en conditions réelles (sandbox).
+
+📎 5. Documents justificatifs & stockage Swiss Backup
+
+- Ajout d’une section “Documents justificatifs” sur la page /obituary/confirm/[slug] :
+  - Pièce d’identité du déclarant (id_card),
+  - Certificat de décès (death_certificate).
+- Tant que les deux documents ne sont pas fournis, le bouton “Confirmer et payer” reste désactivé.
+- Nouvelle table (concept) obituary_documents :
+  - obituary_id, user_id, type (id_card | death_certificate | other),
+  - file_url (URL S3), status, admin_note, timestamps.
+- Nouveau handler POST /api/obituaries/[slug]/documents :
+  - requireAuth + contrôle des droits (proprio annonce ou admin/moderator),
+  - lecture du multipart/form-data,
+  - validation type & taille (images + PDF, max 10 Mo),
+  - upload dans Swiss Backup (S3 compatible) sur l’appareil madizi-docs,
+  - upsert dans obituary_documents (UNIQUE (obituary_id, type)),
+  - renvoi de la liste à jour des documents.
+
+- Infra :
+  - Swiss Backup (Sauvegarde Cloud) activé chez Infomaniak.
+  - Appareil S3 “madizi-docs” créé.
+  - Intégration S3 dans le handler via @aws-sdk/client-s3 et variables d’environnement :
+    - S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET=madizi-docs, S3_REGION=us-east-1.
+
+🧭 6. Prochaines étapes (court terme)
+
+- Fiabiliser PayPal :
+  - tester le flow complet sandbox,
+  - vérifier l’update de payment_transactions et obituaries,
+  - peaufiner les messages de succès/erreur.
+
+- Confirmation & docs :
+  - charger les documents existants au chargement de la page (GET /api/obituaries/:slug/documents),
+  - refléter cet état côté UI (badge “docs déjà transmis”).
+
+- Préparer la modération :
+  - définir précisément l’usage de verification_status (pending / verified / rejected),
+  - prévoir les écrans “Mes annonces” (user) et “Obituaries à valider” (admin).
