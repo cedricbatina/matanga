@@ -704,8 +704,17 @@
       "title": "Informations sur le défunt",
       "subtitle": "Nom, dates, ville principale et autres éléments d'identité.",
         "documents": {
-    "title": "Documents justificatifs",
-    "subtitle": "Ces documents sont nécessaires pour que notre équipe puisse valider et publier votre annonce."
+     "title": "Documents justificatifs",
+      "subtitle": "Ces documents sont vérifiés de manière confidentielle par notre équipe.",
+      "idCardTitle": "Pièce d’identité du déclarant",
+      "idCardHelp": "Document obligatoire pour publier votre première annonce (CNI, passeport, titre de séjour…).",
+      "deathCertTitle": "Certificat de décès",
+      "deathCertHelp": "Document à fournir dès que possible. L’annonce pourra être publiée avant, mais ce certificat restera obligatoire à court terme.",
+      "alreadyUploaded": "Document déjà transmis pour cette annonce.",
+      "missingWarning": "Pour l’instant, seule la pièce d’identité est obligatoire pour publier. Le certificat de décès vous sera demandé dans les jours qui viennent.",
+      "sideHint": "Vous pouvez continuer et payer une annonce dès que la pièce d’identité est transmise. Pensez à revenir ajouter le certificat de décès.",
+      "deathCertOverdue": "Le certificat de décès n’a toujours pas été transmis. Pour des raisons de sécurité, cette annonce pourra être retirée ou rendue non visible si le document n’est pas ajouté rapidement."
+
   }
     },
     "content": {

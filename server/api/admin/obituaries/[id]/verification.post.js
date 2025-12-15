@@ -3,6 +3,7 @@ import { defineEventHandler, createError, readBody } from "h3";
 import { requireAuth } from "../../../../utils/authSession.js";
 import { query } from "../../../../utils/db.js";
 import { logInfo, logError } from "../../../../utils/logger.js";
+import { createNotification } from "../../../../utils/notifications.js";
 
 export default defineEventHandler(async (event) => {
   // 🔐 Admin / modérateur uniquement
@@ -43,10 +44,12 @@ export default defineEventHandler(async (event) => {
 
   try {
     // 1) Vérifier que l'annonce existe
-    const [row] = await query(
+    const rows = await query(
       `
       SELECT
         id,
+        user_id,
+        slug,
         status,
         verification_status,
         is_free,
@@ -61,7 +64,9 @@ export default defineEventHandler(async (event) => {
       { requestId }
     );
 
-    if (!row) {
+    const obituary = rows && rows[0];
+
+    if (!obituary) {
       throw createError({
         statusCode: 404,
         statusMessage: "Obituary not found.",
@@ -101,6 +106,26 @@ export default defineEventHandler(async (event) => {
         [note || null, obituaryId],
         { requestId }
       );
+
+      // 🔔 Notification "documents vérifiés"
+      await createNotification(
+        {
+          recipientId: obituary.user_id,
+          type: "obituary.documents.verified",
+          channel: "in_app",
+          title: "Documents vérifiés",
+          body:
+            "Vos documents justificatifs ont été acceptés. " +
+            "Votre annonce reste en ligne et visible sur Madizi.",
+          data: {
+            obituaryId: obituary.id,
+            slug: obituary.slug,
+            adminId: session.userId,
+          },
+          relatedObituaryId: obituary.id,
+        },
+        { requestId, userId: session.userId }
+      );
     } else if (action === "reject") {
       // ❌ Refuser les documents + marquer l'annonce refusée
       await query(
@@ -116,9 +141,31 @@ export default defineEventHandler(async (event) => {
         [note || null, obituaryId],
         { requestId }
       );
+
+      // 🔔 Notification "documents rejetés"
+      await createNotification(
+        {
+          recipientId: obituary.user_id,
+          type: "obituary.documents.rejected",
+          channel: "in_app",
+          title: "Un document doit être corrigé",
+          body:
+            note ||
+            "Un de vos documents justificatifs n'a pas pu être validé. " +
+              "Merci de le remplacer ou d'en fournir un nouveau afin que l'annonce puisse rester publique.",
+          data: {
+            obituaryId: obituary.id,
+            slug: obituary.slug,
+            adminId: session.userId,
+            adminNote: note || null,
+          },
+          relatedObituaryId: obituary.id,
+        },
+        { requestId, userId: session.userId }
+      );
     }
 
-    // 3) On renvoie juste ok + action, le front fera un refresh()
+    // 3) Réponse simple, le front fera un refresh()
     return {
       ok: true,
       action,

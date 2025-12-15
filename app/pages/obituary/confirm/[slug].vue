@@ -387,6 +387,13 @@
               <p class="review-section__subtitle">
                 {{ t('obituaryReview.sections.documents.subtitle') }}
               </p>
+<p v-if="docsPending" class="review-docs__loading">
+  {{ t('obituaryReview.documents.loading') }}
+</p>
+
+<p v-else-if="docsError" class="review-docs__error">
+  {{ t('obituaryReview.documents.error') }}
+</p>
 
               <div class="review-docs">
                 <!-- Pièce d’identité -->
@@ -436,6 +443,12 @@
                   <p v-if="hasDeathCertDoc" class="review-docs__status review-docs__status--ok">
                     ✅ {{ t('obituaryReview.documents.alreadyUploaded') }}
                   </p>
+                  <p
+  v-if="isCertOverdue"
+  class="review-docs__warning review-docs__warning--strong"
+>
+  {{ t('obituaryReview.documents.deathCertOverdue') }}
+</p>
 
                   <div v-else class="review-docs__upload">
                     <input
@@ -531,35 +544,37 @@
   </button>
 
   <!-- Publier (gratuit) -->
-  <button
-    v-if="isFreePlan"
-    type="submit"
-    class="btn btn-primary"
-    :disabled="isPublishing || isPaying"
-  >
-    <span v-if="isPublishing">
-      {{ t('obituaryReview.actions.publishing') }}
-    </span>
-    <span v-else>
-      {{ t('obituaryReview.actions.publishFree') }}
-    </span>
-  </button>
+<button
+  v-if="isFreePlan"
+  type="submit"
+  class="btn btn-primary"
+  :disabled="isPublishing || isPaying || !hasMinimumDocsForNow"
+>
+  <span v-if="isPublishing">
+    {{ t('obituaryReview.actions.publishing') }}
+  </span>
+  <span v-else>
+    {{ t('obituaryReview.actions.publishFree') }}
+  </span>
+</button>
+
 
   <!-- Payer (plan payant) -->
-  <button
-    v-else
-    type="button"
-    class="btn btn-primary"
-    @click="onPay"
-    :disabled="isPublishing || isPaying || !hasAllRequiredDocs"
-  >
-    <span v-if="isPaying">
-      {{ t('obituaryReview.actions.redirectingToPayment') }}
-    </span>
-    <span v-else>
-      {{ t('obituaryReview.actions.confirmAndPay') }}
-    </span>
-  </button>
+<button
+  v-else
+  type="button"
+  class="btn btn-primary"
+  @click="onPay"
+  :disabled="isPublishing || isPaying || !hasMinimumDocsForNow"
+>
+  <span v-if="isPaying">
+    {{ t('obituaryReview.actions.redirectingToPayment') }}
+  </span>
+  <span v-else>
+    {{ t('obituaryReview.actions.confirmAndPay') }}
+  </span>
+</button>
+
 
   <!-- Retirer du site (soft delete) -->
   <button
@@ -614,6 +629,11 @@ import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
 import { useConfirmStore } from '~/stores/confirmStore';
 import { useDateUtils } from '~/composables/useDateUtils';
+import { useObituaryDocuments } from '~/composables/useObituaryDocuments';
+
+// ...
+
+
 
 const { formatDate, formattedDateTimeWithSeconds } = useDateUtils();
 
@@ -683,14 +703,20 @@ const obituary = computed(() => payload.value?.obituary || null);
 const events = computed(() => payload.value?.events || []);
 const contacts = computed(() => payload.value?.contacts || []);
 // 📎 Documents justificatifs
-const documents = ref([]); // liste depuis l'API (plus tard)
+//const documents = ref([]); // liste depuis l'API (plus tard)
 const docsUploading = ref(false);
 const currentUploadType = ref(null);
 const selectedIdCardFile = ref(null);
 const selectedDeathCertFile = ref(null);
 
-// TODO plus tard : charger les docs existants via /api/obituaries/:slug/documents
-// pour l'instant, on part de "aucun doc" côté front.
+
+const {
+  documents,
+  hasDocuments,
+  pending: docsPending,
+  error: docsError,
+  refresh: refreshDocs,
+} = await useObituaryDocuments(slug);
 const hasIdCardDoc = computed(() =>
   documents.value.some((d) => d.type === 'id_card'),
 );
@@ -699,11 +725,16 @@ const hasDeathCertDoc = computed(() =>
   documents.value.some((d) => d.type === 'death_certificate'),
 );
 
-const hasAllRequiredDocs = computed(() => {
-  // Pour l’instant : toujours exiger les 2 docs, même pour un plan gratuit.
-  // Tu pourras assouplir (par pays / type de compte) plus tard.
+// Il faut AU MINIMUM une pièce d'identité pour pouvoir publier / payer
+const hasMinimumDocsForNow = computed(() => {
+  return hasIdCardDoc.value; // certificat pas encore obligatoire pour l'action
+});
+
+// On garde un computed pour savoir si les 2 sont là (utile pour la suite & admin)
+const hasAllDocs = computed(() => {
   return hasIdCardDoc.value && hasDeathCertDoc.value;
 });
+
 const onSelectIdCard = (event) => {
   const files = event.target?.files;
   selectedIdCardFile.value = files && files[0] ? files[0] : null;
@@ -713,6 +744,7 @@ const onSelectDeathCert = (event) => {
   const files = event.target?.files;
   selectedDeathCertFile.value = files && files[0] ? files[0] : null;
 };
+
 const uploadDocument = async (type, file) => {
   if (!file || !obituary.value) return;
   if (docsUploading.value) return;
@@ -725,19 +757,13 @@ const uploadDocument = async (type, file) => {
     formData.append('file', file);
     formData.append('type', type);
 
-    const res = await $fetch(`/api/obituaries/${slug.value}/documents`, {
+    await $fetch(`/api/obituaries/${slug.value}/documents`, {
       method: 'POST',
       body: formData,
     });
 
-    // On suppose que l’API renvoie la liste des docs à jour
-    if (Array.isArray(res?.documents)) {
-      documents.value = res.documents;
-    } else if (res?.document) {
-      // fallback si l’API renvoie un seul doc
-      const existing = documents.value.filter((d) => d.type !== type);
-      documents.value = [...existing, res.document];
-    }
+    // 🔁 On recharge la liste depuis l'API (source de vérité)
+    await refreshDocs();
 
     if (toast) {
       toast.success(t('obituaryReview.documents.uploadSuccess'));
@@ -756,6 +782,7 @@ const uploadDocument = async (type, file) => {
     currentUploadType.value = null;
   }
 };
+
 
 const onUploadIdCard = async () => {
   if (!selectedIdCardFile.value) {
@@ -1197,6 +1224,23 @@ const onHardDeleteClick = async () => {
     await hardDelete();
   }
 };
+const createdAt = computed(() => {
+  const o = obituary.value;
+  if (!o) return null;
+  return o.createdAt || o.created_at || null;
+});
+
+const isCertOverdue = computed(() => {
+  if (!createdAt.value) return false;
+  if (hasDeathCertDoc.value) return false;
+
+  const created = new Date(createdAt.value);
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  return diffDays >= 7;
+});
 
 </script>
 

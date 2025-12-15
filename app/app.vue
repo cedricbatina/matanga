@@ -25,7 +25,7 @@ const runtimeConfig = useRuntimeConfig();
 // ex. public: { siteUrl: 'https://www.matanga.net' }
 const siteUrl =
   runtimeConfig.public?.siteUrl ||
-  'http://localhost:3000';
+  'http://localhost:3004';
 
 const siteName = 'Matanga';
 
