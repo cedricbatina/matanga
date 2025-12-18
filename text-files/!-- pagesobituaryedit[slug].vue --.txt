@@ -334,88 +334,89 @@
 
           <!-- Bloc événement principal -->
           <section class="form-section">
-            <h2 class="form-section__title">
-              {{ t('createObituary.sections.events.title') }}
-            </h2>
-            <p class="form-section__subtitle">
-              {{ t('editObituary.sections.events.subtitle') }}
-            </p>
+  <h2 class="form-section__title">
+    {{ t('createObituary.sections.mainEvent.title') }}
+  </h2>
+  <p class="form-section__subtitle">
+    {{ t('createObituary.sections.mainEvent.subtitle') }}
+  </p>
 
-            <div class="form-grid-2-col">
-              <div class="form-field">
-                <label class="form-label" for="eventType">
-                  {{ t('createObituary.fields.eventType.label') }}
-                </label>
-                <select
-                  id="eventType"
-                  v-model="form.event.eventType"
-                  class="form-control"
-                >
-                  <option value="funeral">
-                    {{ t('home.eventTypes.funeral') }}
-                  </option>
-                  <option value="wake">
-                    {{ t('home.eventTypes.wake') }}
-                  </option>
-                  <option value="burial">
-                    {{ t('home.eventTypes.burial') }}
-                  </option>
-                  <option value="memorial">
-                    {{ t('home.eventTypes.memorial') }}
-                  </option>
-                </select>
-              </div>
+  <div class="form-grid-2-col">
+    <div class="form-field">
+      <label class="form-label" for="eventType">
+        {{ t('createObituary.fields.eventType.label') }}
+      </label>
+      <select
+        id="eventType"
+        v-model="form.event.eventType"
+        class="form-control"
+      >
+        <option value="funeral">
+          {{ t('home.eventTypes.funeral') }}
+        </option>
+        <option value="wake">
+          {{ t('home.eventTypes.wake') }}
+        </option>
+        <option value="burial">
+          {{ t('home.eventTypes.burial') }}
+        </option>
+        <option value="memorial">
+          {{ t('home.eventTypes.memorial') }}
+        </option>
+      </select>
+    </div>
 
-              <div class="form-field">
-                <label class="form-label" for="eventStartsAt">
-                  {{ t('createObituary.fields.eventStartsAt.label') }}
-                </label>
-                <input
-                  id="eventStartsAt"
-                  v-model="form.event.startsAt"
-                  class="form-control"
-                  type="datetime-local"
-                  :aria-invalid="errors.eventStartsAt ? 'true' : 'false'"
-                />
-                <p
-                  v-if="errors.eventStartsAt"
-                  class="form-error"
-                >
-                  {{ errors.eventStartsAt }}
-                </p>
-              </div>
-            </div>
+    <div class="form-field">
+      <label class="form-label" for="eventStartsAt">
+        {{ t('createObituary.fields.eventStartsAt.label') }}
+      </label>
+      <input
+        id="eventStartsAt"
+        v-model="form.event.startsAt"
+        class="form-control"
+        type="datetime-local"
+        :aria-invalid="errors.eventStartsAt ? 'true' : 'false'"
+      />
+      <p
+        v-if="errors.eventStartsAt"
+        class="form-error"
+      >
+        {{ errors.eventStartsAt }}
+      </p>
+    </div>
+  </div>
 
-            <div class="form-row">
-              <div class="form-field">
-                <label class="form-label" for="venueName">
-                  {{ t('createObituary.fields.venueName.label') }}
-                </label>
-                <input
-                  id="venueName"
-                  v-model.trim="form.event.venueName"
-                  class="form-control"
-                  type="text"
-                  :placeholder="t('createObituary.fields.venueName.placeholder')"
-                />
-              </div>
-            </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label class="form-label" for="venueName">
+        {{ t('createObituary.fields.eventVenueName.label') }}
+      </label>
+      <input
+        id="venueName"
+        v-model.trim="form.event.venueName"
+        class="form-control"
+        type="text"
+        :placeholder="t('createObituary.fields.eventVenueName.placeholder')"
+      />
+    </div>
+  </div>
 
-            <div class="form-row">
-              <div class="form-field">
-                <label class="form-label" for="venueAddress">
-                  {{ t('createObituary.fields.venueAddress.label') }}
-                </label>
-                <textarea
-                  id="venueAddress"
-                  v-model.trim="form.event.venueAddress"
-                  class="form-control form-control--textarea"
-                  rows="3"
-                  :placeholder="t('createObituary.fields.venueAddress.placeholder')"
-                />
-              </div>
-            </div>
-          </section>
+  <div class="form-row">
+    <div class="form-field">
+      <label class="form-label" for="venueAddress">
+        {{ t('createObituary.fields.eventVenueAddress.label') }}
+      </label>
+      <input
+        id="venueAddress"
+        v-model.trim="form.event.venueAddress"
+        class="form-control"
+        type="text"
+        :placeholder="t('createObituary.fields.eventVenueAddress.placeholder')"
+      />
+    </div>
+  </div>
+</section>
+
 
           <!-- Bloc contact famille -->
           <section class="form-section">
@@ -485,28 +486,38 @@
         </div>
 
         <!-- Footer actions -->
-        <div class="card-footer edit-footer">
-          <button
-            type="button"
-            class="btn btn-ghost"
-            @click="goBackToConfirm"
-          >
-            {{ t('editObituary.actions.cancel') }}
-          </button>
+      <div class="card-footer edit-footer">
+  <button
+    type="button"
+    class="btn btn-ghost"
+    @click="goBackToConfirm"
+  >
+    {{ t('editObituary.actions.cancel') }}
+  </button>
 
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :disabled="isSubmitting"
-          >
-            <span v-if="isSubmitting">
-              {{ t('editObituary.actions.saving') }}
-            </span>
-            <span v-else>
-              {{ t('editObituary.actions.save') }}
-            </span>
-          </button>
-        </div>
+  <!-- Nouveau bouton supprimer -->
+  <button
+    type="button"
+    class="btn btn-ghost"
+    @click="onDeleteFromEdit"
+  >
+    {{ t('editObituary.actions.delete') }}
+  </button>
+
+  <button
+    type="submit"
+    class="btn btn-primary"
+    :disabled="isSubmitting"
+  >
+    <span v-if="isSubmitting">
+      {{ t('editObituary.actions.saving') }}
+    </span>
+    <span v-else>
+      {{ t('editObituary.actions.save') }}
+    </span>
+  </button>
+</div>
+
 
         <div
           v-if="submitError"
@@ -527,13 +538,24 @@ definePageMeta({
 });
 
 import { reactive, ref, computed, watch } from 'vue';
-import { useRoute, useRouter, useSeoMeta, useFetch } from '#imports';
+import { useRoute, useRouter, useSeoMeta, useFetch, useNuxtApp } from '#imports';
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
+import { useDateUtils } from '~/composables/useDateUtils';
+import { useConfirmStore } from '~/stores/confirmStore'; // 👈 NEW
+const {
+  toDateInput,
+  toDateTimeLocalInput,
+  normalizeDateTimeLocal,
+} = useDateUtils();
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+const { $useToast } = useNuxtApp();
+const toast = $useToast ? $useToast() : null;
+const confirmStore = useConfirmStore(); // 👈 NEW
+
 
 const slug = computed(() => route.params.slug);
 
@@ -554,17 +576,54 @@ const events = computed(() => obituaryPayload.value?.events || []);
 const contacts = computed(() => obituaryPayload.value?.contacts || []);
 
 // SEO
-useSeoMeta({
-  title: () => {
-    const base = t('editObituary.meta.title');
-    const name = obituary.value?.deceasedFullName;
-    return name ? `${base} – ${name}` : base;
-  },
-  description: () =>
-    obituary.value?.content?.slice(0, 160) ||
-    t('editObituary.meta.description') ||
-    '',
+// SEO
+const seoTitle = computed(() => {
+  const base = t('editObituary.meta.title');
+  // selon tes données, c'est plutôt deceased.fullName côté public,
+  // mais ici on a un champ flat deceasedFullName sur l'obituary
+  const name =
+    obituary.value?.deceasedFullName ||
+    obituary.value?.deceased?.fullName ||
+    '';
+  return name ? `${base} – ${name}` : base;
 });
+
+const seoDescription = computed(() => {
+  const o = obituary.value;
+  if (!o) {
+    return t('editObituary.meta.description') || '';
+  }
+
+  let raw = '';
+
+  // 1) content string directe
+  if (typeof o.content === 'string') {
+    raw = o.content;
+  }
+  // 2) content objet avec body / bodyText
+  else if (o.content && typeof o.content === 'object') {
+    if (typeof o.content.body === 'string') raw = o.content.body;
+    else if (typeof o.content.bodyText === 'string')
+      raw = o.content.bodyText;
+  }
+
+  // 3) fallback sur body à plat si jamais
+  if (!raw && typeof o.body === 'string') {
+    raw = o.body;
+  }
+
+  if (!raw) {
+    return t('editObituary.meta.description') || '';
+  }
+
+  return raw.slice(0, 160);
+});
+
+useSeoMeta({
+  title: () => seoTitle.value,
+  description: () => seoDescription.value,
+});
+
 
 // --- FORM STATE ---
 const form = reactive({
@@ -612,57 +671,68 @@ const isSubmitting = ref(false);
 const submitError = ref('');
 
 // Helpers datetime : backend <-> input[type=datetime-local]
-const normalizeDateTimeLocal = (value) => {
-  // from input "YYYY-MM-DDTHH:mm" -> backend "YYYY-MM-DD HH:mm:ss"
-  if (!value) return null;
-  const [date, time] = value.split('T');
-  if (!date || !time) return value;
-  const tPart = time.length === 5 ? `${time}:00` : time;
-  return `${date} ${tPart}`;
-};
 
-const toDateTimeLocalInput = (value) => {
-  // from backend "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm"
-  if (!value) return '';
-  if (value.includes('T')) {
-    // déjà en format ISO-like, on tronque à la minute
-    return value.slice(0, 16);
-  }
-  const [date, time] = value.split(' ');
-  if (!date || !time) return '';
-  const [h, m] = time.split(':');
-  if (!h || !m) return '';
-  return `${date}T${h}:${m}`;
-};
 
-// Hydratation du form quand les données sont chargées
 watch(
   obituary,
   (val) => {
     if (!val) return;
 
-    form.deceasedFullName = val.deceasedFullName || '';
-    form.dateOfBirth = val.dateOfBirth || '';
-    form.dateOfDeath = val.dateOfDeath || '';
-    form.ageDisplay = val.ageDisplay || '';
-    form.gender = val.deceasedGender || '';
-    form.identityStatus = val.identityStatus || 'known';
-    form.religion = val.religion || '';
-    form.denomination = val.denomination || '';
+    // --- Bloc défunt ---
+    const d = val.deceased || {};
 
-    form.city = val.city || '';
-    form.region = val.region || '';
-    form.country = val.country || '';
-    form.countryCode = val.countryCode || '';
-    form.isRuralArea = !!val.isRuralArea;
+    form.deceasedFullName =
+      d.fullName || val.deceasedFullName || '';
 
-    form.title = val.title || '';
-    form.body = val.content || '';
-    form.mainLanguage = val.mainLanguage || '';
+    form.dateOfBirth = toDateInput(
+      d.dateOfBirth || val.dateOfBirth || ''
+    );
+    form.dateOfDeath = toDateInput(
+      d.dateOfDeath || val.dateOfDeath || ''
+    );
 
-    // Événement principal : on prend l'event marqué isMainEvent ou le premier
+    form.ageDisplay = d.ageDisplay || val.ageDisplay || '';
+    form.gender =
+      d.gender || d.deceasedGender || val.deceasedGender || '';
+    form.identityStatus =
+      d.identityStatus || val.identityStatus || 'known';
+    form.religion = d.religion || val.religion || '';
+    form.denomination = d.denomination || val.denomination || '';
+
+    // --- Localisation ---
+    const loc = val.location || {};
+    form.city = loc.city || val.city || '';
+    form.region = loc.region || val.region || '';
+    form.country = loc.country || val.country || '';
+    form.countryCode = loc.countryCode || val.countryCode || '';
+    form.isRuralArea =
+      loc.isRuralArea ?? val.isRuralArea ?? false;
+
+    // --- Contenu / texte ---
+    const content = val.content || {};
+    form.title = content.title || val.title || '';
+
+    let bodyText = '';
+    if (typeof content.body === 'string') {
+      bodyText = content.body;
+    } else if (typeof content.bodyText === 'string') {
+      bodyText = content.bodyText;
+    } else if (typeof val.body === 'string') {
+      bodyText = val.body;
+    }
+    form.body = bodyText;
+
+    form.mainLanguage =
+      content.mainLanguage || val.mainLanguage || '';
+
+    // --- Image de couverture (si tu l’utilises) ---
+    form.coverImageUrl = val.coverImageUrl || '';
+
+    // --- Événement principal ---
     const mainEvent =
-      events.value.find((ev) => ev.isMainEvent) || events.value[0] || null;
+      events.value.find((ev) => ev.isMainEvent) ||
+      events.value[0] ||
+      null;
 
     if (mainEvent) {
       form.event.eventType = mainEvent.eventType || 'funeral';
@@ -671,21 +741,37 @@ watch(
         : '';
       form.event.venueName = mainEvent.venueName || '';
       form.event.venueAddress = mainEvent.venueAddress || '';
+    } else {
+      form.event.eventType = 'funeral';
+      form.event.startsAt = '';
+      form.event.venueName = '';
+      form.event.venueAddress = '';
     }
 
-    // Contact principal : isPrimary ou premier de la liste
+    // --- Contact principal ---
     const primaryContact =
-      contacts.value.find((c) => c.isPrimary) || contacts.value[0] || null;
+      contacts.value.find((c) => c.isPrimary) ||
+      contacts.value[0] ||
+      null;
 
     if (primaryContact) {
-      form.familyContact.name = primaryContact.name || primaryContact.label || '';
+      form.familyContact.name =
+        primaryContact.name || primaryContact.label || '';
       form.familyContact.phone = primaryContact.phone || '';
-      form.familyContact.whatsapp = primaryContact.whatsappNumber || '';
+      form.familyContact.whatsapp =
+        primaryContact.whatsappNumber || '';
       form.familyContact.email = primaryContact.email || '';
+    } else {
+      form.familyContact.name = '';
+      form.familyContact.phone = '';
+      form.familyContact.whatsapp = '';
+      form.familyContact.email = '';
     }
   },
   { immediate: true }
 );
+
+
 
 // Validation minimale (mêmes règles que création pour les champs clés)
 const validate = () => {
@@ -821,10 +907,13 @@ const onSubmit = async () => {
       body: payload,
     });
 
+    if (toast?.success) {
+      toast.success(t('editObituary.toasts.updated'));
+    }
+
     // Retour vers la page de confirmation
     await router.push(`/obituary/confirm/${slug.value}`);
   } catch (err) {
-    // Field errors backend (si tu décides d'en renvoyer dans err.data.fieldErrors)
     const fieldErrors = err?.data?.fieldErrors;
     if (fieldErrors && typeof fieldErrors === 'object') {
       if (fieldErrors.deceasedFullName) {
@@ -841,11 +930,57 @@ const onSubmit = async () => {
         err?.data?.message ||
         err?.message ||
         t('editObituary.errors.generic');
+
+      if (toast?.error) {
+        toast.error(submitError.value);
+      }
     }
   } finally {
     isSubmitting.value = false;
   }
 };
+const onDeleteFromEdit = async () => {
+  if (!obituary.value) return;
+
+  const confirmed = await confirmStore.ask({
+    title: t('obituaryDelete.confirmTitle', {
+      name:
+        obituary.value?.deceasedFullName ||
+        obituary.value?.deceased?.fullName ||
+        '',
+    }),
+    message: t('obituaryDelete.confirmMessage'),
+    confirmLabel: t('obituaryDelete.confirmLabel'),
+    cancelLabel: t('obituaryDelete.cancelLabel'),
+    danger: true,
+  });
+
+  if (!confirmed) return;
+
+  try {
+    await $fetch(`/api/obituaries/${slug.value}`, {
+      method: 'DELETE',
+    });
+
+    if (toast?.success) {
+      toast.success(t('obituaryDelete.toasts.archived'));
+    }
+
+    await router.push('/obituaries');
+  } catch (err) {
+    const msg =
+      err?.data?.message ||
+      err?.message ||
+      t('obituaryDelete.toasts.error');
+
+    if (toast?.error) {
+      toast.error(msg);
+    } else {
+      console.error('Delete obituary failed', err);
+    }
+  }
+};
+
 </script>
 
 <style scoped>

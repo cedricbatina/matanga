@@ -57,7 +57,7 @@ if (USE_S3) {
       accessKeyId: S3_ACCESS_KEY,
       secretAccessKey: S3_SECRET_KEY,
     },
-    forcePathStyle: true, // nécessaire pour beaucoup de S3 compatibles
+    forcePathStyle: true,
   });
   logInfo("S3 client initialised for obituary documents", {
     endpoint: S3_ENDPOINT,
@@ -174,28 +174,52 @@ export default defineEventHandler(async (event) => {
 
     let storedUrl = null;
 
+    // 4A) Tentative d'upload S3 (Swiss Backup)
     if (USE_S3 && s3Client) {
-      // 🔹 4A) Upload dans Swiss Backup (S3 compatible)
       const objectKey = `obituary-documents/${obituary.id}/${fileBaseName}`;
 
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: S3_BUCKET,
-          Key: objectKey,
-          Body: filePart.data,
-          ContentType: mimeType,
-          // ACL: "private" // par défaut privé; ne pas mettre "public-read" pour des docs sensibles
-        })
-      );
+      try {
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: S3_BUCKET,
+            Key: objectKey,
+            Body: filePart.data,
+            ContentType: mimeType,
+            // ACL: "private" // on laisse privé, ce sont des docs sensibles
+          })
+        );
 
-      // URL "logique" – selon ta politique de sécurité,
-      // tu pourras plus tard générer des URL signées côté admin.
-      const base = S3_PUBLIC_BASE_URL.replace(/\/$/, "");
-      storedUrl = base
-        ? `${base}/${S3_BUCKET}/${objectKey}`
-        : `s3://${S3_BUCKET}/${objectKey}`;
-    } else {
-      // 🔹 4B) Fallback local (dev) : stockage dans public/uploads/obituary-documents
+        const base = S3_PUBLIC_BASE_URL.replace(/\/$/, "");
+        storedUrl = base
+          ? `${base}/${S3_BUCKET}/${objectKey}`
+          : `s3://${S3_BUCKET}/${objectKey}`;
+
+        logInfo("S3 upload obituary document success", {
+          slug: slugParam,
+          userId: session.userId,
+          bucket: S3_BUCKET,
+          key: objectKey,
+          requestId,
+        });
+      } catch (err) {
+        // ❗ On log l'erreur S3 mais on NE jette PAS → fallback local
+        logError("S3 upload obituary document failed, fallback to local", {
+          slug: slugParam,
+          userId: session.userId,
+          bucket: S3_BUCKET,
+          endpoint: S3_ENDPOINT,
+          error: err?.message || String(err),
+          name: err?.name,
+          code: err?.$metadata?.httpStatusCode || null,
+          requestId,
+        });
+
+        storedUrl = null; // on force le fallback local juste en dessous
+      }
+    }
+
+    // 4B) Fallback local (dev / ou si S3 indisponible)
+    if (!storedUrl) {
       const uploadsRoot = process.env.UPLOADS_ROOT || "public/uploads";
       const uploadSubdir = "obituary-documents";
       const uploadDir = path.join(process.cwd(), uploadsRoot, uploadSubdir);
@@ -208,6 +232,14 @@ export default defineEventHandler(async (event) => {
       const relativeUrl = `/uploads/${uploadSubdir}/${fileBaseName}`;
       const publicBase = process.env.PUBLIC_BASE_URL || "";
       storedUrl = publicBase ? `${publicBase}${relativeUrl}` : relativeUrl;
+
+      logInfo("Local upload obituary document success", {
+        slug: slugParam,
+        userId: session.userId,
+        path: finalPath,
+        url: storedUrl,
+        requestId,
+      });
     }
 
     // 5) Upsert dans obituary_documents
@@ -242,7 +274,7 @@ export default defineEventHandler(async (event) => {
         status,
         admin_note AS adminNote,
         created_at AS createdAt,
-        updated_at AS UpdatedAt
+        updated_at AS updatedAt
       FROM obituary_documents
       WHERE obituary_id = ?
       ORDER BY type, id
@@ -265,8 +297,9 @@ export default defineEventHandler(async (event) => {
       documents: rowsDocs,
     };
   } catch (err) {
+    // Erreurs déjà typées (createError) → on log puis on relance
     if (err.statusCode) {
-      logError("Upload obituary document failed", {
+      logError("Upload obituary document failed (typed error)", {
         error: err.message,
         statusCode: err.statusCode,
         slug: slugParam,
@@ -276,17 +309,24 @@ export default defineEventHandler(async (event) => {
       throw err;
     }
 
-    logError("Upload obituary document failed", {
+    // Erreur générique (MySQL / FS / S3, etc.)
+    logError("Upload obituary document failed (unexpected)", {
       error: err.message,
-      stack: err.stack,
+      code: err.code,
       slug: slugParam,
       userId: session.userId,
+      stack: err.stack,
       requestId,
     });
 
+    // En prod tu peux garder un message générique,
+    // en dev tu peux temporairement inclure err.code dans le statusMessage.
     throw createError({
       statusCode: 500,
-      statusMessage: "Erreur interne lors du téléversement du document.",
+      statusMessage:
+        "Erreur interne lors du téléversement du document (code interne : " +
+        (err.code || "unknown") +
+        ").",
     });
   }
 });

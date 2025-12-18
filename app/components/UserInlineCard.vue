@@ -38,59 +38,36 @@
       <!-- Actions compactes -->
       <div class="user-inline-actions">
         <!-- Authentifié : dashboard + logout + (admin / modération) -->
-        <template v-if="isAuthenticated">
-          <!-- Espace utilisateur -->
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm user-inline-btn"
-            @click="$emit('go-dashboard')"
-          >
-            <i class="fa-regular fa-user" aria-hidden="true"></i>
-            <span>{{ t('userInline.dashboard') }}</span>
-          </button>
+     <!-- Authentifié : dashboard + notifications + logout -->
+<template v-if="isAuthenticated">
+  <button
+    type="button"
+    class="btn btn-ghost btn-sm user-inline-btn"
+    @click="$emit('go-dashboard')"
+  >
+    <i class="fa-regular fa-user" aria-hidden="true"></i>
+    <span>{{ t('userInline.dashboard') }}</span>
+  </button>
 
-          <!-- Lien “Mes annonces” (familial) -->
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm user-inline-btn"
-            @click="$emit('go-obituaries')"
-          >
-            <i class="fa-regular fa-scroll" aria-hidden="true"></i>
-            <span>{{ t('userInline.myObituaries') }}</span>
-          </button>
+  <button
+    type="button"
+    class="btn btn-ghost btn-sm user-inline-btn"
+    @click="$emit('go-notifications')"
+  >
+    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+    <span>{{ t('userInline.notifications') }}</span>
+  </button>
 
-          <!-- Bouton admin (visible uniquement admin) -->
-          <button
-            v-if="isAdmin"
-            type="button"
-            class="btn btn-ghost btn-sm user-inline-btn"
-            @click="$emit('go-admin-obituaries')"
-          >
-            <i class="fa-regular fa-shield" aria-hidden="true"></i>
-            <span>{{ t('userInline.adminObituaries') }}</span>
-          </button>
+  <button
+    type="button"
+    class="btn btn-ghost btn-sm user-inline-btn"
+    @click="$emit('logout')"
+  >
+    <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+    <span>{{ t('userInline.logout') }}</span>
+  </button>
+</template>
 
-          <!-- Bouton modération (visible admin + moderator) -->
-          <button
-            v-if="isModeratorOrAdmin"
-            type="button"
-            class="btn btn-ghost btn-sm user-inline-btn"
-            @click="$emit('go-moderator-obituaries')"
-          >
-            <i class="fa-regular fa-gavel" aria-hidden="true"></i>
-            <span>{{ t('userInline.moderatorObituaries') }}</span>
-          </button>
-
-          <!-- Logout -->
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm user-inline-btn"
-            @click="$emit('logout')"
-          >
-            <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-            <span>{{ t('userInline.logout') }}</span>
-          </button>
-        </template>
 
         <!-- Invité : login + register -->
         <template v-else>
@@ -146,6 +123,7 @@ defineEmits([
   'go-obituaries',
   'go-admin-obituaries',
   'go-moderator-obituaries',
+  'go-notifications',
   'logout',
   'login',
   'register',

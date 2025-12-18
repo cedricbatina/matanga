@@ -88,6 +88,7 @@
             @go-obituaries="onGoToObituaries"
              @go-admin-obituaries="onGoToAdminObituaries"
   @go-moderator-obituaries="onGoToModeratorObituaries"
+   @go-notifications="onGoToNotifications"
           @logout="onLogout"
           @login="onLogin"
           @register="onRegister"
@@ -151,6 +152,9 @@ const onRegister = () => {
 };
 const onGoToAdminObituaries = () => {
   router.push('/admin/obituaries');
+};
+const onGoToNotifications = () => {
+  router.push('/notifications');
 };
 
 const onGoToModeratorObituaries = () => {

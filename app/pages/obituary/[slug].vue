@@ -719,15 +719,29 @@ const contacts = computed(() => normalized.value.contacts || []);
 const media = computed(() => normalized.value.media || []);
 
 const heroImageUrl = computed(() => {
-  if (obituary.value?.coverImageUrl) return obituary.value.coverImageUrl;
-  const main = media.value.find((m) => m.isMain && m.mediaType === 'image');
-  if (main?.thumbnailUrl) return main.thumbnailUrl;
+  const o = obituary.value;
+  if (!o) return null;
+
+  if (o.coverImageUrl || o.cover_image_url) {
+    return o.coverImageUrl || o.cover_image_url;
+  }
+
+  const list = media.value || [];
+  const isImage = (m) => (m.mediaType || m.media_type) === 'image';
+
+  const main = list.find((m) => (m.isMain || m.is_main) && isImage(m));
+  if (main?.thumbnailUrl || main?.thumbnail_url) return main.thumbnailUrl || main.thumbnail_url;
   if (main?.url) return main.url;
-  const firstImage = media.value.find((m) => m.mediaType === 'image');
-  if (firstImage?.thumbnailUrl) return firstImage.thumbnailUrl;
+
+  const firstImage = list.find(isImage);
+  if (firstImage?.thumbnailUrl || firstImage?.thumbnail_url) {
+    return firstImage.thumbnailUrl || firstImage.thumbnail_url;
+  }
   if (firstImage?.url) return firstImage.url;
+
   return null;
 });
+
 
 
 // --- Corps de texte ---
@@ -749,10 +763,15 @@ const mainBodyParagraphs = computed(() =>
 
 // --- Labels, localisation, annonce ---
 const locationLabel = computed(() => {
-  if (!obituary.value?.location) return '';
-  const loc = obituary.value.location;
-  return [loc.city, loc.region, loc.country].filter(Boolean).join(' · ');
+  if (obituary.value?.location) {
+    const loc = obituary.value.location;
+    return [loc.city, loc.region, loc.country].filter(Boolean).join(' · ');
+  }
+  // fallback si un jour c'est à plat
+  const o = obituary.value || {};
+  return [o.city, o.region, o.country].filter(Boolean).join(' · ');
 });
+
 
 const announcementTypeLabel = computed(() => {
   const type =

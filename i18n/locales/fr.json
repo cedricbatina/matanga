@@ -541,6 +541,8 @@
   "register": "Créer un compte",
     "dashboard": "Mon espace",
   "myObituaries": "Mes annonces",
+  "notifications": "Notifications",
+
   "logout": "Se déconnecter",
   "status": {
     "online": "Connecté",
@@ -553,7 +555,6 @@
     
     "admin": "Administrateur",
     "moderator": "Modérateur"
-  
   },
   "todayLabel": "Aujourd’hui : {date}"
 }
@@ -647,6 +648,18 @@
       "pro_sub_studio": "Abonnement Pro Studio",
       "pro_sub_network": "Abonnement Pro Réseau"
     },
+ "sections": {
+  "individualObituary": "Familles / particuliers – annonces",
+  "individualObituaryHint": "Ces formules concernent la mise en ligne de l’annonce nécrologique principale.",
+  "individualMemorial": "Options mémorielles (page hommage)",
+  "individualMemorialHint": "Pour prolonger l’hommage sur une page dédiée avec mur de condoléances.",
+
+  "proObituary": "Professionnels du funéraire – annonces",
+  "proObituaryHint": "Formules à l’unité pour les pompes funèbres, paroisses, associations…",
+  "proMemorial": "Mémoriaux longue durée pour les pros",
+  "proMemorialHint": "Pages hommage gérées par votre structure (10 ans renouvelables)."
+},
+
 
   "pro": {
     "badgeSoon": "Espace pro",
@@ -685,6 +698,8 @@
     "ruralNo": "Annonce pour une zone urbaine ou ville"
   },
 "documents": {
+  "title": "Documents justificatifs",
+      "subtitle": "Ces documents sont vérifiés de manière confidentielle par notre équipe.",
   "idCardTitle": "Pièce d’identité du déclarant",
   "idCardHelp": "Carte nationale d’identité, passeport ou titre de séjour en cours de validité.",
   "deathCertTitle": "Certificat de décès",
@@ -697,9 +712,23 @@
   "uploadError": "Impossible de téléverser le document pour le moment.",
   "selectFileFirst": "Veuillez d’abord choisir un fichier.",
   "missingWarning": "Merci de téléverser la pièce d’identité et le certificat de décès avant de procéder au paiement.",
-  "sideHint": "Pour des raisons légales, nous devons vérifier vos documents avant de publier votre annonce."
+  "sideHint": "Pour des raisons légales, nous devons vérifier vos documents avant de publier votre annonce.",
+  "deathCertOverdue": "Le certificat de décès n’a toujours pas été transmis. Pour des raisons de sécurité, cette annonce pourra être retirée ou rendue non visible si le document n’est pas ajouté rapidement."
 },
   "sections": {
+           "documents": {
+     "title": "Documents justificatifs",
+      "subtitle": "Ces documents sont vérifiés de manière confidentielle par notre équipe.",
+      "idCardTitle": "Pièce d’identité du déclarant",
+      "idCardHelp": "Document obligatoire pour publier votre première annonce (CNI, passeport, titre de séjour…).",
+      "deathCertTitle": "Certificat de décès",
+      "deathCertHelp": "Document à fournir dès que possible. L’annonce pourra être publiée avant, mais ce certificat restera obligatoire à court terme.",
+      "alreadyUploaded": "Document déjà transmis pour cette annonce.",
+      "missingWarning": "Pour l’instant, seule la pièce d’identité est obligatoire pour publier. Le certificat de décès vous sera demandé dans les jours qui viennent.",
+      "sideHint": "Vous pouvez continuer et payer une annonce dès que la pièce d’identité est transmise. Pensez à revenir ajouter le certificat de décès.",
+      "deathCertOverdue": "Le certificat de décès n’a toujours pas été transmis. Pour des raisons de sécurité, cette annonce pourra être retirée ou rendue non visible si le document n’est pas ajouté rapidement."
+
+  },
     "deceased": {
       "title": "Informations sur le défunt",
       "subtitle": "Nom, dates, ville principale et autres éléments d'identité.",
@@ -749,7 +778,7 @@
     "duration": "Durée",
     "price": "Montant",
     "planUnknown": "Non renseignée",
-
+      "alreadyPaid": "Le paiement pour cette annonce a déjà été enregistré.",
     "statusFree": "Plan gratuit : l’annonce sera envoyée à l’équipe Madizi pour validation avant mise en ligne.",
     "statusPayment": "Plan payant : vous allez être redirigé vers l’étape de paiement pour finaliser la publication.",
 
@@ -1223,7 +1252,35 @@
     "rejectSuccess": "Annonce marquée comme refusée.",
     "actionError": "Impossible d'appliquer cette action pour le moment."
   }
-}
+},
+"profileHome": {
+  "title": "Mon espace",
+  "subtitle": "Retrouvez vos annonces, vos notifications et, si besoin, vos outils d'administration.",
+  "cards": {
+    "myObituaries": {
+      "title": "Mes annonces",
+      "text": "Consultez, modifiez ou complétez les annonces que vous avez créées sur Madizi.",
+      "cta": "Voir mes annonces"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "text": "Visualisez les messages importants concernant vos annonces (validation, rappels, etc.).",
+      "cta": "Accéder aux notifications"
+    },
+    "moderation": {
+      "title": "Modération / Administration",
+      "text": "Accédez aux outils de vérification des documents et de suivi des annonces payantes.",
+      "adminCta": "Tableau admin",
+      "moderatorCta": "Espace modération"
+    }
+  }
+},
+"notifications": {
+      "title": "Notifications",
+      "text": "Visualisez les messages importants concernant vos annonces (validation, rappels, etc.).",
+      "cta": "Accéder aux notifications"
+    }
+
 
 
 

@@ -1,783 +1,431 @@
-<!-- pages/admin/obituaries/index.vue -->
+<!-- pages/obituaries/index.vue -->
 <template>
   <main class="app-main fade-in">
-    <PageNavBar
-      aria-label="Navigation espace modération"
-      :show-back-home="true"
-      :show-back-list="false"
-      :show-create="false"
-    />
+    <!-- EN-TÊTE -->
+<PageNavBar
+  aria-label="Navigation principale des annonces"
+  :show-back-home="true"
+  :show-back-list="false"
+  :show-create="true"
+  create-to="/obituary/create"
+/>
+
 
     <section class="section">
-      <!-- Header -->
-      <header class="section-header">
+      <div class="section-header">
         <h1 class="section-title">
-          {{ t('adminObituaries.title') }}
+          {{ t('home.list.title') }}
         </h1>
         <p class="section-subtitle">
-          {{ t('adminObituaries.subtitle') }}
+          {{ t('home.list.subtitle') }}
         </p>
-      </header>
+      </div>
+    </section>
 
-      <!-- Barre de filtres / recherche -->
-      <div class="adminobits-toolbar">
-        <!-- Filtres statut vérification -->
-        <nav
-          class="adminobits-filters"
-          aria-label="Filtrer les annonces par état de vérification"
-        >
-          <button
-            v-for="option in verificationOptions"
-            :key="option.value"
-            type="button"
-            class="adminobits-filter-chip"
-            :class="{
-              'adminobits-filter-chip--active':
-                option.value === verificationFilter
-            }"
-            :aria-pressed="option.value === verificationFilter"
-            @click="onVerificationChange(option.value)"
-          >
-            <span class="adminobits-filter-label">
-              {{ t(option.labelKey) }}
-            </span>
-          </button>
-        </nav>
-
-        <!-- Recherche + tri -->
-        <div class="adminobits-controls">
-          <!-- Recherche -->
-          <label class="adminobits-search">
-            <span class="sr-only">
-              {{ t('adminObituaries.searchLabel') }}
-            </span>
-            <span class="adminobits-search__icon" aria-hidden="true">
-              <i class="fa-regular fa-magnifying-glass" />
-            </span>
+    <!-- FILTRES / RECHERCHE -->
+    <section class="section">
+      <form class="card form" @submit.prevent="onSubmitFilters">
+        <!-- Ligne pays + ville -->
+        <div class="form-row form-row-inline">
+          <div class="form-field">
+            <label class="form-label" for="country">
+              {{ t('home.search.country.label') }}
+            </label>
             <input
-              v-model="search"
-              type="search"
-              class="adminobits-search__input"
-              :placeholder="t('adminObituaries.searchPlaceholder')"
-            >
-          </label>
+              id="country"
+              v-model="localFilters.countryCode"
+              class="form-control"
+              type="text"
+              maxlength="2"
+              :placeholder="t('home.search.country.placeholder')"
+            />
+            <p class="form-hint">
+              {{ t('home.search.country.hint') }}
+            </p>
+          </div>
 
-          <!-- Tri -->
-          <label class="adminobits-sort">
-            <span class="adminobits-sort__label">
-              {{ t('adminObituaries.sortLabel') }}
-            </span>
-            <div class="adminobits-sort__control">
-              <select
-                v-model="sort"
-                class="adminobits-sort__select"
-              >
-                <option value="recent">
-                  {{ t('adminObituaries.sort.recent') }}
-                </option>
-                <option value="oldest">
-                  {{ t('adminObituaries.sort.oldest') }}
-                </option>
-                <option value="popular">
-                  {{ t('adminObituaries.sort.popular') }}
-                </option>
-              </select>
-              <span class="adminobits-sort__icon" aria-hidden="true">
-                <i class="fa-regular fa-arrow-up-wide-short" />
-              </span>
-            </div>
-          </label>
+          <div class="form-field">
+            <label class="form-label" for="city">
+              {{ t('home.search.city.label') }}
+            </label>
+            <input
+              id="city"
+              v-model="localFilters.city"
+              class="form-control"
+              type="text"
+              :placeholder="t('home.search.city.placeholder')"
+            />
+          </div>
         </div>
+
+        <!-- Ligne q + sort -->
+        <div class="form-row form-row-inline">
+          <div class="form-field">
+            <label class="form-label" for="q">
+              {{ t('home.search.q.label') }}
+            </label>
+            <input
+              id="q"
+              v-model="localFilters.q"
+              class="form-control"
+              type="text"
+              :placeholder="t('home.search.q.placeholder')"
+            />
+            <p class="form-hint">
+              {{ t('home.search.q.hint') }}
+            </p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="sort">
+              {{ t('home.search.sort.label') }}
+            </label>
+            <select
+              id="sort"
+              v-model="localFilters.sort"
+              class="form-control"
+            >
+              <option value="recent">
+                {{ t('home.search.sort.options.recent') }}
+              </option>
+              <option value="oldest">
+                {{ t('home.search.sort.options.oldest') }}
+              </option>
+              <option value="popular">
+                {{ t('home.search.sort.options.popular') }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            @click="onResetFilters"
+          >
+            {{ t('home.search.reset') }}
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            :disabled="obituaries.loading"
+          >
+            {{
+              obituaries.loading
+                ? t('home.search.loading')
+                : t('home.search.submit')
+            }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- LISTE DES ANNONCES -->
+    <section class="section">
+      <!-- Erreur -->
+      <div v-if="obituaries.error" class="card card-muted">
+        <p class="text-sm text-danger">
+          {{ t('home.list.error') }}
+        </p>
       </div>
 
       <!-- Loading -->
-      <div v-if="pending" class="adminobits-loading">
-        <div class="adminobits-skeleton" />
-        <div class="adminobits-skeleton" />
-      </div>
-
-      <!-- Erreur (inclut 403 si pas admin) -->
-      <div
-        v-else-if="error"
-        class="adminobits-error"
-        role="alert"
-      >
-        <p class="adminobits-error__text">
-          <span v-if="errorStatus === 403">
-            {{ t('adminObituaries.errorForbidden') }}
-          </span>
-          <span v-else>
-            {{ t('adminObituaries.error') }}
-          </span>
-        </p>
-        <button
-          type="button"
-          class="btn btn-ghost btn-sm"
-          @click="refresh"
-        >
-          {{ t('adminObituaries.retry') }}
-        </button>
-      </div>
-
-      <!-- Liste vide -->
-      <div
-        v-else-if="!items.length"
-        class="adminobits-empty"
-      >
-        <p class="adminobits-empty__text">
-          {{ t('adminObituaries.empty') }}
+      <div v-else-if="obituaries.loading" class="card card-muted">
+        <p class="text-sm">
+          {{ t('home.list.loading') }}
         </p>
       </div>
 
-      <!-- Liste d'annonces -->
-      <div
-        v-else
-        class="adminobits-list"
-      >
-        <article
-          v-for="item in items"
-          :key="item.id"
-          class="card adminobits-card"
-        >
-          <div class="card-body adminobits-card__body">
-            <header class="adminobits-card__header">
-              <h2 class="adminobits-card__title">
-                {{ item.content?.title || '—' }}
-              </h2>
-
-              <div class="adminobits-pill-row">
-                <!-- Statut fonctionnel -->
-                <span class="adminobits-pill">
-                  {{ formatStatus(item.status) }}
-                </span>
-
-                <!-- Vérification -->
-                <span
-                  class="adminobits-pill adminobits-pill--verification"
-                >
-                  {{ formatVerification(item.verificationStatus) }}
-                </span>
-
-                <!-- Paiement -->
-                <span
-                  v-if="hasPaid(item)"
-                  class="adminobits-pill adminobits-pill--paid"
-                >
-                  {{ formatPayment(item) }}
-                </span>
-              </div>
-            </header>
-
-            <!-- Infos défunt / lieu -->
-            <p
-              class="adminobits-meta"
-            >
-              <span v-if="item.deceased?.fullName">
-                {{ item.deceased.fullName }}
-              </span>
-              <span
-                v-if="item.deceased?.fullName && (item.location?.city || item.location?.country)"
-              >
-                ·
-              </span>
-              <span v-if="item.location?.city || item.location?.country">
-                {{
-                  [
-                    item.location?.city,
-                    item.location?.country,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')
-                }}
-              </span>
-            </p>
-
-            <!-- Infos famille -->
-            <p class="adminobits-meta-small">
-              {{ t('adminObituaries.familyLabel') }}
-              <strong>{{ item.user?.email }}</strong>
-              <span v-if="item.user?.city || item.user?.country">
-                ·
-                {{
-                  [
-                    item.user?.city,
-                    item.user?.country,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')
-                }}
-              </span>
-            </p>
-
-            <!-- Dates -->
-            <p class="adminobits-meta-small">
-              {{ t('adminObituaries.createdAt', { date: formatDateTime(item.createdAt) }) }}
-              <span v-if="item.publishedAt">
-                ·
-                {{ t('adminObituaries.publishedAt', { date: formatDateTime(item.publishedAt) }) }}
-              </span>
-            </p>
-
-            <!-- Plan -->
-            <p
-              v-if="item.monetization?.pricingTier"
-              class="adminobits-plan"
-            >
-              {{ t('adminObituaries.plan') }}
-              <strong> {{ formatPlan(item.monetization.pricingTier) }}</strong>
-              <span v-if="item.monetization?.isFree">
-                · {{ t('adminObituaries.planFree') }}
-              </span>
-            </p>
-
-            <!-- Extrait -->
-            <p
-              v-if="item.content?.excerpt"
-              class="adminobits-excerpt"
-            >
-              {{ item.content.excerpt }}
-            </p>
-
-            <!-- Actions -->
-            <div class="adminobits-actions">
-              <!-- Voir annonce publique -->
-              <NuxtLink
-                :to="`/obituary/${item.slug}`"
-                class="btn btn-ghost btn-sm"
-                target="_blank"
-              >
-                {{ t('adminObituaries.actions.viewPublic') }}
-              </NuxtLink>
-
-              <!-- Voir récap côté famille -->
-              <NuxtLink
-                :to="`/obituary/confirm/${item.slug}`"
-                class="btn btn-ghost btn-sm"
-                target="_blank"
-              >
-                {{ t('adminObituaries.actions.viewConfirm') }}
-              </NuxtLink>
-
-              <!-- (Étapes suivantes : boutons Vérifier / Rejeter qui appellent une API admin) -->
-            </div>
-          </div>
-        </article>
-
-        <!-- Pagination avec ton composant -->
-        <div
-          v-if="pagination && pagination.totalPages > 1"
-          class="adminobits-pagination"
-        >
-          <Pagination
-            :current-page="page"
-            :total-pages="pagination.totalPages"
-            :total-items="pagination.total"
-            :page-size="pagination.pageSize"
-            :aria-label="t('adminObituaries.pagination.aria')"
-            :label-prev="t('pagination.prev')"
-            :label-next="t('pagination.next')"
-            @pageChange="changePage"
-          />
+      <!-- Résultats -->
+      <div v-else>
+        <!-- Vide -->
+        <div v-if="!obituaries.items.length" class="card card-muted">
+          <p class="text-sm">
+            {{ t('home.list.empty') }}
+          </p>
         </div>
+
+        <!-- Cards -->
+        <div v-else class="grid grid-3-cols">
+          <article
+            v-for="item in obituaries.items"
+            :key="item.id"
+            class="card obituary-card"
+          >
+            <!-- Miniature -->
+            <div
+              v-if="thumbnailUrlFor(item)"
+              class="obituary-card__media"
+            >
+              <img
+                class="obituary-card__image"
+                :src="thumbnailUrlFor(item)"
+                :alt="item.content.title || item.deceased.fullName"
+                loading="lazy"
+              />
+            </div>
+
+            <div class="obituary-card__content">
+              <header class="card-header">
+                <h2 class="card-title">
+                  {{ item.content.title || item.deceased.fullName }}
+                </h2>
+
+                <p class="card-subtitle text-xs text-soft">
+                  <span v-if="item.deceased.dateOfDeath">
+                    {{
+                      t('home.list.card.dateOfDeath', {
+                        date: formatDate(item.deceased.dateOfDeath),
+                      })
+                    }}
+                  </span>
+
+                  <span v-if="item.deceased.ageDisplay">
+                    • {{ item.deceased.ageDisplay }}
+                  </span>
+
+                  <span v-if="item.publishedAt">
+                    • {{ timeAgo(item.publishedAt) }}
+                  </span>
+                </p>
+              </header>
+
+              <div class="card-body">
+                <!-- Extrait -->
+                <p class="text-sm mb-2">
+                  {{ item.content.excerpt }}
+                </p>
+
+                <!-- Localisation -->
+                <p class="text-xs text-soft">
+                  <span v-if="item.location.city">
+                    {{ item.location.city }}
+                  </span>
+                  <span v-if="item.location.region">
+                    • {{ item.location.region }}
+                  </span>
+                  <span v-if="item.location.country">
+                    • {{ item.location.country }}
+                  </span>
+                </p>
+
+                <!-- Badges -->
+                <div class="mt-2">
+                  <span
+                    v-if="item.monetization.isFree"
+                    class="badge badge-success"
+                  >
+                    {{ t('home.list.card.badgeFree') }}
+                  </span>
+                  <span
+                    v-else
+                    class="badge badge-neutral"
+                  >
+                    {{
+                      t('home.list.card.badgePaid', {
+                        tier: item.monetization.pricingTier || 'pro',
+                      })
+                    }}
+                  </span>
+
+                  <span
+                    v-if="item.stats.viewCount != null"
+                    class="badge badge-soft"
+                    style="margin-left: 4px;"
+                  >
+                    {{
+                      t('home.list.card.views', {
+                        count: item.stats.viewCount,
+                      })
+                    }}
+                  </span>
+                </div>
+
+                <!-- Événement principal -->
+                <p
+                  v-if="item.mainEvent && item.mainEvent.startsAt"
+                  class="text-xs text-soft mt-3"
+                >
+                  {{
+                    t('home.list.card.mainEvent', {
+                      type: t(
+                        'home.eventTypes.' +
+                          (item.mainEvent.eventType || 'other')
+                      ),
+                      date: formattedDate(item.mainEvent.startsAt),
+                    })
+                  }}
+                </p>
+              </div>
+
+              <footer class="card-footer">
+                <NuxtLink
+                  :to="obituaryPath(item)"
+                  class="btn btn-secondary btn-sm"
+                >
+                  {{ t('home.list.card.viewDetails') }}
+                </NuxtLink>
+              </footer>
+            </div>
+          </article>
+        </div>
+
+        <!-- Pagination -->
+        <Pagination
+          v-if="obituaries.pagination.totalPages > 1"
+          class="mt-4"
+          :current-page="obituaries.pagination.page"
+          :total-pages="obituaries.pagination.totalPages"
+          :total-items="obituaries.pagination.total"
+          :page-size="obituaries.pagination.pageSize"
+          :aria-label="t('pagination.ariaLabel')"
+          :label-prev="t('pagination.prev')"
+          :label-next="t('pagination.next')"
+          @pageChange="onPageChange"
+        />
       </div>
     </section>
   </main>
 </template>
 
 <script setup>
-definePageMeta({
-  middleware: ['auth'], // + protection côté API pour roles admin/modo
-});
-
-import { computed, ref, watch } from 'vue';
-import {
-  useRoute,
-  useRouter,
-  useSeoMeta,
-  useFetch,
-} from '#imports';
+import { computed, reactive, watch } from 'vue';
+import { useSeoMeta } from '#imports';
 import { useI18n } from 'vue-i18n';
-import PageNavBar from '~/components/PageNavBar.vue';
-import Pagination from '~/components/Pagination.vue';
+import { useObituariesStore } from '~/stores/obituaries';
 import { useDateUtils } from '~/composables/useDateUtils';
+import Pagination from '~/components/Pagination.vue';
+import PageNavBar from '~/components/PageNavBar.vue';
 
-const route = useRoute();
-const router = useRouter();
-const { t } = useI18n();
-const { formattedDateTimeWithSeconds } = useDateUtils();
-
-// Filtres "état de vérification"
-const verificationOptions = [
-  { value: 'all', labelKey: 'adminObituaries.filters.all' },
-  { value: 'pending', labelKey: 'adminObituaries.filters.pending' },
-  { value: 'verified', labelKey: 'adminObituaries.filters.verified' },
-  { value: 'rejected', labelKey: 'adminObituaries.filters.rejected' },
-];
-
-const initialVerification =
-  typeof route.query.verification === 'string'
-    ? route.query.verification
-    : 'pending';
-
-const verificationFilter = ref(
-  verificationOptions.some((o) => o.value === initialVerification)
-    ? initialVerification
-    : 'pending',
-);
-
-// Pagination
-const initialPage =
-  route.query.page && Number(route.query.page) > 0
-    ? Number(route.query.page)
-    : 1;
-
-const page = ref(initialPage);
-
-// recherche & tri
-const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
-const sort = ref(
-  typeof route.query.sort === 'string' ? route.query.sort : 'recent',
-);
-
-// Appel API admin
-const {
-  data,
-  pending,
-  error,
-  refresh,
-} = await useFetch(
-  () => {
-    const params = new URLSearchParams();
-    params.set('page', String(page.value));
-    params.set('pageSize', '10');
-    params.set('onlyPaid', 'true');
-
-    if (verificationFilter.value !== 'all') {
-      params.set('verification', verificationFilter.value);
-    }
-
-    if (search.value && search.value.trim().length > 1) {
-      params.set('q', search.value.trim());
-    }
-
-    if (sort.value && sort.value !== 'recent') {
-      params.set('sort', sort.value);
-    }
-
-    return `/api/admin/obituaries?${params.toString()}`;
-  },
-  {
-    key: () =>
-      `admin-obits-${verificationFilter.value}-${page.value}-${sort.value}-${
-        search.value || ''
-      }`,
-  },
-);
-
-const result = computed(
-  () => data.value || { ok: false, items: [], pagination: null },
-);
-
-const items = computed(() => result.value.items || []);
-const pagination = computed(() => result.value.pagination || null);
-
-const errorStatus = computed(() => error.value?.statusCode || null);
+const { t, locale } = useI18n();
+const obituaries = useObituariesStore();
+const { formatDate, formattedDate, timeAgo } = useDateUtils();
 
 // SEO
+const seoTitle = computed(() => t('home.meta.title'));
+const seoDescription = computed(() => t('home.meta.description'));
+
 useSeoMeta({
-  title: () => t('adminObituaries.meta.title'),
-  description: () => t('adminObituaries.meta.description'),
+  title: seoTitle,
+  description: seoDescription,
+  ogTitle: seoTitle,
+  ogDescription: seoDescription,
 });
 
-// Helpers
-const formatDateTime = (value) => {
-  if (!value) return '';
-  return formattedDateTimeWithSeconds(value);
+// Filtres (UI)
+const localFilters = reactive({
+  countryCode: obituaries.filters.countryCode || '',
+  city: obituaries.filters.city || '',
+  q: obituaries.filters.q || '',
+  sort: obituaries.filters.sort || 'recent',
+});
+
+const obituaryPath = (item) => `/obituary/${item.slug}`;
+
+// Miniature : coverImageUrl puis fallback éventuels.
+const thumbnailUrlFor = (item) => {
+  if (item.coverImageUrl) return item.coverImageUrl;
+  if (item.thumbnailUrl) return item.thumbnailUrl;
+  if (item.media?.thumbnailUrl) return item.media.thumbnailUrl;
+  if (item.media?.coverUrl) return item.media.coverUrl;
+  return null;
 };
 
-const hasPaid = (item) => {
-  return (
-    item &&
-    item.monetization &&
-    typeof item.monetization.amountPaid === 'number' &&
-    item.monetization.amountPaid > 0
-  );
-};
-
-const formatPayment = (item) => {
-  if (!hasPaid(item)) return '';
-  const amount = item.monetization.amountPaid.toFixed(2).replace('.', ',');
-  const curr = item.monetization.currency || 'EUR';
-  return t('adminObituaries.payment.paid', {
-    amount,
-    currency: curr,
+// Appliquer les filtres au store
+const applyFiltersToStore = () => {
+  obituaries.setFilters({
+    countryCode: localFilters.countryCode,
+    city: localFilters.city,
+    q: localFilters.q,
+    sort: localFilters.sort,
   });
 };
 
-const formatStatus = (status) => {
-  switch (status) {
-    case 'draft':
-      return t('adminObituaries.status.draft');
-    case 'pending_review':
-      return t('adminObituaries.status.pending_review');
-    case 'published':
-      return t('adminObituaries.status.published');
-    case 'archived':
-      return t('adminObituaries.status.archived');
-    case 'rejected':
-      return t('adminObituaries.status.rejected');
-    case 'expired':
-      return t('adminObituaries.status.expired');
-    default:
-      return status || '';
-  }
+const onSubmitFilters = () => {
+  applyFiltersToStore();
+  obituaries.fetchList();
 };
 
-const formatVerification = (vs) => {
-  switch (vs) {
-    case 'not_required':
-      return t('adminObituaries.verification.not_required');
-    case 'pending':
-      return t('adminObituaries.verification.pending');
-    case 'verified':
-      return t('adminObituaries.verification.verified');
-    case 'rejected':
-      return t('adminObituaries.verification.rejected');
-    default:
-      return vs || '';
-  }
+const onResetFilters = () => {
+  obituaries.resetFilters();
+  localFilters.countryCode = '';
+  localFilters.city = '';
+  localFilters.q = '';
+  localFilters.sort = 'recent';
+  obituaries.fetchList();
 };
 
-const formatPlan = (pricingTier) => {
-  if (!pricingTier) return t('adminObituaries.planUnknown');
-  const key = `plans.codes.${pricingTier}`;
-  const translated = t(key);
-  return translated === key ? pricingTier : translated;
+const onPageChange = (page) => {
+  obituaries.setPage(page);
+  obituaries.fetchList();
 };
 
-// Actions UI
-const onVerificationChange = (value) => {
-  if (verificationFilter.value === value) return;
-  verificationFilter.value = value;
-  page.value = 1;
-};
+// Filtre langue + premier chargement
+obituaries.setFilters({ language: locale.value });
+await obituaries.fetchList();
 
-const changePage = (newPage) => {
-  if (newPage === page.value || newPage < 1) return;
-  page.value = newPage;
-};
-
-// Sync query string (URL partageable)
 watch(
-  [verificationFilter, page, search, sort],
-  ([newVerification, newPage, newSearch, newSort]) => {
-    const query = {
-      ...route.query,
-      verification: newVerification,
-      page: String(newPage),
-    };
-
-    if (newSearch && newSearch.trim().length > 1) {
-      query.q = newSearch.trim();
-    } else {
-      delete query.q;
-    }
-
-    if (newSort && newSort !== 'recent') {
-      query.sort = newSort;
-    } else {
-      delete query.sort;
-    }
-
-    router.replace({ query });
-  },
-  { immediate: false },
+  () => locale.value,
+  (lang) => {
+    obituaries.setFilters({ language: lang });
+    obituaries.fetchList();
+  }
 );
 </script>
 
 <style scoped>
-.adminobits-toolbar {
-  margin-top: var(--space-3);
+.obituary-card {
   display: flex;
   flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.obituary-card__media {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.obituary-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.obituary-card__content {
+  padding: var(--space-4);
+}
+.link-back {
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+  text-decoration: none;
+}
+.link-back:hover {
+  color: var(--color-accent-strong);
+  text-decoration: underline;
+}
+
+.section-header--nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.section-header__left {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-/* Filtres vérification */
-.adminobits-filters {
+.section-header__right {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
-.adminobits-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-muted);
-  font-size: 0.78rem;
-  cursor: pointer;
-  color: var(--color-text-soft);
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.adminobits-filter-chip:hover {
-  border-color: var(--color-border-strong, #94a3b8);
-}
-
-.adminobits-filter-chip--active {
-  background: var(--color-primary-soft, rgba(79, 70, 229, 0.08));
-  color: var(--color-primary-text, #3730a3);
-  border-color: var(--color-primary-border, #818cf8);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.4);
-}
-
-.adminobits-filter-label {
-  white-space: nowrap;
-}
-
-/* Recherche + tri */
-.adminobits-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Recherche */
-.adminobits-search {
-  position: relative;
-  flex: 1 1 220px;
-  max-width: 420px;
-}
-
-.adminobits-search__icon {
-  position: absolute;
-  inset-inline-start: 0.6rem;
-  inset-block-start: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  color: var(--color-text-soft);
-}
-
-.adminobits-search__input {
-  width: 100%;
-  padding: 0.4rem 0.7rem 0.4rem 2rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border-subtle);
-  font-size: 0.85rem;
-  background: var(--color-surface-main);
-  color: var(--color-text-main);
-}
-
-.adminobits-search__input::placeholder {
-  color: var(--color-text-muted, #9ca3af);
-}
-
-/* Tri */
-.adminobits-sort {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  color: var(--color-text-soft);
-}
-
-.adminobits-sort__label {
-  white-space: nowrap;
-}
-
-.adminobits-sort__control {
-  position: relative;
-}
-
-.adminobits-sort__select {
-  padding: 0.25rem 1.8rem 0.25rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border-subtle);
-  font-size: 0.8rem;
-  background: var(--color-surface-main);
-  color: var(--color-text-main);
-  appearance: none;
-}
-
-.adminobits-sort__icon {
-  position: absolute;
-  inset-inline-end: 0.45rem;
-  inset-block-start: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  color: var(--color-text-soft);
-}
-
-/* Loading / skeleton */
-.adminobits-loading {
-  margin-top: var(--space-3);
-  display: grid;
-  gap: 0.8rem;
-}
-
-.adminobits-skeleton {
-  height: 110px;
-  border-radius: 0.9rem;
-  background: linear-gradient(
-    90deg,
-    rgba(148, 163, 184, 0.16),
-    rgba(148, 163, 184, 0.28),
-    rgba(148, 163, 184, 0.16)
-  );
-  background-size: 200% 100%;
-  animation: adminobits-shimmer 1.3s infinite;
-}
-
-/* Erreur */
-.adminobits-error {
-  margin-top: var(--space-3);
-  padding: 0.9rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(239, 68, 68, 0.7);
-  background: rgba(239, 68, 68, 0.08);
-}
-
-.adminobits-error__text {
-  margin: 0 0 0.4rem;
-  font-size: 0.9rem;
-}
-
-/* Vide */
-.adminobits-empty {
-  margin-top: var(--space-4);
-  padding: 1.1rem 1rem;
-  border-radius: 0.9rem;
-  border: 1px dashed var(--color-border-subtle);
-  background: var(--color-surface-muted);
-  text-align: left;
-}
-
-.adminobits-empty__text {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-text-soft);
-}
-
-/* Liste / cartes */
-.adminobits-list {
-  margin-top: var(--space-3);
-  display: grid;
-  gap: 0.9rem;
-}
-
-.adminobits-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.adminobits-card__header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.adminobits-card__title {
-  margin: 0;
-  font-size: 0.98rem;
-  font-weight: 600;
-}
-
-.adminobits-pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.adminobits-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  background: var(--color-surface-muted);
-  color: var(--color-text-soft);
-}
-
-.adminobits-pill--verification {
-  background: rgba(148, 163, 184, 0.15);
-}
-
-.adminobits-pill--paid {
-  background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
-}
-
-.adminobits-meta {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--color-text-main);
-}
-
-.adminobits-meta-small {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--color-text-soft);
-}
-
-.adminobits-plan {
-  margin: 0;
-  font-size: 0.82rem;
-  color: var(--color-text-soft);
-}
-
-.adminobits-plan strong {
-  font-weight: 600;
-}
-
-.adminobits-excerpt {
-  margin: 0.2rem 0 0;
-  font-size: 0.88rem;
-  color: var(--color-text-main);
-}
-
-/* Actions */
-.adminobits-actions {
-  margin-top: 0.6rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-/* Pagination */
-.adminobits-pagination {
-  margin-top: 1rem;
-}
-
-/* Skeleton animation */
-@keyframes adminobits-shimmer {
-  0% {
-    background-position: 0% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Mobile */
-@media (max-width: 640px) {
-  .adminobits-controls {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .adminobits-sort {
-    justify-content: flex-start;
-  }
-}
 </style>

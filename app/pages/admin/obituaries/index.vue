@@ -333,6 +333,7 @@ import PageNavBar from '~/components/PageNavBar.vue';
 import Pagination from '~/components/Pagination.vue';
 import { useDateUtils } from '~/composables/useDateUtils';
 import { useNuxtApp } from '#imports';
+import { useConfirmStore } from '~/stores/confirmStore'; // 👈 AJOUT
 
 const route = useRoute();
 const router = useRouter();
@@ -340,6 +341,9 @@ const { t } = useI18n();
 const { formattedDateTimeWithSeconds } = useDateUtils();
 const { $useToast } = useNuxtApp();
 const toast = $useToast ? $useToast() : null;
+
+const confirmStore = useConfirmStore(); // 👈 AJOUT
+
 
 // état pour désactiver les boutons pendant l'appel API
 const processingId = ref(null);
@@ -541,33 +545,79 @@ const callVerificationAction = async (itemId, action, note) => {
 };
 
 const onVerifyClick = async (item) => {
-  const confirmed = window.confirm(
+  if (!confirmStore) return;
+
+  const title =
+    t('adminObituaries.confirm.verifyTitle', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    }) ||
     t('adminObituaries.confirm.verify', {
       title: item.content?.title || item.deceased?.fullName || '',
-    })
-  );
+    }) ||
+    'Valider les documents pour cette annonce ?';
+
+  const message =
+    t('adminObituaries.confirm.verifyMessage', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    }) ||
+    t('adminObituaries.confirm.verify', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    }) ||
+    "Cette action marquera les documents comme vérifiés. Vous pourrez toujours modifier la vérification plus tard.";
+
+  const confirmed = await confirmStore.ask({
+    title,
+    message,
+    confirmLabel: t('common.actions.verify') || 'Valider',
+    cancelLabel: t('common.actions.cancel') || 'Annuler',
+  });
 
   if (!confirmed) return;
 
   await callVerificationAction(item.id, 'verify', null);
 };
 
+
 const onRejectClick = async (item) => {
-  const confirmed = window.confirm(
+  if (!confirmStore) return;
+
+  const title =
+    t('adminObituaries.confirm.rejectTitle', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    }) ||
     t('adminObituaries.confirm.reject', {
       title: item.content?.title || item.deceased?.fullName || '',
-    })
-  );
+    }) ||
+    'Refuser ces documents ?';
+
+  const message =
+    t('adminObituaries.confirm.rejectMessage', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    }) ||
+    t('adminObituaries.confirm.reject', {
+      title: item.content?.title || item.deceased?.fullName || '',
+    }) ||
+    "Cette action marquera les documents comme refusés. Vous pourrez ajouter un commentaire pour la famille.";
+
+  const confirmed = await confirmStore.ask({
+    title,
+    message,
+    confirmLabel: t('common.actions.reject') || 'Refuser',
+    cancelLabel: t('common.actions.cancel') || 'Annuler',
+  });
 
   if (!confirmed) return;
 
+  // TODO plus tard : remplacer ce prompt par un modal avec textarea
   const note = window.prompt(
-    t('adminObituaries.confirm.rejectNotePrompt'),
+    t('adminObituaries.confirm.rejectNotePrompt') ||
+      'Vous pouvez indiquer la raison du refus (optionnel) :',
     ''
   );
 
   await callVerificationAction(item.id, 'reject', note || '');
 };
+
 
 // Sync query string (URL partageable)
 watch(

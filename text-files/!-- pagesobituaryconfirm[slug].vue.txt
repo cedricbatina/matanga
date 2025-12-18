@@ -22,21 +22,20 @@
 
         <!-- Info plan -->
         <div
-          v-if="planLabel"
+          v-if="planLabel || planPrice"
           class="review-plan-banner"
         >
           <div class="review-plan-banner__top">
             <span class="review-plan-banner__plan">
-              {{ planLabel }}
+              {{ planLabel || t('obituaryReview.side.planUnknown') }}
             </span>
             <span class="review-plan-banner__price">
               {{ planPrice }}
             </span>
           </div>
           <p class="review-plan-banner__meta">
-  {{ t('obituaryReview.planMeta', { days: effectivePublishDays }) }}
-</p>
-
+            {{ t('obituaryReview.planMeta', { days: effectivePublishDays }) }}
+          </p>
         </div>
       </header>
 
@@ -64,13 +63,17 @@
         </button>
       </div>
 
+      <!-- Formulaire de confirmation -->
       <form
         v-else-if="obituary"
         class="review-layout"
         @submit.prevent="onConfirm"
       >
         <!-- Colonne principale : contenu de l’annonce -->
-        <section class="card review-main" aria-label="Récapitulatif de l'annonce">
+        <section
+          class="card review-main"
+          aria-label="Récapitulatif de l'annonce"
+        >
           <div class="card-body review-main__body">
             <!-- Bloc défunt -->
             <section class="review-section">
@@ -81,106 +84,164 @@
                 {{ t('obituaryReview.sections.deceased.subtitle') }}
               </p>
 
-             <dl class="review-dl">
-  <!-- Nom -->
-  <div class="review-dl__row">
-    <dt>{{ t('createObituary.fields.deceasedFullName.label') }}</dt>
-    <dd>{{ obituary.deceasedFullName }}</dd>
-  </div>
+              <dl class="review-dl">
+                <!-- Nom -->
+                <div class="review-dl__row">
+                  <dt>
+                    {{ t('createObituary.fields.deceasedFullName.label') }}
+                  </dt>
+                  <dd>{{ obituary.deceased?.fullName }}</dd>
+                </div>
 
-  <!-- Genre -->
-  <div
-    v-if="obituary.deceasedGender"
-    class="review-dl__row"
-  >
-    <dt>{{ t('createObituary.fields.gender.label') }}</dt>
-    <dd>{{ formatGender(obituary.deceasedGender) }}</dd>
-  </div>
+                <!-- Genre -->
+                <div
+                  v-if="obituary.deceased?.gender"
+                  class="review-dl__row"
+                >
+                  <dt>{{ t('createObituary.fields.gender.label') }}</dt>
+                  <dd>{{ formatGender(obituary.deceased.gender) }}</dd>
+                </div>
 
-  <!-- Niveau d’identification -->
-  <div
-    v-if="obituary.identityStatus"
-    class="review-dl__row"
-  >
-    <dt>{{ t('createObituary.fields.identityStatus.label') }}</dt>
-    <dd>{{ formatIdentityStatus(obituary.identityStatus) }}</dd>
-  </div>
+                <!-- Niveau d’identification -->
+                <div
+                  v-if="obituary.deceased?.identityStatus"
+                  class="review-dl__row"
+                >
+                  <dt>
+                    {{ t('createObituary.fields.identityStatus.label') }}
+                  </dt>
+                  <dd>
+                    {{ formatIdentityStatus(obituary.deceased.identityStatus) }}
+                  </dd>
+                </div>
 
-  <!-- Dates naissance / décès -->
-  <div
-    v-if="obituary.dateOfBirth || obituary.dateOfDeath"
-    class="review-dl__row"
-  >
-    <dt>{{ t('obituaryReview.fields.dates') }}</dt>
-    <dd>
-      <span v-if="obituary.dateOfBirth">
-        {{ t('obituaryReview.fields.dateOfBirth', { date: obituary.dateOfBirth }) }}
-      </span>
-      <span v-if="obituary.dateOfBirth && obituary.dateOfDeath"> · </span>
-      <span v-if="obituary.dateOfDeath">
-        {{ t('obituaryReview.fields.dateOfDeath', { date: obituary.dateOfDeath }) }}
-      </span>
-    </dd>
-  </div>
+                <!-- Dates naissance / décès -->
+              <!-- Dates naissance / décès -->
+<div
+  v-if="
+    obituary.deceased?.dateOfBirth ||
+    obituary.deceased?.dateOfDeath
+  "
+  class="review-dl__row"
+>
+  <dt>{{ t('obituaryReview.fields.dates') }}</dt>
+  <dd>
+    <span v-if="obituary.deceased?.dateOfBirth">
+      {{
+        t('obituaryReview.fields.dateOfBirth', {
+          date: formatDate(obituary.deceased.dateOfBirth),
+        })
+      }}
+    </span>
+    <span
+      v-if="
+        obituary.deceased?.dateOfBirth &&
+        obituary.deceased?.dateOfDeath
+      "
+    >
+      ·
+    </span>
+    <span v-if="obituary.deceased?.dateOfDeath">
+      {{
+        t('obituaryReview.fields.dateOfDeath', {
+          date: formatDate(obituary.deceased.dateOfDeath),
+        })
+      }}
+    </span>
+  </dd>
+</div>
 
-  <!-- Âge affiché -->
-  <div
-    v-if="obituary.ageDisplay"
-    class="review-dl__row"
-  >
-    <dt>{{ t('createObituary.fields.ageDisplay.label') }}</dt>
-    <dd>{{ obituary.ageDisplay }}</dd>
-  </div>
 
-  <!-- Religion -->
-  <div
-    v-if="obituary.religion || obituary.denomination"
-    class="review-dl__row"
-  >
-    <dt>{{ t('createObituary.fields.religion.label') }}</dt>
-    <dd>
-      <span v-if="obituary.religion">
-        {{ formatReligion(obituary.religion) }}
-      </span>
-      <span v-if="obituary.religion && obituary.denomination"> · </span>
-      <span v-if="obituary.denomination">
-        {{ obituary.denomination }}
-      </span>
-    </dd>
-  </div>
+                <!-- Âge affiché -->
+                <div
+                  v-if="obituary.deceased?.ageDisplay"
+                  class="review-dl__row"
+                >
+                  <dt>
+                    {{ t('createObituary.fields.ageDisplay.label') }}
+                  </dt>
+                  <dd>{{ obituary.deceased.ageDisplay }}</dd>
+                </div>
 
-  <!-- Localisation -->
-  <div
-    v-if="obituary.city || obituary.region || obituary.country"
-    class="review-dl__row"
-  >
-    <dt>{{ t('obituaryReview.fields.location') }}</dt>
-    <dd>
-      {{ [obituary.city, obituary.region, obituary.country].filter(Boolean).join(', ') }}
-    </dd>
-  </div>
+                <!-- Religion -->
+                <div
+                  v-if="
+                    obituary.deceased?.religion ||
+                    obituary.deceased?.denomination
+                  "
+                  class="review-dl__row"
+                >
+                  <dt>{{ t('createObituary.fields.religion.label') }}</dt>
+                  <dd>
+                    <span v-if="obituary.deceased?.religion">
+                      {{ formatReligion(obituary.deceased.religion) }}
+                    </span>
+                    <span
+                      v-if="
+                        obituary.deceased?.religion &&
+                        obituary.deceased?.denomination
+                      "
+                    >
+                      ·
+                    </span>
+                    <span v-if="obituary.deceased?.denomination">
+                      {{ obituary.deceased.denomination }}
+                    </span>
+                  </dd>
+                </div>
 
-  <!-- Code pays -->
-  <div
-    v-if="obituary.countryCode"
-    class="review-dl__row"
-  >
-    <dt>{{ t('obituaryReview.fields.countryCode') }}</dt>
-    <dd>{{ obituary.countryCode }}</dd>
-  </div>
+                <!-- Localisation -->
+                <div
+                  v-if="
+                    obituary.location?.city ||
+                    obituary.location?.region ||
+                    obituary.location?.country
+                  "
+                  class="review-dl__row"
+                >
+                  <dt>{{ t('obituaryReview.fields.location') }}</dt>
+                  <dd>
+                    {{
+                      [
+                        obituary.location?.city,
+                        obituary.location?.region,
+                        obituary.location?.country,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                    }}
+                  </dd>
+                </div>
 
-  <!-- Zone rurale / village -->
-  <div
-    v-if="obituary.isRuralArea !== null && obituary.isRuralArea !== undefined"
-    class="review-dl__row"
-  >
-    <dt>{{ t('createObituary.fields.isRuralArea.label') }}</dt>
-    <dd>
-      {{ obituary.isRuralArea ? t('obituaryReview.fields.ruralYes') : t('obituaryReview.fields.ruralNo') }}
-    </dd>
-  </div>
-</dl>
+                <!-- Code pays -->
+                <div
+                  v-if="obituary.location?.countryCode"
+                  class="review-dl__row"
+                >
+                  <dt>{{ t('obituaryReview.fields.countryCode') }}</dt>
+                  <dd>{{ obituary.location.countryCode }}</dd>
+                </div>
 
+                <!-- Zone rurale / village -->
+                <div
+                  v-if="
+                    obituary.location &&
+                    obituary.location.isRuralArea !== undefined
+                  "
+                  class="review-dl__row"
+                >
+                  <dt>
+                    {{ t('createObituary.fields.isRuralArea.label') }}
+                  </dt>
+                  <dd>
+                    {{
+                      obituary.location.isRuralArea
+                        ? t('obituaryReview.fields.ruralYes')
+                        : t('obituaryReview.fields.ruralNo')
+                    }}
+                  </dd>
+                </div>
+              </dl>
             </section>
 
             <!-- Bloc texte annonce -->
@@ -193,11 +254,11 @@
               </p>
 
               <h3 class="review-content__title">
-                {{ obituary.title }}
+                {{ obituary.content?.title }}
               </h3>
 
               <p class="review-content__body">
-                {{ obituary.content }}
+                {{ obituary.content?.body }}
               </p>
             </section>
 
@@ -245,7 +306,9 @@
                     v-if="event.venueName || event.venueAddress"
                     class="review-events__place"
                   >
-                    <strong>{{ event.venueName }}</strong>
+                    <strong v-if="event.venueName">
+                      {{ event.venueName }}
+                    </strong>
                     <br v-if="event.venueName && event.venueAddress" />
                     <span v-if="event.venueAddress">
                       {{ event.venueAddress }}
@@ -278,7 +341,12 @@
               >
                 <li
                   v-for="contact in contacts"
-                  :key="contact.id || contact.email || contact.phone || contact.name"
+                  :key="
+                    contact.id ||
+                    contact.email ||
+                    contact.phone ||
+                    contact.name
+                  "
                   class="review-contacts__item"
                 >
                   <p class="review-contacts__name">
@@ -287,17 +355,15 @@
                       · {{ t('obituaryReview.contacts.primary') }}
                     </span>
                   </p>
+
                   <ul class="review-contacts__channels">
                     <li v-if="contact.phone">
-                      <i class="fas fa-phone" aria-hidden="true"></i>
                       <span>{{ contact.phone }}</span>
                     </li>
                     <li v-if="contact.whatsappNumber">
-                      <i class="fab fa-whatsapp" aria-hidden="true"></i>
                       <span>{{ contact.whatsappNumber }}</span>
                     </li>
                     <li v-if="contact.email">
-                      <i class="fas fa-envelope" aria-hidden="true"></i>
                       <span>{{ contact.email }}</span>
                     </li>
                   </ul>
@@ -313,6 +379,107 @@
             </section>
           </div>
         </section>
+              <!-- Bloc documents justificatifs -->
+            <section class="review-section">
+              <h2 class="review-section__title">
+                {{ t('obituaryReview.sections.documents.title') }}
+              </h2>
+              <p class="review-section__subtitle">
+                {{ t('obituaryReview.sections.documents.subtitle') }}
+              </p>
+<p v-if="docsPending" class="review-docs__loading">
+  {{ t('obituaryReview.documents.loading') }}
+</p>
+
+<p v-else-if="docsError" class="review-docs__error">
+  {{ t('obituaryReview.documents.error') }}
+</p>
+
+              <div class="review-docs">
+                <!-- Pièce d’identité -->
+                <div class="review-docs__item">
+                  <h3 class="review-docs__item-title">
+                    {{ t('obituaryReview.documents.idCardTitle') }}
+                  </h3>
+                  <p class="review-docs__item-text">
+                    {{ t('obituaryReview.documents.idCardHelp') }}
+                  </p>
+
+                  <p v-if="hasIdCardDoc" class="review-docs__status review-docs__status--ok">
+                    ✅ {{ t('obituaryReview.documents.alreadyUploaded') }}
+                  </p>
+
+                  <div v-else class="review-docs__upload">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      @change="onSelectIdCard"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs"
+                      :disabled="docsUploading"
+                      @click="onUploadIdCard"
+                    >
+                      <span v-if="docsUploading && currentUploadType === 'id_card'">
+                        {{ t('obituaryReview.documents.uploading') }}
+                      </span>
+                      <span v-else>
+                        {{ t('obituaryReview.documents.uploadIdCard') }}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Certificat de décès -->
+                <div class="review-docs__item">
+                  <h3 class="review-docs__item-title">
+                    {{ t('obituaryReview.documents.deathCertTitle') }}
+                  </h3>
+                  <p class="review-docs__item-text">
+                    {{ t('obituaryReview.documents.deathCertHelp') }}
+                  </p>
+
+                  <p v-if="hasDeathCertDoc" class="review-docs__status review-docs__status--ok">
+                    ✅ {{ t('obituaryReview.documents.alreadyUploaded') }}
+                  </p>
+                  <p
+  v-if="isCertOverdue"
+  class="review-docs__warning review-docs__warning--strong"
+>
+  {{ t('obituaryReview.documents.deathCertOverdue') }}
+</p>
+
+                  <div v-else class="review-docs__upload">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      @change="onSelectDeathCert"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs"
+                      :disabled="docsUploading"
+                      @click="onUploadDeathCert"
+                    >
+                      <span v-if="docsUploading && currentUploadType === 'death_certificate'">
+                        {{ t('obituaryReview.documents.uploading') }}
+                      </span>
+                      <span v-else>
+                        {{ t('obituaryReview.documents.uploadDeathCert') }}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <p
+                v-if="!hasAllRequiredDocs"
+                class="review-docs__warning"
+              >
+                {{ t('obituaryReview.documents.missingWarning') }}
+              </p>
+            </section>
 
         <!-- Colonne droite : encadré actions / paiement -->
         <aside
@@ -321,8 +488,12 @@
         >
           <div class="card-body review-side__body">
             <p class="review-side__status">
-  {{ isFreePlan ? t('obituaryReview.side.statusFree') : t('obituaryReview.side.statusPayment') }}
-</p>
+              {{
+                isFreePlan
+                  ? t('obituaryReview.side.statusFree')
+                  : t('obituaryReview.side.statusPayment')
+              }}
+            </p>
 
             <h2 class="review-side__title">
               {{ t('obituaryReview.side.title') }}
@@ -345,9 +516,8 @@
                   {{ t('obituaryReview.side.duration') }}
                 </span>
                 <span class="review-side__value">
-  {{ t('obituaryReview.planMeta', { days: effectivePublishDays }) }}
-</span>
-
+                  {{ t('obituaryReview.planMeta', { days: effectivePublishDays }) }}
+                </span>
               </li>
               <li>
                 <span class="review-side__label">
@@ -362,33 +532,85 @@
             <p class="review-side__legal">
               {{ t('obituaryReview.side.legal') }}
             </p>
+<div class="review-side__actions">
+  <!-- Modifier -->
+  <button
+    type="button"
+    class="btn btn-ghost btn-sm"
+    @click="onEdit"
+    :disabled="isPublishing || isPaying"
+  >
+    {{ t('obituaryReview.actions.edit') }}
+  </button>
 
-            <div class="review-side__actions">
-              <button
-                type="button"
-                class="btn btn-ghost btn-sm"
-                @click="onEdit"
-              >
-                {{ t('obituaryReview.actions.edit') }}
-              </button>
+  <!-- Publier (gratuit) -->
+  <button
+    v-if="isFreePlan"
+    type="submit"
+    class="btn btn-primary"
+    :disabled="isPublishing || isPaying"
+  >
+    <span v-if="isPublishing">
+      {{ t('obituaryReview.actions.publishing') }}
+    </span>
+    <span v-else>
+      {{ t('obituaryReview.actions.publishFree') }}
+    </span>
+  </button>
 
-              <button
-                v-if="isFreePlan"
-                type="submit"
-                class="btn btn-primary"
-              >
-                {{ t('obituaryReview.actions.publishFree') }}
-              </button>
+  <!-- Plan payant, pas encore payé → bouton de paiement -->
+  <button
+    v-else-if="!isAlreadyPaid"
+    type="button"
+    class="btn btn-primary"
+    @click="onPay"
+    :disabled="isPublishing || isPaying || !hasAllRequiredDocs"
+  >
+    <span v-if="isPaying">
+      {{ t('obituaryReview.actions.redirectingToPayment') }}
+    </span>
+    <span v-else>
+      {{ t('obituaryReview.actions.confirmAndPay') }}
+    </span>
+  </button>
 
-              <button
-                v-else
-                type="button"
-                class="btn btn-primary"
-                @click="onPay"
-              >
-                {{ t('obituaryReview.actions.confirmAndPay') }}
-              </button>
-            </div>
+  <!-- Plan payant, déjà payé → pas de nouveau paiement -->
+  <p
+    v-else
+    class="review-side__info"
+  >
+    {{ t('obituaryReview.side.alreadyPaid') }}
+  </p>
+
+  <!-- Archive / suppression -->
+  <button
+    type="button"
+    class="btn btn-ghost btn-sm"
+    @click="onSoftDeleteClick"
+    :disabled="isPublishing || isPaying"
+  >
+    🗂 {{ t('obituaryReview.actions.archive') }}
+  </button>
+
+  <button
+    type="button"
+    class="btn btn-danger btn-sm"
+    @click="onHardDeleteClick"
+    :disabled="isPublishing || isPaying"
+  >
+    🗑 {{ t('obituaryReview.actions.hardDelete') }}
+  </button>
+</div>
+
+
+<p
+  v-if="!hasAllRequiredDocs && !isFreePlan"
+  class="review-side__hint"
+>
+  {{ t('obituaryReview.documents.sideHint') }}
+</p>
+
+
           </div>
         </aside>
       </form>
@@ -401,18 +623,41 @@ definePageMeta({
   middleware: ['auth'],
 });
 
-import { computed } from 'vue';
-import { useRoute, useRouter, useSeoMeta, useFetch } from '#imports';
+import { computed, ref } from 'vue';
+import {
+  useRoute,
+  useRouter,
+  useSeoMeta,
+  useFetch,
+  useNuxtApp,
+} from '#imports';
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
+import { useConfirmStore } from '~/stores/confirmStore';
+import { useDateUtils } from '~/composables/useDateUtils';
+import { useObituaryDocuments } from '~/composables/useObituaryDocuments';
 
-const { t, locale } = useI18n();
+// ...
+
+
+
+const { formatDate, formattedDateTimeWithSeconds } = useDateUtils();
+
 const route = useRoute();
 const router = useRouter();
+const { t, locale } = useI18n();
+
+// Toastification (plugin : provide("useToast", ...))
+const { $useToast } = useNuxtApp();
+const toast = $useToast ? $useToast() : null;
+const isPublishing = ref(false);
+const isPaying = ref(false);
+// Store de confirmation (LkConfirmModal)
+const confirmStore = useConfirmStore();
 
 const slug = computed(() => route.params.slug);
 
-// 💡 mini PLAN_META côté client pour le prix / libellé
+// 🔹 Mini PLAN_META côté client pour le prix / libellé
 const PLAN_META = {
   indiv_free_7: {
     code: 'indiv_free_7',
@@ -448,9 +693,9 @@ const PLAN_META = {
   },
 };
 
-// 📡 Récupération de l’annonce par slug
+// 📡 Récupération de la payload par slug
 const {
-  data: obituary,
+  data,
   pending,
   error,
   refresh,
@@ -458,51 +703,166 @@ const {
   key: () => `obituary-confirm-${slug.value}`,
 });
 
+// Normalisation de la réponse
+const payload = computed(() => data.value || null);
+const obituary = computed(() => payload.value?.obituary || null);
+const events = computed(() => payload.value?.events || []);
+const contacts = computed(() => payload.value?.contacts || []);
+// 📎 Documents justificatifs
+//const documents = ref([]); // liste depuis l'API (plus tard)
+const docsUploading = ref(false);
+const currentUploadType = ref(null);
+const selectedIdCardFile = ref(null);
+const selectedDeathCertFile = ref(null);
+
+
+const {
+  documents,
+  hasDocuments,
+  pending: docsPending,
+  error: docsError,
+  refresh: refreshDocs,
+} = await useObituaryDocuments(slug);
+const hasIdCardDoc = computed(() =>
+  documents.value.some((d) => d.type === 'id_card'),
+);
+
+const hasDeathCertDoc = computed(() =>
+  documents.value.some((d) => d.type === 'death_certificate'),
+);
+
+// Il faut AU MINIMUM une pièce d'identité pour pouvoir publier / payer
+const hasMinimumDocsForNow = computed(() => {
+  return hasIdCardDoc.value; // certificat pas encore obligatoire pour l'action
+});
+
+// On garde un computed pour savoir si les 2 sont là (utile pour la suite & admin)
+const hasAllDocs = computed(() => {
+  return hasIdCardDoc.value && hasDeathCertDoc.value;
+});
+
+const onSelectIdCard = (event) => {
+  const files = event.target?.files;
+  selectedIdCardFile.value = files && files[0] ? files[0] : null;
+};
+
+const onSelectDeathCert = (event) => {
+  const files = event.target?.files;
+  selectedDeathCertFile.value = files && files[0] ? files[0] : null;
+};
+
+const uploadDocument = async (type, file) => {
+  if (!file || !obituary.value) return;
+  if (docsUploading.value) return;
+
+  docsUploading.value = true;
+  currentUploadType.value = type;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    await $fetch(`/api/obituaries/${slug.value}/documents`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    // 🔁 On recharge la liste depuis l'API (source de vérité)
+    await refreshDocs();
+
+    if (toast) {
+      toast.success(t('obituaryReview.documents.uploadSuccess'));
+    }
+  } catch (err) {
+    console.error('Upload document error', err);
+    const msg =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      t('obituaryReview.documents.uploadError');
+    if (toast) {
+      toast.error(msg);
+    }
+  } finally {
+    docsUploading.value = false;
+    currentUploadType.value = null;
+  }
+};
+const isAlreadyPaid = computed(() => {
+  const o = obituary.value;
+  if (!o || !o.monetization) return false;
+
+  const amount =
+    typeof o.monetization.amountPaid === 'number'
+      ? o.monetization.amountPaid
+      : typeof o.monetization.amount_paid === 'number'
+        ? o.monetization.amount_paid
+        : 0;
+
+  return amount > 0;
+});
+
+
+const onUploadIdCard = async () => {
+  if (!selectedIdCardFile.value) {
+    if (toast) {
+      toast.info(t('obituaryReview.documents.selectFileFirst'));
+    }
+    return;
+  }
+  await uploadDocument('id_card', selectedIdCardFile.value);
+};
+
+const onUploadDeathCert = async () => {
+  if (!selectedDeathCertFile.value) {
+    if (toast) {
+      toast.info(t('obituaryReview.documents.selectFileFirst'));
+    }
+    return;
+  }
+  await uploadDocument('death_certificate', selectedDeathCertFile.value);
+};
+
 // SEO dynamique
 useSeoMeta({
   title: () => {
     const base = t('obituaryReview.meta.title');
-    const name = obituary.value?.deceasedFullName;
+    const name = obituary.value?.deceased?.fullName;
     return name ? `${base} – ${name}` : base;
   },
-  description: () =>
-    obituary.value?.content?.slice(0, 160) ||
-    t('obituaryReview.meta.description') ||
-    '',
+  description: () => {
+    const body =
+      obituary.value?.content?.body ||
+      obituary.value?.content?.bodyText ||
+      '';
+    if (body) {
+      return body.slice(0, 160);
+    }
+    return t('obituaryReview.meta.description') || '';
+  },
   ogTitle: () => t('obituaryReview.meta.title'),
-  ogDescription: () =>
-    obituary.value?.content?.slice(0, 160) ||
-    t('obituaryReview.meta.description') ||
-    '',
+  ogDescription: () => {
+    const body =
+      obituary.value?.content?.body ||
+      obituary.value?.content?.bodyText ||
+      '';
+    if (body) {
+      return body.slice(0, 160);
+    }
+    return t('obituaryReview.meta.description') || '';
+  },
 });
 
-// ✅ Helpers dérivés
-const events = computed(() => obituary.value?.events || []);
-const contacts = computed(() => obituary.value?.contacts || []);
-
-const planFromQuery = computed(() => {
-  const raw = route.query.plan;
-  if (typeof raw === 'string' && raw.trim().length > 0) {
-    return raw.trim();
-  }
-  return null;
-});
-
+// 🔹 Plan / monétisation
 const planCodeFromData = computed(() => {
   const o = obituary.value;
-  if (o) {
-    const fromCode = o.planCode || o.plan_code;
-    if (fromCode && PLAN_META[fromCode]) {
-      return fromCode;
-    }
-
-    const fromTier = o.pricingTier || o.pricing_tier;
-    if (fromTier && PLAN_META[fromTier]) {
-      return fromTier;
-    }
+  // On préfère le pricingTier de monetization
+  const tier = o?.monetization?.pricingTier;
+  if (tier && PLAN_META[tier]) {
+    return tier;
   }
 
-  // Fallback : ce qui arrive dans l'URL
+  // Fallback : paramètre plan dans l'URL
   const fromQuery = route.query.plan;
   if (typeof fromQuery === 'string' && PLAN_META[fromQuery]) {
     return fromQuery;
@@ -511,51 +871,84 @@ const planCodeFromData = computed(() => {
   return null;
 });
 
-
 const currentPlanMeta = computed(() => {
   const code = planCodeFromData.value;
   if (!code) return null;
   return PLAN_META[code] || null;
-});
-const effectivePublishDays = computed(() => {
-  // 1) Priorité au plan connu côté front
-  const metaDays = currentPlanMeta.value?.publishDurationDays;
-  if (typeof metaDays === 'number' && metaDays > 0) {
-    return metaDays;
-  }
-
-  // 2) Sinon, on récupère ce que renvoie l'API (camelCase ou snake_case)
-  const o = obituary.value;
-  if (!o) return 0;
-
-  const fromCamel =
-    typeof o.publishDurationDays === 'number' ? o.publishDurationDays : null;
-  const fromSnake =
-    typeof o.publish_duration_days === 'number' ? o.publish_duration_days : null;
-
-  return fromCamel ?? fromSnake ?? 0;
 });
 
 const isFreePlan = computed(() => {
   if (currentPlanMeta.value) {
     return !!currentPlanMeta.value.isFree;
   }
-  const o = obituary.value;
-  if (!o) return false;
-
-  if (typeof o.isFree === 'boolean') return o.isFree;
-  if (typeof o.is_free === 'boolean') return o.is_free;
-
+  const m = obituary.value?.monetization;
+  if (!m) return false;
+  if (typeof m.isFree === 'boolean') return m.isFree;
   return false;
 });
 
+const effectivePublishDays = computed(() => {
+  // 1) Si on connaît le plan côté front
+  const metaDays = currentPlanMeta.value?.publishDurationDays;
+  if (typeof metaDays === 'number' && metaDays > 0) {
+    return metaDays;
+  }
+
+  const o = obituary.value;
+  if (!o) {
+    // 2) Fallback : si on sait au moins que c'est gratuit, on considère free_7
+    if (isFreePlan.value) {
+      return PLAN_META.indiv_free_7.publishDurationDays;
+    }
+    return 0;
+  }
+
+  // 3) On regarde ce que renvoie l'API (camelCase / snake_case)
+  const fromCamel =
+    typeof o.publishDurationDays === 'number'
+      ? o.publishDurationDays
+      : null;
+  const fromSnake =
+    typeof o.publish_duration_days === 'number'
+      ? o.publish_duration_days
+      : null;
+
+  const rawDays = fromCamel ?? fromSnake;
+
+  if (typeof rawDays === 'number' && rawDays > 0) {
+    // Si on ne connaît pas le plan mais que l'annonce est gratuite,
+    // on force quand même la durée du plan gratuit front (7 jours),
+    // pour garder une UX cohérente.
+    if (!currentPlanMeta.value && isFreePlan.value) {
+      return PLAN_META.indiv_free_7.publishDurationDays;
+    }
+    return rawDays;
+  }
+
+  // 4) Dernier fallback : gratuit → 7 jours ; sinon 0
+  if (isFreePlan.value) {
+    return PLAN_META.indiv_free_7.publishDurationDays;
+  }
+
+  return 0;
+});
 
 const planLabel = computed(() => {
-  if (!currentPlanMeta.value) {
-    const code = planCodeFromData.value;
-    return code ? code : null;
+  if (currentPlanMeta.value) {
+    return t(currentPlanMeta.value.labelKey);
   }
-  return t(currentPlanMeta.value.labelKey);
+
+  // Si on sait au moins que c'est gratuit, on affiche le label du plan gratuit
+  if (isFreePlan.value) {
+    return t(PLAN_META.indiv_free_7.labelKey);
+  }
+
+  const code = planCodeFromData.value;
+  if (code) {
+    return code;
+  }
+
+  return null;
 });
 
 const planPrice = computed(() => {
@@ -588,15 +981,14 @@ const planPrice = computed(() => {
     return t('plans.price.paid', { amount: euros });
   }
 
-  // 3) Si on sait que le plan est gratuit
+  // 3) Si on sait que le plan est gratuit, même sans meta connu
   if (isFreePlan.value) {
     return t('plans.price.free');
   }
 
-  // 4) Dernier fallback : montant inconnu mais surtout pas "Gratuit"
+  // 4) Dernier fallback : montant inconnu
   return '—';
 });
-
 
 // 🌍 Formatters
 const formatEventType = (type) => {
@@ -617,20 +1009,18 @@ const formatEventType = (type) => {
 
 const formatDateTime = (value) => {
   if (!value) return '';
-  // value en pratique "YYYY-MM-DD HH:mm:ss" côté backend
-  const normalized = value.replace(' ', 'T');
-  const d = new Date(normalized);
-  if (Number.isNaN(d.getTime())) return value;
-
-  return d.toLocaleString(locale.value || 'fr-FR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
+  return formattedDateTimeWithSeconds(value);
 };
+
+
 const formatGender = (value) => {
   if (!value) return '';
-  if (value === 'male') return t('createObituary.fields.gender.options.male');
-  if (value === 'female') return t('createObituary.fields.gender.options.female');
+  if (value === 'male') {
+    return t('createObituary.fields.gender.options.male');
+  }
+  if (value === 'female') {
+    return t('createObituary.fields.gender.options.female');
+  }
   return value;
 };
 
@@ -648,41 +1038,237 @@ const formatIdentityStatus = (value) => {
 };
 
 const formatReligion = (value) => {
-  if (!value) return t('createObituary.fields.religion.options.none');
-  if (value === 'christian') return t('createObituary.fields.religion.options.christian');
-  if (value === 'muslim') return t('createObituary.fields.religion.options.muslim');
-  if (value === 'other') return t('createObituary.fields.religion.options.other');
+  if (!value) {
+    return t('createObituary.fields.religion.options.none');
+  }
+  if (value === 'christian') {
+    return t('createObituary.fields.religion.options.christian');
+  }
+  if (value === 'muslim') {
+    return t('createObituary.fields.religion.options.muslim');
+  }
+  if (value === 'other') {
+    return t('createObituary.fields.religion.options.other');
+  }
   return value;
 };
 
+// Actions
 const onEdit = () => {
   router.push({
     path: `/obituary/edit/${slug.value}`,
   });
 };
 
+/**
+ * Publier une annonce gratuite :
+ * - appelle POST /api/obituaries/:slug/publish
+ * - met à jour statut/visibilité côté DB
+ * - redirige vers la page publique de l’annonce
+ */
+const onConfirm = async () => {
+  if (!isFreePlan.value) {
+    // sécurité : on ne publie ici que les plans gratuits
+    return;
+  }
+  if (isPublishing.value) return;
+
+  isPublishing.value = true;
+
+  try {
+    await $fetch(`/api/obituaries/${slug.value}/publish`, {
+      method: 'POST',
+    });
+
+    if (toast) {
+      toast.success(t('toasts.obituary.published'));
+    }
+
+    const targetSlug = obituary.value?.slug || slug.value;
+    await router.push(`/obituary/${targetSlug}`);
+  } catch (err) {
+    console.error('Publish free obituary error', err);
+
+    const message =
+      err?.data?.message ||
+      err?.statusMessage ||
+      t('toasts.obituary.publishError');
+
+    if (toast) {
+      toast.error(message);
+    }
+  } finally {
+    isPublishing.value = false;
+  }
+};
+
+/**
+ * Créer une transaction de paiement :
+ * - appelle POST /api/payments/checkout
+ * - reçoit paymentId
+ * - redirige vers /checkout/[paymentId]
+ * 
+ * On reste très sobre sur les infos retournées pour éviter
+ * d’exposer des données sensibles (pas d’IDs externes Stripe/PayPal ici).
+ */
+/*const onPay = async () => {
+  if (!obituary.value) return;
+
+  try {
+    const res = await $fetch("/api/payments/checkout", {
+      method: "POST",
+      body: {
+        obituarySlug: slug.value,
+        paymentMethod: "card",
+      },
+    });
+
+    if (toast) {
+      toast.success(t("toasts.payment.redirecting"));
+    }
+
+    if (res && res.paymentId) {
+      await router.push(`/checkout/${res.paymentId}`);
+    } else if (toast) {
+      toast.error(t("toasts.payment.missingId"));
+    }
+  } catch (err) {
+    console.error("Checkout error", err);
+
+    const backendMsg =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      err?.message ||
+      "";
+
+    if (toast) {
+      toast.error(
+        backendMsg || t("toasts.payment.checkoutError")
+      );
+    }
+  }
+};*/
 
 const onPay = () => {
-  // TODO : ici tu brancheras ta vraie page/flow de paiement
-  // Exemple futur :
-  // router.push({ path: `/checkout/obituary/${slug.value}` });
-  console.info('TODO: lancer le flow de paiement pour', slug.value);
+  if (!slug.value) return;
+
+  const target = {
+    path: `/checkout/obituary/${slug.value}`,
+  };
+
+  // optionnel : si tu veux passer le plan
+  if (planCodeFromData.value) {
+    target.query = { plan: planCodeFromData.value };
+  }
+
+  router.push(target);
 };
 
-const onConfirm = () => {
-  // Gratuit : publication directe
-  console.info('TODO: appel backend pour publier définitivement', slug.value);
-  // ex futur : POST /api/obituaries/:slug/publish
+// 🔻 Soft delete (archive / rendre privé)
+const softDelete = async () => {
+  try {
+    await $fetch(`/api/obituaries/${slug.value}`, {
+      method: 'DELETE',
+    });
+
+    if (toast) {
+      toast.success('Annonce archivée (retirée de la liste publique).');
+    }
+    await router.push('/obituaries');
+  } catch (err) {
+    console.error('Soft delete error', err);
+    if (toast) {
+      toast.error('Impossible d’archiver cette annonce pour le moment.');
+    }
+  }
 };
+
+// 🔻 Hard delete (supprimer définitivement)
+const hardDelete = async () => {
+  try {
+    await $fetch(`/api/obituaries/${slug.value}/hard`, {
+      method: 'DELETE',
+    });
+
+    if (toast) {
+      toast.success('Annonce supprimée définitivement.');
+    }
+    await router.push('/obituaries');
+  } catch (err) {
+    console.error('Hard delete error', err);
+    if (toast) {
+      toast.error('Impossible de supprimer définitivement cette annonce.');
+    }
+  }
+};
+
+// Ouverture des modals de confirmation
+
+const onSoftDeleteClick = async () => {
+  if (!confirmStore) {
+    return;
+  }
+
+  const confirmed = await confirmStore.ask({
+    title: t('obituaryReview.delete.softTitle') || 'Retirer cette annonce du site ?',
+    message:
+      t('obituaryReview.delete.softMessage') ||
+      'L’annonce ne sera plus visible publiquement, mais vous pourrez encore la retrouver dans votre compte.',
+    confirmLabel: t('common.actions.archive') || 'Retirer',
+    cancelLabel: t('common.actions.cancel') || 'Annuler',
+  });
+
+  if (confirmed) {
+    await softDelete();
+  }
+};
+
+const onHardDeleteClick = async () => {
+  if (!confirmStore) {
+    return;
+  }
+
+  const confirmed = await confirmStore.ask({
+    title:
+      t('obituaryReview.delete.hardTitle') ||
+      'Supprimer définitivement cette annonce ?',
+    message:
+      t('obituaryReview.delete.hardMessage') ||
+      'Cette action est irréversible. Toutes les informations associées à cette annonce seront supprimées.',
+    confirmLabel: t('common.actions.delete') || 'Supprimer',
+    cancelLabel: t('common.actions.cancel') || 'Annuler',
+  });
+
+  if (confirmed) {
+    await hardDelete();
+  }
+};
+const createdAt = computed(() => {
+  const o = obituary.value;
+  if (!o) return null;
+  return o.createdAt || o.created_at || null;
+});
+
+const isCertOverdue = computed(() => {
+  if (!createdAt.value) return false;
+  if (hasDeathCertDoc.value) return false;
+
+  const created = new Date(createdAt.value);
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  return diffDays >= 7;
+});
+
 </script>
+
 
 <style scoped>
 .review-plan-banner {
   margin-top: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 0.9rem;
-
-  /* ✅ Fond doux et cohérent avec create */
   background: var(--color-accent-soft, rgba(56, 189, 248, 0.08));
   border: 1px solid rgba(56, 189, 248, 0.6);
 }
@@ -710,7 +1296,6 @@ const onConfirm = () => {
   color: var(--color-text-soft);
 }
 
-
 /* Layout */
 .review-layout {
   margin-top: var(--space-3);
@@ -719,7 +1304,6 @@ const onConfirm = () => {
   gap: var(--space-3);
 }
 
-/* mobile-first, puis 2 colonnes sur desktop */
 @media (min-width: 900px) {
   .review-layout {
     display: grid;
@@ -802,8 +1386,8 @@ const onConfirm = () => {
 .review-events__item {
   padding: 0.7rem 0.8rem;
   border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .review-events__header {
@@ -822,10 +1406,10 @@ const onConfirm = () => {
   font-size: 0.75rem;
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
-  background: rgba(56, 189, 248, 0.15);
-  color: #7dd3fc;
+  background: var(--color-accent-soft);
 }
 
+/* Events body */
 .review-events__datetime {
   margin: 0;
   font-size: 0.9rem;
@@ -849,8 +1433,8 @@ const onConfirm = () => {
 .review-contacts__item {
   padding: 0.65rem 0.8rem;
   border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .review-contacts__name {
@@ -871,16 +1455,20 @@ const onConfirm = () => {
   align-items: center;
   gap: 0.35rem;
 }
-.review-contacts__channels i {
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
 
 /* Side card */
 .review-side__body {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+.review-side__status {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-soft);
 }
 
 .review-side__title {
@@ -986,11 +1574,110 @@ const onConfirm = () => {
     background-position: -200% 0;
   }
 }
-.review-side__status {
-  margin: 0 0 0.5rem;
+/* Boutons danger / warning locaux à cette page */
+
+.btn-danger {
+  background: #b91c1c;
+  border-color: #991b1b;
+  color: #fff;
+}
+
+.btn-danger:hover,
+.btn-danger:focus-visible {
+  background: #991b1b;
+  border-color: #7f1d1d;
+}
+
+/* Ghost "warning" : texte / bordure ambrés, fond transparent */
+.btn-ghost-warning {
+  border-color: rgba(245, 158, 11, 0.7);
+  color: #b45309;
+}
+
+.btn-ghost-warning:hover,
+.btn-ghost-warning:focus-visible {
+  background: rgba(245, 158, 11, 0.08);
+}
+/* ============================
+   Bloc documents justificatifs
+   ============================ */
+
+.review-docs {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 800px) {
+  .review-docs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.review-docs__item {
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border-subtle);
+  background: rgba(148, 163, 184, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.review-docs__item-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.review-docs__item-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+}
+
+.review-docs__upload {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+/* Champ file un peu moins “brut” */
+.review-docs__upload input[type="file"] {
   font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  max-width: 100%;
+}
+
+/* Statut “ok, déjà uploadé” */
+.review-docs__status {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.review-docs__status--ok {
+  color: #15803d;
+}
+
+/* Alerte générale si docs manquants */
+.review-docs__warning {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px dashed rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.04);
+  color: rgba(127, 29, 29, 0.95);
+}
+
+/* Petit texte d’aide dans la colonne droite (si utilisé) */
+.review-side__hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
   color: var(--color-text-soft);
 }
 
