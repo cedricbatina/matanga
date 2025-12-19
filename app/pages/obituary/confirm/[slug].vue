@@ -615,6 +615,18 @@
     >
       {{ t('obituaryReview.documents.missingWarning') }}
     </p>
+    <p
+  v-else-if="isCertOverdue && !hasDeathCertDoc"
+  class="review-docs__warning review-docs__warning--strong"
+>
+  {{
+    t('obituaryReview.documents.deathCertOverdue', {
+      days: 7,
+      date: certDeadlineLabel,
+    })
+  }}
+</p>
+
   </div>
 </section>
 
@@ -626,20 +638,32 @@
         >
           <div class="card-body review-side__body">
             <p class="review-side__status">
-              {{
-                isFreePlan
-                  ? t('obituaryReview.side.statusFree')
-                  : t('obituaryReview.side.statusPayment')
-              }}
-            </p>
+  {{
+    isFreePlan
+      ? t('obituaryReview.side.statusFree')
+      : isAlreadyPaid
+        ? t('obituaryReview.side.statusPaid')
+        : t('obituaryReview.side.statusPayment')
+  }}
+</p>
 
-            <h2 class="review-side__title">
-              {{ t('obituaryReview.side.title') }}
-            </h2>
-            <p class="review-side__subtitle">
-              {{ t('obituaryReview.side.subtitle') }}
-            </p>
+<h2 class="review-side__title">
+  {{
+    isAlreadyPaid && !isFreePlan
+      ? t('obituaryReview.side.titlePaid')
+      : t('obituaryReview.side.title')
+  }}
+</h2>
 
+<p class="review-side__subtitle">
+  {{
+    isAlreadyPaid && !isFreePlan
+      ? t('obituaryReview.side.subtitlePaid')
+      : t('obituaryReview.side.subtitle')
+  }}
+</p>
+
+           
             <ul class="review-side__summary">
               <li>
                 <span class="review-side__label">
@@ -681,7 +705,7 @@
     {{ t('obituaryReview.actions.edit') }}
   </button>
 
-  <!-- Publier (gratuit) -->
+  <!-- Plan GRATUIT : publier -->
   <button
     v-if="isFreePlan"
     type="submit"
@@ -696,9 +720,9 @@
     </span>
   </button>
 
-  <!-- Plan payant, pas encore payé → bouton de paiement -->
+  <!-- Plan PAYANT : pas encore payé & pas encore publié → paiement -->
   <button
-    v-else-if="!isAlreadyPaid"
+    v-else-if="!isAlreadyPaid && !isPublished"
     type="button"
     class="btn btn-primary"
     @click="onPay"
@@ -712,7 +736,7 @@
     </span>
   </button>
 
-  <!-- Plan payant, déjà payé → pas de nouveau paiement -->
+  <!-- Plan PAYANT déjà réglé / déjà publié → pas de nouveau paiement -->
   <p
     v-else
     class="review-side__info"
@@ -720,7 +744,7 @@
     {{ t('obituaryReview.side.alreadyPaid') }}
   </p>
 
-  <!-- Archive / suppression -->
+  <!-- Archive / suppression (inchangé) -->
   <button
     type="button"
     class="btn btn-ghost btn-sm"
@@ -739,6 +763,7 @@
     🗑 {{ t('obituaryReview.actions.hardDelete') }}
   </button>
 </div>
+
 
 
 <p
@@ -803,7 +828,7 @@ const PLAN_META = {
     isFree: true,
     currency: null,
     basePriceCents: 0,
-    publishDurationDays: 7,
+    publishDurationDays: 14,
   },
   indiv_basic_21: {
     code: 'indiv_basic_21',
@@ -870,10 +895,16 @@ const hasDeathCertDoc = computed(() =>
   documents.value.some((d) => d.type === 'death_certificate'),
 );
 
-// On garde un computed pour savoir si les 2 sont là (utile pour la suite & admin)
-const hasAllDocs = computed(() => {
-  return hasIdCardDoc.value && hasDeathCertDoc.value;
+/**
+ * 🔹 Docs requis pour autoriser le paiement
+ * Pour l’instant : CNI obligatoire, certificat optionnel.
+ * Si un jour tu veux rendre le certificat obligatoire,
+ * tu pourras revenir à : hasIdCardDoc.value && hasDeathCertDoc.value
+ */
+const hasAllRequiredDocs = computed(() => {
+  return hasIdCardDoc.value; // seule CNI obligatoire pour débloquer le paiement
 });
+
 
 const onSelectIdCard = (event) => {
   const files = event.target?.files;
@@ -939,20 +970,39 @@ const uploadDocument = async (type, file) => {
     currentUploadType.value = null;
   }
 };
+const isPublished = computed(() => obituary.value?.status === 'published');
+
+
 
 const isAlreadyPaid = computed(() => {
   const o = obituary.value;
   if (!o || !o.monetization) return false;
 
+  const m = o.monetization;
+
+  // 1) Montant payé explicite
   const amount =
-    typeof o.monetization.amountPaid === 'number'
-      ? o.monetization.amountPaid
-      : typeof o.monetization.amount_paid === 'number'
-        ? o.monetization.amount_paid
+    typeof m.amountPaid === 'number'
+      ? m.amountPaid
+      : typeof m.amount_paid === 'number'
+        ? m.amount_paid
         : 0;
 
-  return amount > 0;
+  if (amount > 0) return true;
+
+  // 2) Paiement enregistré par le backend
+  if (!m.isFree && m.paymentProvider && m.paymentReference) {
+    return true;
+  }
+
+  // 3) Sécurité : annonce payante déjà publiée
+  if (!m.isFree && isPublished.value) {
+    return true;
+  }
+
+  return false;
 });
+
 
 
 const onUploadIdCard = async () => {
@@ -1041,16 +1091,14 @@ const isFreePlan = computed(() => {
 const effectivePublishDays = computed(() => {
   const o = obituary.value;
   const meta = currentPlanMeta.value;
+  const monet = o?.monetization || null;
 
-  // 1) D'abord : ce que le backend a enregistré
+  // 1) D'abord : ce que le backend a enregistré (dans monetization)
   const apiDays =
-    (typeof o?.publishDurationDays === 'number' && o.publishDurationDays > 0
-      ? o.publishDurationDays
-      : null) ??
-    (typeof o?.publish_duration_days === 'number' &&
-    o.publish_duration_days > 0
-      ? o.publish_duration_days
-      : null);
+    typeof monet?.publishDurationDays === 'number' &&
+    monet.publishDurationDays > 0
+      ? monet.publishDurationDays
+      : null;
 
   if (typeof apiDays === 'number' && apiDays > 0) {
     return apiDays;
@@ -1074,6 +1122,7 @@ const effectivePublishDays = computed(() => {
   return 0;
 });
 
+
 const planLabel = computed(() => {
   if (currentPlanMeta.value) {
     return t(currentPlanMeta.value.labelKey);
@@ -1094,7 +1143,7 @@ const planLabel = computed(() => {
 
 const planPrice = computed(() => {
   const meta = currentPlanMeta.value;
-  const o = obituary.value;
+  const monet = obituary.value?.monetization || null;
 
   // 1) Si on connaît le plan côté front
   if (meta) {
@@ -1111,10 +1160,10 @@ const planPrice = computed(() => {
 
   // 2) Sinon on regarde ce que l'API a renvoyé comme montant
   const rawAmount =
-    typeof o?.amountPaid === 'number'
-      ? o.amountPaid
-      : typeof o?.amount_paid === 'number'
-        ? o.amount_paid
+    typeof monet?.amountPaid === 'number'
+      ? monet.amountPaid
+      : typeof monet?.amount_paid === 'number'
+        ? monet.amount_paid
         : null;
 
   if (rawAmount && rawAmount > 0) {
@@ -1130,6 +1179,7 @@ const planPrice = computed(() => {
   // 4) Dernier fallback : montant inconnu
   return '—';
 });
+
 
 // 🌍 Formatters
 const formatEventType = (type) => {
@@ -1400,6 +1450,14 @@ const isCertOverdue = computed(() => {
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
   return diffDays >= 7;
+});
+const certDeadlineLabel = computed(() => {
+  if (!createdAt.value) return '';
+  const created = new Date(createdAt.value);
+  const deadline = new Date(
+    created.getTime() + 7 * 24 * 60 * 60 * 1000,
+  );
+  return formatDate(deadline);
 });
 
 </script>

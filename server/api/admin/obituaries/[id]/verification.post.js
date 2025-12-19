@@ -1,4 +1,3 @@
-// server/api/admin/obituaries/[id]/verification.post.js
 import { defineEventHandler, createError, readBody } from "h3";
 import { requireAuth } from "../../../../utils/authSession.js";
 import { query } from "../../../../utils/db.js";
@@ -55,7 +54,8 @@ export default defineEventHandler(async (event) => {
         is_free,
         amount_paid,
         payment_provider,
-        publish_duration_days
+        publish_duration_days,
+        visibility
       FROM obituaries
       WHERE id = ?
       LIMIT 1
@@ -73,24 +73,38 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // 2) Appliquer l'action
     if (action === "verify") {
-      // ✅ Vérifier + publier si besoin
+      // ✅ Valider les docs + publier + rendre public si besoin
       await query(
         `
         UPDATE obituaries
         SET
           verification_status = 'verified',
           verification_note = ?,
+
+          -- statut fonctionnel
           status = CASE
             WHEN status IN ('draft','pending_review','rejected') THEN 'published'
             ELSE status
           END,
+
+          -- visibilité publique une fois les docs validés
+          visibility = CASE
+            WHEN status IN ('draft','pending_review','rejected') THEN 'public'
+            WHEN status = 'published' AND visibility = 'private' THEN 'public'
+            ELSE visibility
+          END,
+
+          -- dates de publication
           publish_at = COALESCE(publish_at, NOW()),
           published_at = CASE
-            WHEN status IN ('draft','pending_review','rejected') THEN NOW()
+            WHEN published_at IS NULL
+              AND status IN ('draft','pending_review','rejected','published')
+            THEN NOW()
             ELSE published_at
           END,
+
+          -- recalcul de l'expiration si besoin
           expires_at = CASE
             WHEN publish_duration_days IS NOT NULL
               AND publish_duration_days > 0
@@ -100,6 +114,7 @@ export default defineEventHandler(async (event) => {
             )
             ELSE expires_at
           END,
+
           updated_at = NOW()
         WHERE id = ?
       `,
@@ -116,7 +131,7 @@ export default defineEventHandler(async (event) => {
           title: "Documents vérifiés",
           body:
             "Vos documents justificatifs ont été acceptés. " +
-            "Votre annonce reste en ligne et visible sur Madizi.",
+            "Votre annonce est désormais publique et visible sur Madizi.",
           data: {
             obituaryId: obituary.id,
             slug: obituary.slug,
@@ -127,7 +142,7 @@ export default defineEventHandler(async (event) => {
         { requestId, userId: session.userId }
       );
     } else if (action === "reject") {
-      // ❌ Refuser les documents + marquer l'annonce refusée
+      // ❌ Refus des documents
       await query(
         `
         UPDATE obituaries
@@ -142,7 +157,6 @@ export default defineEventHandler(async (event) => {
         { requestId }
       );
 
-      // 🔔 Notification "documents rejetés"
       await createNotification(
         {
           recipientId: obituary.user_id,

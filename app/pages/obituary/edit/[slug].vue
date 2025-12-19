@@ -1038,6 +1038,12 @@ const onDeleteFromEdit = async () => {
     }
   }
 };
+const coverImageUrl = computed(() => {
+  // priorité au formulaire (éventuelle nouvelle URL)
+  if (form.coverImageUrl) return form.coverImageUrl;
+  // fallback sur ce qui vient du backend si jamais
+  return obituary.value?.coverImageUrl || '';
+});
 
 </script>
 

@@ -634,7 +634,7 @@
 
   
  "codes": {
-      "indiv_free_7": "Annonce découverte 7 jours",
+      "indiv_free_7": "Annonce découverte · 14 jours",
       "indiv_basic_21": "Formule Basic 21 jours",
       "indiv_essentiel_30": "Pack Essentiel 30 jours + rappel",
       "indiv_prestige_60": "Pack Prestige 60 jours",
@@ -782,7 +782,10 @@
     "statusFree": "Plan gratuit : l’annonce sera envoyée à l’équipe Madizi pour validation avant mise en ligne.",
     "statusPayment": "Plan payant : vous allez être redirigé vers l’étape de paiement pour finaliser la publication.",
 
-    "legal": "En confirmant, vous certifiez que les informations fournies sont exactes et que vous avez le droit de les publier. L’équipe Madizi peut retirer l’annonce en cas de signalement ou de non-respect des règles."
+    "legal": "En confirmant, vous certifiez que les informations fournies sont exactes et que vous avez le droit de les publier. L’équipe Madizi peut retirer l’annonce en cas de signalement ou de non-respect des règles.",
+    "statusPaid": "Plan payant : le paiement pour cette annonce a déjà été enregistré.",
+    "titlePaid": "Annonce déjà réglée",
+    "subtitlePaid": "Vous pouvez encore modifier certains éléments. En cas de changement majeur, la modération pourra réexaminer l’annonce."
   },
     "delete": {
       "softTitle": "Retirer cette annonce du site ?",
