@@ -164,11 +164,11 @@
       "subtitle": "Madizi aide les familles et la diaspora à partager une information claire et fiable.",
       "body": "Créez une annonce nécrologique structurée, ajoutez les veillées, la messe, l’inhumation, et partagez facilement le lien par WhatsApp, SMS ou réseaux sociaux.",
       
-      
+      "ctaGroupAria": "Actions principales",
       "helperText": "Service pensé pour l’Afrique et sa diaspora, avec prise en compte des fuseaux horaires et des événements en ligne.",
-        "primaryCta": "Publier une annonce gratuite",
-    "secondaryCta": "Voir toutes les annonces",
-    "viewPlansCta": "Voir les plans et options"
+        "primaryCta": "Publier une annonce",
+    "secondaryCta": "Toutes les annonces",
+    "viewPlansCta": "Plans & Options"
    
       
     },
@@ -350,8 +350,16 @@
   },
   "title": "Créer une annonce",
   "subtitle": "Remplissez les informations principales sur la personne défunte, le texte de l’annonce et la première cérémonie.",
-  
+    "actions": {
+      "cancel": "Annuler",
+      "submit": "Publier l’annonce",
+      "submitting": "Publication en cours…"
+    },
     "sections": {
+       "organization": {
+          "title": "Informations de la structure",
+          "subtitle": "Ces informations pourront être utilisées pour l’affichage et la facturation (optionnel pour l’instant)."
+        },
       "deceased": {
         "title": "Informations sur le défunt",
         "subtitle": "Nom, dates, ville principale, religion…",
@@ -360,6 +368,7 @@
       "title": "Publication de l'annonce",
       "selectedPlan": "Vous préparez cette annonce avec le plan « {plan} » ({days} jours de mise en avant).",
       "changePlanCta": "Changer de plan ou voir les détails"
+      
     }
       },
       "content": {
@@ -379,13 +388,21 @@
         "subtitleFree": "Votre annonce gratuite sera publiée pendant {days} jours.",
         "legal": "En envoyant cette annonce, vous confirmez disposer des droits nécessaires pour publier ces informations.",
         "selectedPlan": "Plan choisi : {plan} (publication {days} jours).",
-      "changePlanCta": "Changer de plan"
+      "changePlanCta": "Changer d'option",
+        "subtitle": "Remplissez les informations principales sur la personne défunte, le texte de l’annonce et la première cérémonie."
       }
     },
     "fields": {
       "deceasedFullName": {
         "label": "Nom complet du défunt",
-        "placeholder": "Ex. Père André MABIALA"
+        "placeholder": "Ex. Père André MABIALA",
+         "orgName": { "label": "Nom de la structure", "placeholder": "Ex. Pompes funèbres Dupont" },
+        "orgType": { "label": "Type" },
+        "orgContactName": { "label": "Référent", "placeholder": "Nom du contact" },
+        "orgEmail": { "label": "Email", "placeholder": "Votre email pro" },
+        "orgPhone": { "label": "Téléphone", "placeholder": "+33…" },
+        "orgAddress": { "label": "Adresse", "placeholder": "Adresse de la structure (optionnel)" },
+        "orgWebsite": { "label": "Site web", "placeholder": "https://…" }
       },
       "gender": {
         "label": "Genre",
@@ -394,6 +411,14 @@
           "male": "Homme",
           "female": "Femme"
         }
+      },
+       "orgTypes": {
+        "none": "—",
+        "funeral_home": "Pompes funèbres",
+        "church": "Église / paroisse",
+        "mosque": "Mosquée",
+        "association": "Association",
+        "other": "Autre"
       },
       "identityStatus": {
         "label": "Niveau d’identification",
@@ -499,6 +524,59 @@
         "placeholder": "https://…",
         "hint": "Collez un lien vers une photo déjà hébergée (Google Drive, site, etc.)."
       }
+   
+    },
+    "pro": {
+  "banner": {
+    "label": "Mode professionnel",
+    "helper": "Vous créez l’annonce au nom d’une structure."
+  },
+  "sections": {
+    "organization": {
+      "title": "Informations sur la structure",
+      "subtitle": "Renseignez les informations de la structure qui publie l’annonce."
+    }
+  },
+  "fields": {
+    "orgName": {
+      "label": "Nom de la structure",
+      "placeholder": "Ex. Pompes funèbres Dupont"
+    },
+    "orgType": {
+      "label": "Type",
+      "placeholder": "—",
+      "options": {
+        "funeral_home": "Pompes funèbres",
+        "church": "Église / paroisse",
+        "mosque": "Mosquée",
+        "association": "Association",
+        "other": "Autre"
+      }
+    },
+    "orgContactName": {
+      "label": "Référent",
+      "placeholder": "Nom du contact"
+    },
+    "orgEmail": {
+      "label": "Email",
+      "placeholder": "Votre email pro"
+    },
+    "orgPhone": {
+      "label": "Téléphone",
+      "placeholder": "+33…"
+    },
+    "orgAddress": {
+      "label": "Adresse",
+      "placeholder": "Adresse de la structure (optionnel)"
+    },
+    "orgWebsite": {
+      "label": "Site web",
+      "placeholder": "https://…"
+    }
+  },
+  "hint": "(Pour l’instant, ces champs n’impactent pas la publication. On les activera côté API ensuite.)"
+}
+
     },
     "defaults": {
       "familyContactLabel": "Famille"
@@ -515,7 +593,7 @@
       "eventStartsAtRequired": "La date et l’heure de l’événement principal sont obligatoires.",
       "submitFailed": "Impossible de créer l’annonce pour le moment. Merci de réessayer plus tard."
     }
-  },
+  ,
   
 
   "layout": {
@@ -529,10 +607,8 @@
     "themeToggleToDark": "Activer le thème sombre",
     "themeLabelLight": "Thème clair",
     "themeLabelDark": "Thème sombre"
-  }
+  },
 
-
-,
 
 "userInline": {
   "guestLabel": "Visiteur – vous n’êtes pas encore connecté",
@@ -668,8 +744,31 @@
     "features": {
       "bundle": "Gestion de plusieurs annonces par mois avec suivi centralisé.",
       "visibility": "Visibilité renforcée et mise en avant adaptée à votre zone d’intervention.",
-      "billing": "Facturation claire et adaptée à votre activité (mensuelle ou à l’usage)."
+      "billing": "Facturation claire et adaptée à votre activité (mensuelle ou à l’usage).",
+       "maxActive": {
+          "label": "Annonces actives",
+          "value": "Jusqu’à {count} annonce(s) active(s)"
+        }
     },
+     "comingSoon": {
+        "badge": "Sur demande",
+        "note": "L’espace pro Madizi sera bientôt ouvert aux opérateurs funéraires. Contactez-nous pour être prévenu de son lancement."
+      },
+       "banner": {
+        "label": "Mode professionnel",
+        "helper": "Vous créez l’annonce au nom d’une structure."
+      },
+        "fields": {
+        "orgName": {
+          "label": "Nom de la structure",
+          "placeholder": "Ex. Pompes Funèbres XYZ"
+        }
+      },
+        "organization": {
+          "title": "Informations sur la structure",
+          "subtitle": "Renseignez les informations de la structure qui publie l’annonce."
+        },
+      "contact": "Être prévenu",
     "ctaDisabled": "Sur demande",
     "helper": "L’espace pro Madizi sera bientôt ouvert aux opérateurs funéraires. Contactez-nous pour être prévenu de son lancement."
   }
@@ -702,6 +801,8 @@
       "subtitle": "Ces documents sont vérifiés de manière confidentielle par notre équipe.",
   "idCardTitle": "Pièce d’identité du déclarant",
   "idCardHelp": "Carte nationale d’identité, passeport ou titre de séjour en cours de validité.",
+  "deathCertOverdue": "Délai dépassé depuis {overdueDays} jour(s). Merci d’ajouter le certificat (date limite : {date}).",
+  "deathCertDueIn": "À fournir sous {days} jour(s) (avant le {date}).",
   "deathCertTitle": "Certificat de décès",
   "deathCertHelp": "Certificat ou acte de décès délivré par les autorités compétentes (dans la limite de la législation en vigueur).",
   "uploadIdCard": "Téléverser la pièce d’identité",
@@ -713,14 +814,46 @@
   "selectFileFirst": "Veuillez d’abord choisir un fichier.",
   "missingWarning": "Merci de téléverser la pièce d’identité et le certificat de décès avant de procéder au paiement.",
   "sideHint": "Pour des raisons légales, nous devons vérifier vos documents avant de publier votre annonce.",
-  "deathCertOverdue": "Le certificat de décès n’a toujours pas été transmis. Pour des raisons de sécurité, cette annonce pourra être retirée ou rendue non visible si le document n’est pas ajouté rapidement."
+   "obituaryReview.documents.openFile": "Ouvrir le document"
+
+ 
 },
+  
+ "codes": {
+      "indiv_free_7": "Annonce découverte · 14 jours",
+      "indiv_basic_21": "Formule Basic 21 jours",
+      "indiv_essentiel_30": "Pack Essentiel 30 jours + rappel",
+      "indiv_prestige_60": "Pack Prestige 60 jours",
+      "indiv_memorial_10y": "Mémoriel 10 ans",
+      "pro_essentiel_60": "Annonce Pro Essentielle 60 jours",
+      "pro_premium_90": "Annonce Pro Premium 90 jours",
+      "pro_sub_studio": "Abonnement Pro Studio",
+      "indiv_free_14": "Annonce découverte · 14 jours",
+  "indiv_basic_30": "Formule Essentiel · 30 jours",
+  "indiv_essentiel_45": "Formule Confort · 45 jours",
+  "indiv_prestige_90": "Formule Prestige · 90 jours",
+
+  "indiv_memorial_6m": "Mémorial · 6 mois",
+  "indiv_memorial_1y": "Mémorial · 1 an",
+  "indiv_memorial_lifetime": "Mémorial · à vie (10 ans renouvelables)",
+
+  "pro_basic_30": "Annonce Pro Standard · 30 jours",
+  "pro_essentiel_90": "Annonce Pro Essentielle · 90 jours",
+  "pro_prestige_365": "Annonce Pro Prestige · 365 jours",
+  "pro_memorial_lifetime": "Mémorial Pro · 10 ans renouvelables",
+
+  "pro_sub_start": "Abonnement Pro Start",
+  "pro_sub_standard": "Abonnement Pro Standard",
+  "pro_sub_network": "Abonnement Pro Réseau"
+    },
   "sections": {
            "documents": {
      "title": "Documents justificatifs",
       "subtitle": "Ces documents sont vérifiés de manière confidentielle par notre équipe.",
       "idCardTitle": "Pièce d’identité du déclarant",
       "idCardHelp": "Document obligatoire pour publier votre première annonce (CNI, passeport, titre de séjour…).",
+      "openFile": "Ouvrir le fichier",
+      "chooseFile": "Choisir un fichier",
       "deathCertTitle": "Certificat de décès",
       "deathCertHelp": "Document à fournir dès que possible. L’annonce pourra être publiée avant, mais ce certificat restera obligatoire à court terme.",
       "alreadyUploaded": "Document déjà transmis pour cette annonce.",
@@ -920,7 +1053,12 @@
       "toastSuccess": "Instructions de virement générées. Vous pouvez maintenant effectuer le virement."
     }
   ,
-
+     "toast": {
+    "coverUploadSuccess": "Image sauvegardée avec succès !",
+    "coverUploadFail": "Impossible d'envoyer la photo.",
+    "obituaryCreateSuccess": "Annonce créée avec succès !",
+    "obituaryCreateFail": "Erreur lors de la création de l'annonce."
+  },
   "plans": {
     "price": {
       "free": "Gratuit",
@@ -977,7 +1115,12 @@
       "draft": "Brouillon (non publié)",
       "pending_review": "En attente de validation",
       "published": "Publié",
-      "archived": "Archivé"
+      "archived": "Archivé",
+        "mismatch": {
+      "text": "Un brouillon existe pour un autre plan. Voulez-vous le restaurer ?",
+      "restore": "Restaurer le brouillon",
+      "clear": "Effacer le brouillon"
+    }
     },
 
     "actions": {

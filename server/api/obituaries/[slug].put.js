@@ -2,7 +2,7 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { requireAuth } from "../../utils/authSession.js";
 import { query, transaction } from "../../utils/db.js";
-import { logInfo, logError, logDebug } from "../../utils/logger.js";
+import { logInfo, logError } from "../../utils/logger.js";
 import {
   buildObituaryBaseSlug,
   ensureUniqueSlugForObituary,
@@ -16,28 +16,68 @@ function isNonEmptyString(v) {
 }
 
 function sanitizeString(v) {
-  return typeof v === "string" ? v.trim() : null;
+  if (typeof v !== "string") return null;
+  const s = v.trim();
+  return s.length ? s : null;
+}
+
+function hasOwn(obj, key) {
+  return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
 }
 
 function isAdminOrModerator(session) {
   const roles = Array.isArray(session.roles) ? session.roles : [];
   return roles.includes("admin") || roles.includes("moderator");
 }
+function normalizeMedia(list) {
+  if (!Array.isArray(list)) return [];
+
+  const allowedTypes = new Set(["image", "video", "link", "other"]);
+  const out = [];
+
+  for (const raw of list) {
+    if (!raw) continue;
+
+    const mediaType = String(
+      raw.mediaType || raw.media_type || "image"
+    ).toLowerCase();
+    if (!allowedTypes.has(mediaType)) continue;
+
+    const url = sanitizeString(raw.url);
+    if (!url) continue; // obligatoire
+
+    out.push({
+      eventId: raw.eventId ?? raw.event_id ?? null,
+      mediaType,
+      provider: sanitizeString(raw.provider) || "direct",
+      url,
+      thumbnailUrl:
+        sanitizeString(raw.thumbnailUrl || raw.thumbnail_url) || null,
+      title: sanitizeString(raw.title) || null,
+      description: sanitizeString(raw.description) || null,
+      durationSeconds: raw.durationSeconds ?? raw.duration_seconds ?? null,
+      isMain: !!(raw.isMain || raw.is_main),
+      sortOrder: Number(raw.sortOrder ?? raw.sort_order ?? 0) || 0,
+    });
+  }
+
+  // optionnel : trier par sortOrder
+  out.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  return out;
+}
+
 
 export default defineEventHandler(async (event) => {
   const slugParam = event.context.params?.slug;
   if (!slugParam) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Slug is required.",
-    });
+    throw createError({ statusCode: 400, statusMessage: "Slug is required." });
   }
 
   const session = await requireAuth(event);
   const requestId =
     event.context.requestId || Math.random().toString(36).slice(2, 10);
 
-  const body = await readBody(event);
+  const body = (await readBody(event)) || {};
 
   logInfo("Update obituary attempt", {
     slug: slugParam,
@@ -45,19 +85,19 @@ export default defineEventHandler(async (event) => {
     requestId,
   });
 
-  // 1. Récupérer l’obituary existant
+  // 1) Load existing obituary
   const rows = await query(
     `
     SELECT *
     FROM obituaries
     WHERE slug = ?
     LIMIT 1
-  `,
+    `,
     [slugParam],
     { requestId }
   );
 
-  if (rows.length === 0) {
+  if (!rows.length) {
     throw createError({
       statusCode: 404,
       statusMessage: "Obituary not found.",
@@ -66,7 +106,7 @@ export default defineEventHandler(async (event) => {
 
   const existing = rows[0];
 
-  // 2. Vérifier les droits
+  // 2) ACL
   const userIsOwner = existing.user_id === session.userId;
   const userIsAdmin = isAdminOrModerator(session);
 
@@ -77,7 +117,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // 3. Extraire les champs du body (mêmes que pour la création)
+  // 3) Extract fields (same keys as create)
   const {
     deceasedFullName,
     deceasedGivenNames,
@@ -91,8 +131,8 @@ export default defineEventHandler(async (event) => {
     denomination,
 
     title,
-    content, // texte de l'annonce (body)
-    mainLanguage, // 'fr', 'en', 'pt', 'es'...
+    content, // body text
+    mainLanguage, // 'fr', 'en', 'pt', 'es'
 
     city,
     region,
@@ -100,13 +140,16 @@ export default defineEventHandler(async (event) => {
     countryCode,
     isRuralArea,
 
-    // contact principal
+    // cover image
+    coverImageUrl,
+
+    // primary contact (flat columns)
     familyContactName,
     familyContactPhone,
     familyContactWhatsapp,
     familyContactEmail,
 
-    // monétisation
+    // monetization (admins only)
     isFree,
     pricingTier,
     currency,
@@ -115,23 +158,26 @@ export default defineEventHandler(async (event) => {
     paymentProvider,
     paymentReference,
 
-    // événements associés (table obituary_events)
+    // related rows
     events,
-
-    // contacts détaillés (table obituary_contacts)
     contacts,
-
-    // option pour régénérer le slug
+    media,
+    // option
     regenSlug,
-  } = body || {};
+  } = body;
 
-  // 4. Validation de base (obligatoire pour les champs clés)
+  // IMPORTANT: do not overwrite events/contacts unless the key is present in payload
+  const hasEventsKey = hasOwn(body, "events");
+  const hasContactsKey = hasOwn(body, "contacts");
+  const hasCoverKey = hasOwn(body, "coverImageUrl");
+ const hasMediaKey = hasOwn(body, "media");
+
+  // 4) Validate core fields (fallback to existing if omitted)
   const fieldErrors = {};
 
   const deceasedFullNameClean = sanitizeString(
     deceasedFullName ?? existing.deceased_full_name
   );
-
   if (!isNonEmptyString(deceasedFullNameClean)) {
     fieldErrors.deceasedFullName = "Full name of the deceased is required.";
   }
@@ -172,12 +218,21 @@ export default defineEventHandler(async (event) => {
     fieldErrors.mainLanguage = "Invalid language.";
   }
 
-  // events : on exige au moins un événement comme pour la création
-  if (!Array.isArray(events) || events.length === 0) {
-    fieldErrors.events = "At least one event (wake/funeral) is required.";
+  // Validate events only if user wants to update them
+  if (hasEventsKey) {
+    if (!Array.isArray(events) || events.length === 0) {
+      fieldErrors.events = "At least one event (wake/funeral) is required.";
+    } else {
+      const hasAtLeastOneStartsAt = events.some(
+        (ev) => ev && (ev.startsAt || ev.starts_at)
+      );
+      if (!hasAtLeastOneStartsAt) {
+        fieldErrors.events = "Each event must include a startsAt value.";
+      }
+    }
   }
 
-  // monétisation : on ne permet la modif de certains champs qu’aux admins
+  // Monetization: only admin/mod can update, otherwise keep existing values
   let isFreeValue;
   let pricingTierValue;
   let currencyValue;
@@ -187,7 +242,6 @@ export default defineEventHandler(async (event) => {
   let paymentReferenceValue;
 
   if (userIsAdmin) {
-    // Admin : peut modifier monétisation
     isFreeValue = typeof isFree === "boolean" ? isFree : !!existing.is_free;
     pricingTierValue = pricingTier ?? existing.pricing_tier;
     currencyValue = currency ?? existing.currency;
@@ -216,7 +270,6 @@ export default defineEventHandler(async (event) => {
       fieldErrors.publishDurationDays = "Publish duration must be positive.";
     }
   } else {
-    // User normal : on garde les valeurs existantes
     isFreeValue = !!existing.is_free;
     pricingTierValue = existing.pricing_tier;
     currencyValue = existing.currency;
@@ -226,7 +279,7 @@ export default defineEventHandler(async (event) => {
     paymentReferenceValue = existing.payment_reference;
   }
 
-  if (Object.keys(fieldErrors).length > 0) {
+  if (Object.keys(fieldErrors).length) {
     throw createError({
       statusCode: 400,
       statusMessage: "Invalid obituary data.",
@@ -234,17 +287,19 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // 5. Nettoyage / fallback des autres champs
+  // 5) Sanitize / fallback other fields
   const deceasedGivenNamesClean = sanitizeString(
     deceasedGivenNames ?? existing.deceased_given_names
   );
   const deceasedFamilyNamesClean = sanitizeString(
     deceasedFamilyNames ?? existing.deceased_family_names
   );
+
   const cityClean = sanitizeString(city ?? existing.city);
   const regionClean = sanitizeString(region ?? existing.region);
   const countryClean = sanitizeString(country ?? existing.country);
   const countryCodeClean = sanitizeString(countryCode ?? existing.country_code);
+
   const familyContactNameClean = sanitizeString(
     familyContactName ?? existing.family_contact_name
   );
@@ -257,10 +312,12 @@ export default defineEventHandler(async (event) => {
   const familyContactEmailClean = sanitizeString(
     familyContactEmail ?? existing.family_contact_email
   );
+
   const denominationClean = sanitizeString(
     denomination ?? existing.denomination
   );
   const ageDisplayClean = sanitizeString(ageDisplay ?? existing.age_display);
+
   const isRuralVal =
     typeof isRuralArea === "boolean"
       ? isRuralArea
@@ -271,7 +328,12 @@ export default defineEventHandler(async (event) => {
   const dateOfBirthValue = dateOfBirth ?? existing.date_of_birth;
   const dateOfDeathValue = dateOfDeath ?? existing.date_of_death;
 
-  // Calcul possible de age_at_death si dateOfBirth & dateOfDeath fournis
+  // cover image: only update if key present, otherwise keep existing
+  const coverImageUrlClean = hasCoverKey
+    ? sanitizeString(coverImageUrl)
+    : existing.cover_image_url ?? null;
+
+  // Compute age_at_death if both dates provided
   let ageAtDeathValue = existing.age_at_death;
   if (dateOfBirthValue && dateOfDeathValue) {
     try {
@@ -280,21 +342,16 @@ export default defineEventHandler(async (event) => {
       if (!Number.isNaN(dob.getTime()) && !Number.isNaN(dod.getTime())) {
         let age = dod.getFullYear() - dob.getFullYear();
         const m = dod.getMonth() - dob.getMonth();
-        if (m < 0 || (m === 0 && dod.getDate() < dob.getDate())) {
-          age--;
-        }
-        if (age >= 0 && age <= 130) {
-          ageAtDeathValue = age;
-        }
+        if (m < 0 || (m === 0 && dod.getDate() < dob.getDate())) age--;
+        if (age >= 0 && age <= 130) ageAtDeathValue = age;
       }
     } catch (_) {
       // ignore
     }
   }
 
-  // 6. Slug : soit on garde, soit on régénère
+  // 6) Slug: keep, or regenerate if requested
   let finalSlug = existing.slug;
-
   if (regenSlug === true) {
     const baseSlug = buildObituaryBaseSlug({
       deceasedFullName: deceasedFullNameClean,
@@ -308,48 +365,49 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // 7. Transaction : UPDATE obituary + replacer events & contacts
+  // 7) Transaction: update obituary + optional replace events/contacts
   try {
     const result = await transaction(
       async (tx) => {
-        // 7.1 UPDATE obituaries
+        // 7.1 Update obituaries (including cover_image_url)
         const updateSql = `
-        UPDATE obituaries
-        SET
-          deceased_full_name = ?,
-          deceased_given_names = ?,
-          deceased_family_names = ?,
-          identity_status = ?,
-          deceased_gender = ?,
-          date_of_birth = ?,
-          date_of_death = ?,
-          age_at_death = ?,
-          age_display = ?,
-          religion = ?,
-          denomination = ?,
-          title = ?,
-          body = ?,
-          main_language = ?,
-          slug = ?,
-          city = ?,
-          region = ?,
-          country = ?,
-          country_code = ?,
-          is_rural_area = ?,
-          family_contact_name = ?,
-          family_contact_phone = ?,
-          family_contact_whatsapp = ?,
-          family_contact_email = ?,
-          is_free = ?,
-          pricing_tier = ?,
-          currency = ?,
-          amount_paid = ?,
-          publish_duration_days = ?,
-          payment_provider = ?,
-          payment_reference = ?,
-          updated_at = NOW()
-        WHERE id = ?
-      `;
+          UPDATE obituaries
+          SET
+            deceased_full_name = ?,
+            deceased_given_names = ?,
+            deceased_family_names = ?,
+            identity_status = ?,
+            deceased_gender = ?,
+            date_of_birth = ?,
+            date_of_death = ?,
+            age_at_death = ?,
+            age_display = ?,
+            religion = ?,
+            denomination = ?,
+            title = ?,
+            body = ?,
+            main_language = ?,
+            slug = ?,
+            city = ?,
+            region = ?,
+            country = ?,
+            country_code = ?,
+            is_rural_area = ?,
+            family_contact_name = ?,
+            family_contact_phone = ?,
+            family_contact_whatsapp = ?,
+            family_contact_email = ?,
+            cover_image_url = ?,
+            is_free = ?,
+            pricing_tier = ?,
+            currency = ?,
+            amount_paid = ?,
+            publish_duration_days = ?,
+            payment_provider = ?,
+            payment_reference = ?,
+            updated_at = NOW()
+          WHERE id = ?
+        `;
 
         const updateParams = [
           deceasedFullNameClean,
@@ -376,6 +434,7 @@ export default defineEventHandler(async (event) => {
           familyContactPhoneClean,
           familyContactWhatsappClean,
           familyContactEmailClean,
+          coverImageUrlClean,
           isFreeValue ? 1 : 0,
           pricingTierValue,
           isFreeValue ? null : currencyValue,
@@ -388,51 +447,62 @@ export default defineEventHandler(async (event) => {
 
         await tx.query(updateSql, updateParams);
 
-        // 7.2 Remplacer les events
-        await tx.query("DELETE FROM obituary_events WHERE obituary_id = ?", [
-          existing.id,
-        ]);
+        // 7.2 Replace events ONLY if provided
+        if (hasEventsKey) {
+          await tx.query("DELETE FROM obituary_events WHERE obituary_id = ?", [
+            existing.id,
+          ]);
 
-        const insertEventSql = `
-        INSERT INTO obituary_events (
-          obituary_id, event_type, title, description,
-          starts_at, ends_at, timezone,
-          venue_name, venue_address,
-          city, region, country, country_code,
-          is_main_event, created_at, updated_at
-        )
-        VALUES (
-          ?, ?, ?, ?,
-          ?, ?, ?,
-          ?, ?,
-          ?, ?, ?, ?,
-          ?, NOW(), NOW()
-        )
-      `;
+          const insertEventSql = `
+            INSERT INTO obituary_events (
+              obituary_id, event_type, title, description,
+              starts_at, ends_at, timezone,
+              venue_name, venue_address,
+              city, region, country, country_code,
+              is_main_event, created_at, updated_at
+            )
+            VALUES (
+              ?, ?, ?, ?,
+              ?, ?, ?,
+              ?, ?,
+              ?, ?, ?, ?,
+              ?, NOW(), NOW()
+            )
+          `;
 
-        if (Array.isArray(events)) {
-          for (const [index, ev] of events.entries()) {
+          for (const [index, ev] of (events || []).entries()) {
             if (!ev) continue;
 
-            const evType = ev.eventType || "wake";
+            const evType = sanitizeString(ev.eventType) || "wake";
             const evTitle = sanitizeString(ev.title) || "Event";
             const evDescription = sanitizeString(ev.description);
-            const evStartsAt = ev.startsAt;
-            const evEndsAt = ev.endsAt || null;
+
+            const evStartsAt = ev.startsAt || ev.starts_at || null;
+            const evEndsAt = ev.endsAt || ev.ends_at || null;
+
             const evTimezone = sanitizeString(ev.timezone) || null;
             const evVenueName = sanitizeString(ev.venueName);
             const evVenueAddress = sanitizeString(ev.venueAddress);
-            const evCity = sanitizeString(ev.city || cityClean);
-            const evRegion = sanitizeString(ev.region || regionClean);
-            const evCountry = sanitizeString(ev.country || countryClean);
-            const evCountryCode = sanitizeString(
-              ev.countryCode || countryCodeClean
-            );
+
+            const evCity = sanitizeString(ev.city) || cityClean;
+            const evRegion = sanitizeString(ev.region) || regionClean;
+            const evCountry = sanitizeString(ev.country) || countryClean;
+            const evCountryCode =
+              sanitizeString(ev.countryCode) || countryCodeClean;
+
             const isMain = ev.isMainEvent || index === 0 ? 1 : 0;
 
+            // strict: we validated earlier, but keep safety
             if (!evStartsAt) {
-              // on peut décider de throw si nécessaire
-              continue;
+              throw createError({
+                statusCode: 400,
+                statusMessage: "Invalid obituary data.",
+                data: {
+                  fieldErrors: {
+                    events: "Each event must include a startsAt value.",
+                  },
+                },
+              });
             }
 
             await tx.query(insertEventSql, [
@@ -454,45 +524,95 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        // 7.3 Remplacer les contacts
-        await tx.query("DELETE FROM obituary_contacts WHERE obituary_id = ?", [
-          existing.id,
-        ]);
+        // 7.3 Replace contacts ONLY if provided
+        if (hasContactsKey) {
+          await tx.query(
+            "DELETE FROM obituary_contacts WHERE obituary_id = ?",
+            [existing.id]
+          );
 
-        const insertContactSql = `
-        INSERT INTO obituary_contacts (
-          obituary_id, label, name, phone, whatsapp_number, email,
-          is_public, is_primary, created_at, updated_at
-        )
-        VALUES (
-          ?, ?, ?, ?, ?, ?,
-          ?, ?, NOW(), NOW()
-        )
-      `;
+          const insertContactSql = `
+            INSERT INTO obituary_contacts (
+              obituary_id, label, name, phone, whatsapp_number, email,
+              is_public, is_primary, created_at, updated_at
+            )
+            VALUES (
+              ?, ?, ?, ?, ?, ?,
+              ?, ?, NOW(), NOW()
+            )
+          `;
 
-        if (Array.isArray(contacts) && contacts.length > 0) {
-          for (const c of contacts) {
-            if (!c) continue;
-            const label = sanitizeString(c.label);
-            const name = sanitizeString(c.name);
-            const phone = sanitizeString(c.phone);
-            const whatsapp = sanitizeString(c.whatsappNumber);
-            const email = sanitizeString(c.email);
-            const isPublic = c.isPublic === false ? 0 : 1;
-            const isPrimary = c.isPrimary ? 1 : 0;
+          if (Array.isArray(contacts) && contacts.length > 0) {
+            for (const c of contacts) {
+              if (!c) continue;
 
-            await tx.query(insertContactSql, [
-              existing.id,
-              label,
-              name,
-              phone,
-              whatsapp,
-              email,
-              isPublic,
-              isPrimary,
-            ]);
+              const label = sanitizeString(c.label);
+              const name = sanitizeString(c.name);
+              const phone = sanitizeString(c.phone);
+              const whatsapp = sanitizeString(c.whatsappNumber);
+              const email = sanitizeString(c.email);
+
+              const isPublic = c.isPublic === false ? 0 : 1;
+              const isPrimary = c.isPrimary ? 1 : 0;
+
+              // if totally empty, skip
+              if (!label && !name && !phone && !whatsapp && !email) continue;
+
+              await tx.query(insertContactSql, [
+                existing.id,
+                label,
+                name,
+                phone,
+                whatsapp,
+                email,
+                isPublic,
+                isPrimary,
+              ]);
+            }
           }
         }
+  if (hasMediaKey) {
+    const normalizedMedia = normalizeMedia(media);
+
+    await tx.query("DELETE FROM obituary_media WHERE obituary_id = ?", [
+      existing.id,
+    ]);
+
+    if (normalizedMedia.length > 0) {
+      const insertMediaSql = `
+      INSERT INTO obituary_media (
+        obituary_id, event_id,
+        media_type, provider, url,
+        thumbnail_url, title, description,
+        duration_seconds, is_main, sort_order,
+        created_at, updated_at
+      )
+      VALUES (
+        ?, ?,
+        ?, ?, ?,
+        ?, ?, ?,
+        ?, ?, ?,
+        NOW(), NOW()
+      )
+    `;
+
+      for (const m of normalizedMedia) {
+        await tx.query(insertMediaSql, [
+          existing.id,
+          m.eventId,
+          m.mediaType,
+          m.provider,
+          m.url,
+          m.thumbnailUrl,
+          m.title,
+          m.description,
+          m.durationSeconds,
+          m.isMain ? 1 : 0,
+          Number.isFinite(m.sortOrder) ? m.sortOrder : 0,
+        ]);
+      }
+    }
+  }
 
         return { obituaryId: existing.id, slug: finalSlug };
       },
@@ -514,16 +634,14 @@ export default defineEventHandler(async (event) => {
     };
   } catch (err) {
     logError("Update obituary failed", {
-      error: err.message,
-      stack: err.stack,
+      error: err?.message,
+      stack: err?.stack,
       slug: slugParam,
       userId: session.userId,
       requestId,
     });
 
-    if (err.statusCode) {
-      throw err;
-    }
+    if (err?.statusCode) throw err;
 
     throw createError({
       statusCode: 500,

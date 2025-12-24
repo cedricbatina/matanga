@@ -52,4 +52,355 @@ Période : 14–15 décembre 2025
 
 - Préparer la modération :
   - définir précisément l’usage de verification_status (pending / verified / rejected),
-  - prévoir les écrans “Mes annonces” (user) et “Obituaries à valider” (admin).
+  - prévoir les écrans “Mes annonces” (user) et “Obituaries à valider” (admin). 
+
+
+///
+Journal de dev – Matanga / Madizi
+
+Période : 18–19 décembre 2025
+
+1. Flux côté famille – création / édition / confirmation
+1.1 Page de confirmation /obituary/confirm/[slug].vue
+
+Mise en place d’un récap complet de l’annonce :
+
+Bloc défunt (nom, dates, âge affiché, religion, localisation, rural/urbain…)
+
+Texte d’annonce (titre + corps)
+
+Liste des événements (type, date/heure, lieu, événement principal)
+
+Liste des contacts (contact principal, téléphone, WhatsApp, email)
+
+Ajout du bloc “Documents justificatifs” :
+
+Gestion des deux types :
+
+id_card (pièce d’identité)
+
+death_certificate (certificat de décès)
+
+Affichage :
+
+Badge vert si déjà uploadé + lien “voir le fichier”
+
+Badge orange si manquant, avec bouton d’upload (image/PDF)
+
+Logique d’upload :
+
+POST /api/obituaries/:slug/documents via FormData
+
+Refresh automatique de la liste de documents après upload
+
+Toasts success / error en cas de problème d’upload
+
+Règle métier CNI / certificat :
+
+CNI = obligatoire pour déclencher le paiement.
+
+Certificat de décès = optionnel pendant 7 jours, mais suivi :
+
+hasAllRequiredDocs = basé uniquement sur la CNI.
+
+Calcul isCertOverdue :
+
+compare now à created_at
+
+si >= 7 jours et pas de death_certificate → considéré en retard.
+
+certDeadlineLabel = date limite affichée formatée.
+
+Message d’avertissement renforcé si le certificat est en retard.
+
+Intégration avec les plans :
+
+Mini PLAN_META côté front (codes : indiv_free_7, indiv_basic_21, indiv_essentiel_30, indiv_prestige_60).
+
+Correction : plan gratuit = 14 jours de publication (aligné avec la DB)
+→ publishDurationDays du plan gratuit passé à 14.
+
+Affichage cohérent dans le panneau latéral :
+
+Formule
+
+Durée de publication
+
+Montant (Gratuit ou prix en €)
+
+Panneau latéral : logique des boutons :
+
+Plan gratuit : bouton “Publier gratuitement” qui appelle POST /api/obituaries/:slug/publish puis redirige vers la page publique.
+
+Plan payant :
+
+Si non payé + non publié : bouton “Confirmer et payer” → redirect vers /checkout/obituary/:slug (avec le plan en query si dispo).
+
+Si déjà payé / déjà publié : texte adapté (“Le paiement pour cette annonce a déjà été enregistré”), sans renvoyer vers le paiement.
+
+Boutons de gestion :
+
+Modifier l’annonce → redirection vers /obituary/edit/[slug].
+
+Archiver (soft delete) : DELETE /api/obituaries/:slug → statut archivé / privé, avec toasts.
+
+Suppression définitive (hard delete) : DELETE /api/obituaries/:slug/hard.
+
+Les deux actions passent par un ConfirmModal via useConfirmStore avant d’exécuter l’API.
+
+2. Page d’édition /obituary/edit/[slug].vue
+
+Récupération de la payload via GET /api/obituaries/:slug (obituary + events + contacts) et pré-remplissage du formulaire :
+
+Défunts : nom complet, dates naissance/décès, âge, genre, statut d’identification, religion, dénomination.
+
+Localisation : ville, région, pays, code pays, rural/urbain.
+
+Contenu : titre, texte d’annonce, langue principale.
+
+Image de couverture : coverImageUrl (nouveau champ).
+
+Événement principal :
+
+type (funeral, wake, burial, memorial)
+
+startsAt au bon format datetime-local
+
+lieu (nom + adresse)
+
+Contact principal famille :
+
+nom / label
+
+téléphone
+
+WhatsApp
+
+email
+
+Image de couverture :
+
+Nouveau champ coverImageUrl dans le formulaire.
+
+Aperçu en live si l’URL est renseignée (petite vignette sous le champ).
+
+Ce champ est inclus dans le payload envoyé au backend.
+
+Validation minimale alignée avec la création :
+
+Nom du défunt obligatoire.
+
+Titre ≥ longueur minimale.
+
+Corps de texte ≥ ~40 caractères.
+
+Date/heure de l’événement principal obligatoire.
+
+Build du payload PUT /api/obituaries/:slug :
+
+On n’y touche pas à la monétisation / plan.
+
+On envoie :
+
+champs plats (défunts, localisation, titre, contenu, coverImageUrl…)
+
+un seul event principal (isMainEvent = true)
+
+un contact principal public + primary si rempli.
+
+Navigation & actions :
+
+Bouton Annuler → retour vers /obituary/confirm/:slug.
+
+Bouton Enregistrer → PUT, puis retour vers la page de confirmation avec toast de succès.
+
+Bouton Supprimer depuis l’édition :
+
+ConfirmModal via useConfirmStore
+
+DELETE /api/obituaries/:slug (archive)
+
+redirection vers /obituaries.
+
+3. Espace admin – modération & vérification
+3.1 API server/api/admin/obituaries/[id]/verification.post.js
+
+Debug du fichier (erreur “Expected finally but found else”) → réécriture propre et structurée du handler.
+
+Règle métier mise au clair et implémentée :
+
+Action verify :
+
+Vérifie l’existence de l’annonce (SELECT).
+
+Met à jour :
+
+verification_status = 'verified'
+
+verification_note = note
+
+status :
+
+si draft / pending_review / rejected → passe à published
+
+visibility :
+
+si on vérifie une annonce non publiée → public
+
+si déjà published mais private → forcée à public
+👉 corrige le bug où les annonces payées restaient invisibles.
+
+publish_at → COALESCE(publish_at, NOW())
+
+published_at → set à NOW() si encore NULL
+
+expires_at recalculé avec publish_duration_days (si présent).
+
+Envoi d’une notification in-app :
+
+type obituary.documents.verified
+
+message explicite : “Vos documents justificatifs ont été acceptés. Votre annonce est désormais publique et visible…”.
+
+Action reject :
+
+verification_status = 'rejected'
+
+status = 'rejected'
+
+verification_note = note
+
+Envoi d’une notification obituary.documents.rejected avec la raison facultative pour la famille.
+
+3.2 Page admin /pages/admin/obituaries/index.vue
+
+Filtrage & liste :
+
+Filtres de vérification : all, pending, verified, rejected.
+
+Recherche par nom défunt / titre / email.
+
+Tri : récent, plus ancien, populaire.
+
+Paramètre onlyPaid = true par défaut → cette page admin vise les annonces avec paiement.
+
+Appel API GET /api/admin/obituaries :
+
+Pagination via page / pageSize.
+
+Filtrage par status, verification_status, texte, tri, paiement.
+
+Affichage des cartes :
+
+Titre de l’annonce.
+
+Pills :
+
+statut fonctionnel (draft, pending_review, published, etc.)
+
+état de vérification
+
+pill paiement (montant payé + devise) si amountPaid > 0.
+
+Infos défunt + localisation.
+
+Infos famille (email + ville/pays utilisateur).
+
+Dates : création + éventuellement publication.
+
+Plan tarifaire (pricingTier) formaté via i18n.
+
+Actions par annonce :
+
+Lien vers la page publique /obituary/:slug (nouvel onglet).
+
+Lien vers la page famille /obituary/confirm/:slug (nouvel onglet).
+
+Bouton Valider :
+
+ConfirmModal via useConfirmStore.
+
+Appelle POST /api/admin/obituaries/:id/verification avec action = 'verify'.
+
+Gère les états de chargement par processingId / processingAction.
+
+Bouton Refuser :
+
+ConfirmModal + prompt texte (raison du refus).
+
+Appelle la même API avec action = 'reject' + note.
+
+Toasts de succès / erreur sur les actions admin.
+
+4. Vérifications DB & cohérence des statuts
+
+Requêtes d’inspection sur la table obituaries pour comprendre les incohérences :
+
+Liste globale : statut, visibilité, paiement, vérification, durée de publication, dates.
+
+Focus sur :
+
+annonces payantes mais non publiques (published + private)
+
+annonces gratuites pour confirmer que la durée est bien 14 jours en DB.
+
+Constat :
+
+Plusieurs annonces payantes avec :
+
+status = 'published'
+
+verification_status = 'verified'
+
+mais visibility = 'private'
+→ corrigé par la nouvelle logique dans verification.post.js + un UPDATE SQL pour les lignes existantes.
+
+Patch SQL proposé pour corriger les anciennes données :
+
+UPDATE obituaries
+SET
+  visibility = 'public',
+  published_at = COALESCE(published_at, publish_at, NOW())
+WHERE is_free = 0
+  AND status = 'published'
+  AND visibility = 'private'
+  AND verification_status = 'verified';
+
+
+Vérification que les annonces gratuites ont bien :
+
+is_free = 1
+
+publish_duration_days = 14
+
+cohérence avec pricing_tier (indiv_free_7 / free_basic).
+
+5. Pagination
+
+Relecture du composant <Pagination> :
+
+Navigation précédente / suivante.
+
+Liste de pages avec ellipses.
+
+Résumé “X–Y sur Z résultats”.
+
+Champ “Aller à la page” (input numérique synchronisé avec la page courante).
+
+Import & utilisation confirmés dans /admin/obituaries pour la pagination de la liste admin.
+
+6. TODO / pistes pour la suite
+
+Mettre en place (ou vérifier) la logique backend qui :
+
+archive ou bascule l’annonce si aucun certificat après 7 jours (règle “certificat obligatoire passé le délai”).
+
+Ajouter éventuellement un filtre “onlyPaid = false” dans la page admin pour voir aussi les gratuites / tests.
+
+Révision des textes i18n (FR + autres langues) pour :
+
+bien refléter “Gratuit 14 jours”
+
+messages clairs quand “Paiement déjà enregistré”
+
+messages docs en retard / obligatoires.

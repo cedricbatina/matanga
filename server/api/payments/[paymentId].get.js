@@ -3,7 +3,7 @@ import { defineEventHandler, createError } from "h3";
 import { requireAuth } from "../../utils/authSession.js";
 import { query } from "../../utils/db.js";
 import { logInfo, logError } from "../../utils/logger.js";
-import { findPlanByCode } from "../../utils/pricingPlans.js";
+import { findPlanByCode } from "~/utils/pricingPlans.js";
 
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event);

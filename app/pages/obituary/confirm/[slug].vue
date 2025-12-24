@@ -13,6 +13,7 @@
       <!-- Header -->
       <header class="section-header">
         <h1 class="section-title">
+
           {{ t('obituaryReview.title') }}
         </h1>
 
@@ -522,6 +523,17 @@
             <p class="review-docs__item-text">
               {{ t('obituaryReview.documents.deathCertHelp') }}
             </p>
+            <p
+  v-if="requiresDeathCertEver && !hasDeathCertDoc && certDeadlineDate && !isCertOverdue"
+  class="review-docs__item-text"
+>
+  {{ t('obituaryReview.documents.deathCertDueIn', {
+    days: certDaysLeft,
+    date: formatDate(certDeadlineDate),
+  }) }}
+</p>
+
+
           </div>
 
           <span
@@ -610,22 +622,25 @@
 
     <!-- Avertissement global -->
     <p
-      v-if="!hasAllRequiredDocs && !isFreePlan"
+     v-if="!hasAllRequiredDocsForPublish"
+
       class="review-docs__warning"
     >
       {{ t('obituaryReview.documents.missingWarning') }}
     </p>
-    <p
-  v-else-if="isCertOverdue && !hasDeathCertDoc"
+<p
+  v-else-if="requiresDeathCertEver && isCertOverdue && !hasDeathCertDoc"
   class="review-docs__warning review-docs__warning--strong"
 >
   {{
     t('obituaryReview.documents.deathCertOverdue', {
-      days: 7,
-      date: certDeadlineLabel,
+      overdueDays: certOverdueDays,
+      date: formatDate(certDeadlineDate),
     })
   }}
 </p>
+
+
 
   </div>
 </section>
@@ -704,13 +719,23 @@
   >
     {{ t('obituaryReview.actions.edit') }}
   </button>
-
-  <!-- Plan GRATUIT : publier -->
+  <!-- PRO subscription -->
+<template v-if="isProSubscriptionPlan">
   <button
-    v-if="isFreePlan"
+    v-if="!hasActiveSubscription"
+    type="button"
+    class="btn btn-primary"
+    @click="onSubscribe"
+    :disabled="isPublishing || isPaying"
+  >
+    {{ t('obituaryReview.actions.subscribe') }}
+  </button>
+
+  <button
+    v-else
     type="submit"
     class="btn btn-primary"
-    :disabled="isPublishing || isPaying"
+    :disabled="isPublishing || isPaying || !hasAllRequiredDocsForPublish"
   >
     <span v-if="isPublishing">
       {{ t('obituaryReview.actions.publishing') }}
@@ -720,13 +745,44 @@
     </span>
   </button>
 
+  <button
+    v-if="hasActiveSubscription"
+    type="button"
+    class="btn btn-ghost btn-sm"
+    @click="onManageSubscription"
+    :disabled="isPublishing || isPaying"
+  >
+    {{ t('obituaryReview.actions.manageSubscription') }}
+  </button>
+</template>
+<template v-else>
+
+
+  <!-- Plan GRATUIT : publier -->
+  <button
+    v-if="isFreePlan"
+    type="submit"
+    class="btn btn-primary"
+   :disabled="isPublishing || isPaying || !hasAllRequiredDocsForPublish"
+
+  >
+    <span v-if="isPublishing">
+      {{ t('obituaryReview.actions.publishing') }}
+    </span>
+    <span v-else>
+      {{ t('obituaryReview.actions.publish') }}
+
+    </span>
+  </button>
+
   <!-- Plan PAYANT : pas encore payé & pas encore publié → paiement -->
   <button
     v-else-if="!isAlreadyPaid && !isPublished"
     type="button"
     class="btn btn-primary"
     @click="onPay"
-    :disabled="isPublishing || isPaying || !hasAllRequiredDocs"
+   :disabled="isPublishing || isPaying || !hasAllRequiredDocsForPayment"
+
   >
     <span v-if="isPaying">
       {{ t('obituaryReview.actions.redirectingToPayment') }}
@@ -743,7 +799,7 @@
   >
     {{ t('obituaryReview.side.alreadyPaid') }}
   </p>
-
+</template>
   <!-- Archive / suppression (inchangé) -->
   <button
     type="button"
@@ -767,7 +823,8 @@
 
 
 <p
-  v-if="!hasAllRequiredDocs && !isFreePlan"
+v-if="!hasAllRequiredDocsForPublish"
+
   class="review-side__hint"
 >
   {{ t('obituaryReview.documents.sideHint') }}
@@ -786,152 +843,258 @@ definePageMeta({
   middleware: ['auth'],
 });
 
-import { computed, ref } from 'vue';
-import {
-  useRoute,
-  useRouter,
-  useSeoMeta,
-  useFetch,
-  useNuxtApp,
-} from '#imports';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { useRoute, useRouter, useSeoMeta, useFetch, useNuxtApp } from '#imports';
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
 import { useConfirmStore } from '~/stores/confirmStore';
 import { useDateUtils } from '~/composables/useDateUtils';
+import { usePricingPlans } from '~/composables/usePricingPlans';
 import { useObituaryDocuments } from '~/composables/useObituaryDocuments';
 
-// ...
+const { formatDate, formattedDateTimeWithSeconds, safeDate, getCountdownString } = useDateUtils();
+
+// ✅ IMPORTANT: garde pricingPlans côté client (~/utils), pas server/utils
 
 
-
-const { formatDate, formattedDateTimeWithSeconds } = useDateUtils();
+const { findPlanByCode } = usePricingPlans();
 
 const route = useRoute();
 const router = useRouter();
-const { t, locale } = useI18n();
+
+// ✅ wrapper i18n avec fallback pour éviter d’afficher des clés brutes
+const { t: _t, te, locale } = useI18n();
+const I18N_FALLBACKS = {
+  'obituaryReview.documents.missing': 'Manquant',
+  'obituaryReview.documents.chooseFile': 'Choisir un fichier',
+  'obituaryReview.documents.noFileSelected': 'Aucun fichier sélectionné',
+  'obituaryReview.documents.uploadSuccess': 'Document téléversé.',
+  'obituaryReview.documents.uploadError': 'Erreur lors du téléversement.',
+  'obituaryReview.documents.selectFileFirst': 'Sélectionnez un fichier d’abord.',
+  'obituaryReview.actions.subscribe': 'S’abonner',
+  'obituaryReview.actions.manageSubscription': 'Gérer mon abonnement',
+  'obituaryReview.actions.publish': 'Publier',
+   'obituaryReview.documents.openFile': 'Ouvrir le document',
+  'obituaryReview.documents.idCardTitle': 'Pièce d’identité du déclarant',
+  'obituaryReview.documents.idCardHelp': 'Carte nationale d’identité, passeport ou titre de séjour en cours de validité.',
+  'obituaryReview.documents.deathCertTitle': 'Certificat de décès',
+  'obituaryReview.documents.deathCertHelp': 'Certificat ou acte de décès délivré par les autorités compétentes.',
+  'obituaryReview.documents.alreadyUploaded': 'Document déjà transmis pour cette annonce.',
+
+};
+const t = (key, params) => {
+  if (te(key)) return params ? _t(key, params) : _t(key);
+  return I18N_FALLBACKS[key] || key;
+};
 
 // Toastification (plugin : provide("useToast", ...))
 const { $useToast } = useNuxtApp();
 const toast = $useToast ? $useToast() : null;
-const isPublishing = ref(false);
-const isPaying = ref(false);
-// Store de confirmation (LkConfirmModal)
+
+
+
+
+// Store modal confirm
 const confirmStore = useConfirmStore();
 
-const slug = computed(() => route.params.slug);
+const isPublishing = ref(false);
+const isPaying = ref(false);
 
-// 🔹 Mini PLAN_META côté client pour le prix / libellé
-const PLAN_META = {
-  indiv_free_7: {
-    code: 'indiv_free_7',
-    labelKey: 'plans.codes.indiv_free_7',
-    isFree: true,
-    currency: null,
-    basePriceCents: 0,
-    publishDurationDays: 14,
-  },
-  indiv_basic_21: {
-    code: 'indiv_basic_21',
-    labelKey: 'plans.codes.indiv_basic_21',
-    isFree: false,
-    currency: 'EUR',
-    basePriceCents: 1800,
-    publishDurationDays: 21,
-  },
-  indiv_essentiel_30: {
-    code: 'indiv_essentiel_30',
-    labelKey: 'plans.codes.indiv_essentiel_30',
-    isFree: false,
-    currency: 'EUR',
-    basePriceCents: 2500,
-    publishDurationDays: 30,
-  },
-  indiv_prestige_60: {
-    code: 'indiv_prestige_60',
-    labelKey: 'plans.codes.indiv_prestige_60',
-    isFree: false,
-    currency: 'EUR',
-    basePriceCents: 4900,
-    publishDurationDays: 60,
-  },
-};
+const slug = computed(() => String(route.params.slug || ''));
 
-// 📡 Récupération de la payload par slug
-const {
-  data,
-  pending,
-  error,
-  refresh,
-} = await useFetch(() => `/api/obituaries/${slug.value}`, {
-  key: () => `obituary-confirm-${slug.value}`,
-});
+// -------------------- Fetch obituary payload --------------------
+const { data, pending, error, refresh } = await useFetch(
+  () => `/api/obituaries/${slug.value}`,
+  { key: () => `obituary-confirm-${slug.value}` }
+);
 
-// Normalisation de la réponse
 const payload = computed(() => data.value || null);
 const obituary = computed(() => payload.value?.obituary || null);
 const events = computed(() => payload.value?.events || []);
 const contacts = computed(() => payload.value?.contacts || []);
-// 📎 Documents justificatifs
-//const documents = ref([]); // liste depuis l'API (plus tard)
+
+// -------------------- Plan resolution (✅ no PLAN_META) --------------------
+const rawPlanCode = computed(() => {
+  const o = obituary.value;
+  const m = o?.monetization || {};
+
+  const fromApi =
+    m.planCode ||
+    m.plan_code ||
+    m.pricingTier ||      // vieux fallback si API renvoie encore ça
+    m.pricing_tier ||
+    o?.planCode ||
+    o?.plan_code ||
+    null;
+
+  if (fromApi) return String(fromApi);
+
+  const fromQuery = route.query.plan;
+  if (typeof fromQuery === 'string' && fromQuery.trim()) return fromQuery.trim();
+
+  return null;
+});
+
+const currentPlan = computed(() => {
+  if (!rawPlanCode.value) return null;
+  return findPlanByCode(rawPlanCode.value) || null;
+});
+
+const isProPlan = computed(() => currentPlan.value?.accountType === 'pro');
+const isSubscriptionPlan = computed(() => currentPlan.value?.billingType === 'subscription');
+const isOneOffPlan = computed(() => currentPlan.value?.billingType === 'oneoff');
+
+const isFreePlan = computed(() => {
+  if (currentPlan.value) return !!currentPlan.value.isFree;
+  const m = obituary.value?.monetization;
+  return typeof m?.isFree === 'boolean' ? m.isFree : false;
+});
+
+const effectivePublishDays = computed(() => {
+  const o = obituary.value;
+  const monet = o?.monetization || null;
+
+  // 1) API
+  const apiDays =
+    typeof monet?.publishDurationDays === 'number' && monet.publishDurationDays > 0
+      ? monet.publishDurationDays
+      : null;
+  if (apiDays) return apiDays;
+
+  // 2) Plan
+  const planDays =
+    typeof currentPlan.value?.publishDurationDays === 'number' && currentPlan.value.publishDurationDays > 0
+      ? currentPlan.value.publishDurationDays
+      : null;
+  if (planDays) return planDays;
+
+  return 0;
+});
+
+const planLabel = computed(() => {
+  const p = currentPlan.value;
+  if (p?.labelKey) return t(p.labelKey);
+  if (p?.label) return p.label;
+  return rawPlanCode.value || null;
+});
+
+const formatPriceCents = (cents) => {
+  const euros = (Number(cents || 0) / 100).toFixed(2);
+  return t('plans.price.paid', { amount: euros });
+};
+
+const planPrice = computed(() => {
+  const p = currentPlan.value;
+  const monet = obituary.value?.monetization || null;
+
+  // 1) Plan connu
+  if (p) {
+    if (p.isFree) return t('plans.price.free');
+
+    // subscription: priceCents + période
+    if (p.billingType === 'subscription') {
+      const price = formatPriceCents(p.priceCents);
+      const per = p.billingPeriod === 'year' ? ' / an' : ' / mois';
+      return `${price}${per}`;
+    }
+
+    // oneoff: basePriceCents ou priceCents
+    if (typeof p.basePriceCents === 'number' && p.basePriceCents > 0) {
+      return formatPriceCents(p.basePriceCents);
+    }
+    if (typeof p.priceCents === 'number' && p.priceCents > 0) {
+      return formatPriceCents(p.priceCents);
+    }
+  }
+
+  // 2) fallback API (montant déjà payé)
+  const rawAmount =
+    typeof monet?.amountPaid === 'number'
+      ? monet.amountPaid
+      : typeof monet?.amount_paid === 'number'
+        ? monet.amount_paid
+        : null;
+
+  if (rawAmount && rawAmount > 0) {
+    return t('plans.price.paid', { amount: rawAmount.toFixed(2) });
+  }
+
+  // 3) gratuit fallback
+  if (isFreePlan.value) return t('plans.price.free');
+
+  return '—';
+});
+
+// -------------------- Documents justificatifs --------------------
 const docsUploading = ref(false);
 const currentUploadType = ref(null);
 const selectedIdCardFile = ref(null);
 const selectedDeathCertFile = ref(null);
 
-
 const {
   documents,
-  hasDocuments,
   pending: docsPending,
   error: docsError,
   refresh: refreshDocs,
 } = await useObituaryDocuments(slug);
 
-const hasIdCardDoc = computed(() =>
-  documents.value.some((d) => d.type === 'id_card'),
-);
+const hasIdCardDoc = computed(() => (documents.value || []).some((d) => d.type === 'id_card'));
+const hasDeathCertDoc = computed(() => (documents.value || []).some((d) => d.type === 'death_certificate'));
 
-const hasDeathCertDoc = computed(() =>
-  documents.value.some((d) => d.type === 'death_certificate'),
-);
+const idCardDoc = computed(() => (documents.value || []).find((d) => d.type === 'id_card') || null);
+const deathCertDoc = computed(() => (documents.value || []).find((d) => d.type === 'death_certificate') || null);
 
-/**
- * 🔹 Docs requis pour autoriser le paiement
- * Pour l’instant : CNI obligatoire, certificat optionnel.
- * Si un jour tu veux rendre le certificat obligatoire,
- * tu pourras revenir à : hasIdCardDoc.value && hasDeathCertDoc.value
- */
-const hasAllRequiredDocs = computed(() => {
-  return hasIdCardDoc.value; // seule CNI obligatoire pour débloquer le paiement
+
+const selectedIdCardName = computed(() => (selectedIdCardFile.value ? selectedIdCardFile.value.name : ''));
+const selectedDeathCertName = computed(() => (selectedDeathCertFile.value ? selectedDeathCertFile.value.name : ''));
+
+
+
+const docsPolicy = computed(() => {
+  // priorité: plan registry (findPlanByCode enrichi avec docsPolicy)
+  const p = currentPlan.value;
+  if (p?.docsPolicy) return p.docsPolicy;
+
+  // fallback: si pas de plan connu => on assume individual (safe)
+  return {
+    idDocument: { requiredForCreate: true, requiredForPublish: true },
+    deathCertificate: { required: true, deadlineDays: 7, requiredForPublish: false },
+  };
+});
+
+
+const requiresIdForPublish = computed(() => !!docsPolicy.value?.idDocument?.requiredForPublish);
+
+// paiement = même règle que publish (CNI familles, rien pour pro)
+const requiresIdForPayment = computed(() => !!docsPolicy.value?.idDocument?.requiredForPublish);
+
+const requiresDeathCertEver = computed(() => !!docsPolicy.value?.deathCertificate?.required);
+const deathCertDeadlineDays = computed(() => {
+  const n = Number(docsPolicy.value?.deathCertificate?.deadlineDays);
+  return Number.isFinite(n) && n > 0 ? n : 7;
+});
+
+// ✅ NOM EXACT attendu par le template
+const hasAllRequiredDocsForPublish = computed(() => {
+  if (!requiresIdForPublish.value) return true; // pro
+  return hasIdCardDoc.value; // familles: CNI suffit
+});
+
+const hasAllRequiredDocsForPayment = computed(() => {
+  if (!requiresIdForPayment.value) return true; // pro
+  return hasIdCardDoc.value; // familles: CNI obligatoire avant paiement
 });
 
 
 const onSelectIdCard = (event) => {
-  const files = event.target?.files;
-  selectedIdCardFile.value = files && files[0] ? files[0] : null;
+  const file = event?.target?.files?.[0] || null;
+  selectedIdCardFile.value = file;
 };
 
 const onSelectDeathCert = (event) => {
-  const files = event.target?.files;
-  selectedDeathCertFile.value = files && files[0] ? files[0] : null;
+  const file = event?.target?.files?.[0] || null;
+  selectedDeathCertFile.value = file;
 };
-// Premier document de chaque type (pour lien "voir le fichier", etc.)
-const idCardDoc = computed(() =>
-  documents.value.find((d) => d.type === 'id_card') || null,
-);
-
-const deathCertDoc = computed(() =>
-  documents.value.find((d) => d.type === 'death_certificate') || null,
-);
-
-// Nom du fichier sélectionné côté client
-const selectedIdCardName = computed(() =>
-  selectedIdCardFile.value ? selectedIdCardFile.value.name : ''
-);
-
-const selectedDeathCertName = computed(() =>
-  selectedDeathCertFile.value ? selectedDeathCertFile.value.name : ''
-);
 
 const uploadDocument = async (type, file) => {
   if (!file || !obituary.value) return;
@@ -950,37 +1113,46 @@ const uploadDocument = async (type, file) => {
       body: formData,
     });
 
-    // 🔁 On recharge la liste depuis l’API
     await refreshDocs();
-
-    if (toast) {
-      toast.success(t('obituaryReview.documents.uploadSuccess'));
-    }
+    toast?.success(t('obituaryReview.documents.uploadSuccess'));
   } catch (err) {
     console.error('Upload document error', err);
     const msg =
       err?.data?.statusMessage ||
       err?.data?.message ||
       t('obituaryReview.documents.uploadError');
-    if (toast) {
-      toast.error(msg);
-    }
+    toast?.error(msg);
   } finally {
     docsUploading.value = false;
     currentUploadType.value = null;
   }
 };
+
+const onUploadIdCard = async () => {
+  if (!selectedIdCardFile.value) {
+    toast?.info(t('obituaryReview.documents.selectFileFirst'));
+    return;
+  }
+  await uploadDocument('id_card', selectedIdCardFile.value);
+};
+
+const onUploadDeathCert = async () => {
+  if (!selectedDeathCertFile.value) {
+    toast?.info(t('obituaryReview.documents.selectFileFirst'));
+    return;
+  }
+  await uploadDocument('death_certificate', selectedDeathCertFile.value);
+};
+
+// -------------------- Payment / publish states --------------------
 const isPublished = computed(() => obituary.value?.status === 'published');
-
-
 
 const isAlreadyPaid = computed(() => {
   const o = obituary.value;
-  if (!o || !o.monetization) return false;
+  if (!o?.monetization) return false;
 
   const m = o.monetization;
 
-  // 1) Montant payé explicite
   const amount =
     typeof m.amountPaid === 'number'
       ? m.amountPaid
@@ -990,42 +1162,37 @@ const isAlreadyPaid = computed(() => {
 
   if (amount > 0) return true;
 
-  // 2) Paiement enregistré par le backend
-  if (!m.isFree && m.paymentProvider && m.paymentReference) {
-    return true;
-  }
+  if (!m.isFree && m.paymentProvider && m.paymentReference) return true;
 
-  // 3) Sécurité : annonce payante déjà publiée
-  if (!m.isFree && isPublished.value) {
-    return true;
-  }
+  if (!m.isFree && isPublished.value) return true;
 
   return false;
 });
 
+// (pour plus tard, quand tu branches l’abonnement côté API)
+const subscriptionStatus = computed(() => {
+  const o = obituary.value;
+  return (
+    o?.monetization?.subscriptionStatus ||
+    o?.subscription?.status ||
+    null
+  );
+});
+const hasActiveSubscription = computed(() => {
+  const s = String(subscriptionStatus.value || '').toLowerCase();
+  return s === 'active' || s === 'trialing';
+});
+const isProSubscriptionPlan = computed(() => isProPlan.value && isSubscriptionPlan.value);
 
+const canPublishNow = computed(() => {
+  if (isPublished.value) return false;
+  if (isFreePlan.value) return true;
+  if (isAlreadyPaid.value) return true;
+  if (isProSubscriptionPlan.value && hasActiveSubscription.value) return true;
+  return false;
+});
 
-const onUploadIdCard = async () => {
-  if (!selectedIdCardFile.value) {
-    if (toast) {
-      toast.info(t('obituaryReview.documents.selectFileFirst'));
-    }
-    return;
-  }
-  await uploadDocument('id_card', selectedIdCardFile.value);
-};
-
-const onUploadDeathCert = async () => {
-  if (!selectedDeathCertFile.value) {
-    if (toast) {
-      toast.info(t('obituaryReview.documents.selectFileFirst'));
-    }
-    return;
-  }
-  await uploadDocument('death_certificate', selectedDeathCertFile.value);
-};
-
-// SEO dynamique
+// -------------------- SEO --------------------
 useSeoMeta({
   title: () => {
     const base = t('obituaryReview.meta.title');
@@ -1033,168 +1200,25 @@ useSeoMeta({
     return name ? `${base} – ${name}` : base;
   },
   description: () => {
-    const body =
-      obituary.value?.content?.body ||
-      obituary.value?.content?.bodyText ||
-      '';
-    if (body) {
-      return body.slice(0, 160);
-    }
-    return t('obituaryReview.meta.description') || '';
+    const body = obituary.value?.content?.body || obituary.value?.content?.bodyText || '';
+    return body ? body.slice(0, 160) : (t('obituaryReview.meta.description') || '');
   },
   ogTitle: () => t('obituaryReview.meta.title'),
   ogDescription: () => {
-    const body =
-      obituary.value?.content?.body ||
-      obituary.value?.content?.bodyText ||
-      '';
-    if (body) {
-      return body.slice(0, 160);
-    }
-    return t('obituaryReview.meta.description') || '';
+    const body = obituary.value?.content?.body || obituary.value?.content?.bodyText || '';
+    return body ? body.slice(0, 160) : (t('obituaryReview.meta.description') || '');
   },
 });
 
-// 🔹 Plan / monétisation
-const planCodeFromData = computed(() => {
-  const o = obituary.value;
-  // On préfère le pricingTier de monetization
-  const tier = o?.monetization?.pricingTier;
-  if (tier && PLAN_META[tier]) {
-    return tier;
-  }
-
-  // Fallback : paramètre plan dans l'URL
-  const fromQuery = route.query.plan;
-  if (typeof fromQuery === 'string' && PLAN_META[fromQuery]) {
-    return fromQuery;
-  }
-
-  return null;
-});
-
-const currentPlanMeta = computed(() => {
-  const code = planCodeFromData.value;
-  if (!code) return null;
-  return PLAN_META[code] || null;
-});
-
-const isFreePlan = computed(() => {
-  if (currentPlanMeta.value) {
-    return !!currentPlanMeta.value.isFree;
-  }
-  const m = obituary.value?.monetization;
-  if (!m) return false;
-  if (typeof m.isFree === 'boolean') return m.isFree;
-  return false;
-});
-const effectivePublishDays = computed(() => {
-  const o = obituary.value;
-  const meta = currentPlanMeta.value;
-  const monet = o?.monetization || null;
-
-  // 1) D'abord : ce que le backend a enregistré (dans monetization)
-  const apiDays =
-    typeof monet?.publishDurationDays === 'number' &&
-    monet.publishDurationDays > 0
-      ? monet.publishDurationDays
-      : null;
-
-  if (typeof apiDays === 'number' && apiDays > 0) {
-    return apiDays;
-  }
-
-  // 2) Ensuite : ce que dit le plan théorique côté front
-  const metaDays =
-    typeof meta?.publishDurationDays === 'number'
-      ? meta.publishDurationDays
-      : null;
-
-  if (typeof metaDays === 'number' && metaDays > 0) {
-    return metaDays;
-  }
-
-  // 3) Dernier fallback : gratuit → plan gratuit (7 j) ; sinon 0
-  if (isFreePlan.value) {
-    return PLAN_META.indiv_free_7.publishDurationDays;
-  }
-
-  return 0;
-});
-
-
-const planLabel = computed(() => {
-  if (currentPlanMeta.value) {
-    return t(currentPlanMeta.value.labelKey);
-  }
-
-  // Si on sait au moins que c'est gratuit, on affiche le label du plan gratuit
-  if (isFreePlan.value) {
-    return t(PLAN_META.indiv_free_7.labelKey);
-  }
-
-  const code = planCodeFromData.value;
-  if (code) {
-    return code;
-  }
-
-  return null;
-});
-
-const planPrice = computed(() => {
-  const meta = currentPlanMeta.value;
-  const monet = obituary.value?.monetization || null;
-
-  // 1) Si on connaît le plan côté front
-  if (meta) {
-    if (meta.isFree) {
-      return t('plans.price.free');
-    }
-    const cents =
-      typeof meta.basePriceCents === 'number' ? meta.basePriceCents : 0;
-    if (cents > 0) {
-      const euros = (cents / 100).toFixed(2);
-      return t('plans.price.paid', { amount: euros });
-    }
-  }
-
-  // 2) Sinon on regarde ce que l'API a renvoyé comme montant
-  const rawAmount =
-    typeof monet?.amountPaid === 'number'
-      ? monet.amountPaid
-      : typeof monet?.amount_paid === 'number'
-        ? monet.amount_paid
-        : null;
-
-  if (rawAmount && rawAmount > 0) {
-    const euros = rawAmount.toFixed(2);
-    return t('plans.price.paid', { amount: euros });
-  }
-
-  // 3) Si on sait que le plan est gratuit, même sans meta connu
-  if (isFreePlan.value) {
-    return t('plans.price.free');
-  }
-
-  // 4) Dernier fallback : montant inconnu
-  return '—';
-});
-
-
-// 🌍 Formatters
+// -------------------- Formatters --------------------
 const formatEventType = (type) => {
   if (!type) return '';
   switch (type) {
-    case 'funeral':
-      return t('home.eventTypes.funeral');
-    case 'wake':
-      return t('home.eventTypes.wake');
-    case 'burial':
-      return t('home.eventTypes.burial');
-    case 'memorial':
-      return t('home.eventTypes.memorial');
-    default:
-      return type;
+    case 'funeral': return t('home.eventTypes.funeral');
+    case 'wake': return t('home.eventTypes.wake');
+    case 'burial': return t('home.eventTypes.burial');
+    case 'memorial': return t('home.eventTypes.memorial');
+    default: return type;
   }
 };
 
@@ -1203,226 +1227,164 @@ const formatDateTime = (value) => {
   return formattedDateTimeWithSeconds(value);
 };
 
-
 const formatGender = (value) => {
   if (!value) return '';
-  if (value === 'male') {
-    return t('createObituary.fields.gender.options.male');
-  }
-  if (value === 'female') {
-    return t('createObituary.fields.gender.options.female');
-  }
+  if (value === 'male') return t('createObituary.fields.gender.options.male');
+  if (value === 'female') return t('createObituary.fields.gender.options.female');
   return value;
 };
 
 const formatIdentityStatus = (value) => {
   switch (value) {
-    case 'known':
-      return t('createObituary.fields.identityStatus.options.known');
-    case 'partial':
-      return t('createObituary.fields.identityStatus.options.partial');
-    case 'unknown':
-      return t('createObituary.fields.identityStatus.options.unknown');
-    default:
-      return value;
+    case 'known': return t('createObituary.fields.identityStatus.options.known');
+    case 'partial': return t('createObituary.fields.identityStatus.options.partial');
+    case 'unknown': return t('createObituary.fields.identityStatus.options.unknown');
+    default: return value;
   }
 };
 
 const formatReligion = (value) => {
-  if (!value) {
-    return t('createObituary.fields.religion.options.none');
-  }
-  if (value === 'christian') {
-    return t('createObituary.fields.religion.options.christian');
-  }
-  if (value === 'muslim') {
-    return t('createObituary.fields.religion.options.muslim');
-  }
-  if (value === 'other') {
-    return t('createObituary.fields.religion.options.other');
-  }
+  if (!value) return t('createObituary.fields.religion.options.none');
+  if (value === 'christian') return t('createObituary.fields.religion.options.christian');
+  if (value === 'muslim') return t('createObituary.fields.religion.options.muslim');
+  if (value === 'other') return t('createObituary.fields.religion.options.other');
   return value;
 };
 
-// Actions
+// -------------------- Actions --------------------
 const onEdit = () => {
-  router.push({
-    path: `/obituary/edit/${slug.value}`,
-  });
+  router.push({ path: `/obituary/edit/${slug.value}` });
 };
 
-/**
- * Publier une annonce gratuite :
- * - appelle POST /api/obituaries/:slug/publish
- * - met à jour statut/visibilité côté DB
- * - redirige vers la page publique de l’annonce
- */
 const onConfirm = async () => {
-  if (!isFreePlan.value) {
-    // sécurité : on ne publie ici que les plans gratuits
-    return;
-  }
+  if (!canPublishNow.value) return;
   if (isPublishing.value) return;
 
   isPublishing.value = true;
 
   try {
-    await $fetch(`/api/obituaries/${slug.value}/publish`, {
-      method: 'POST',
-    });
+    await $fetch(`/api/obituaries/${slug.value}/publish`, { method: 'POST' });
 
-    if (toast) {
-      toast.success(t('toasts.obituary.published'));
-    }
+    toast?.success(t('toasts.obituary.published'));
 
     const targetSlug = obituary.value?.slug || slug.value;
     await router.push(`/obituary/${targetSlug}`);
   } catch (err) {
-    console.error('Publish free obituary error', err);
-
+    console.error('Publish obituary error', err);
     const message =
       err?.data?.message ||
       err?.statusMessage ||
       t('toasts.obituary.publishError');
-
-    if (toast) {
-      toast.error(message);
-    }
+    toast?.error(message);
   } finally {
     isPublishing.value = false;
   }
 };
 
-/**
- * Créer une transaction de paiement :
- * - appelle POST /api/payments/checkout
- * - reçoit paymentId
- * - redirige vers /checkout/[paymentId]
- * 
- * On reste très sobre sur les infos retournées pour éviter
- * d’exposer des données sensibles (pas d’IDs externes Stripe/PayPal ici).
- */
-/*const onPay = async () => {
-  if (!obituary.value) return;
-
-  try {
-    const res = await $fetch("/api/payments/checkout", {
-      method: "POST",
-      body: {
-        obituarySlug: slug.value,
-        paymentMethod: "card",
-      },
-    });
-
-    if (toast) {
-      toast.success(t("toasts.payment.redirecting"));
-    }
-
-    if (res && res.paymentId) {
-      await router.push(`/checkout/${res.paymentId}`);
-    } else if (toast) {
-      toast.error(t("toasts.payment.missingId"));
-    }
-  } catch (err) {
-    console.error("Checkout error", err);
-
-    const backendMsg =
-      err?.data?.statusMessage ||
-      err?.data?.message ||
-      err?.message ||
-      "";
-
-    if (toast) {
-      toast.error(
-        backendMsg || t("toasts.payment.checkoutError")
-      );
-    }
-  }
-};*/
-
 const onPay = () => {
   if (!slug.value) return;
 
-  const target = {
-    path: `/checkout/obituary/${slug.value}`,
-  };
+  const target = { path: `/checkout/obituary/${slug.value}` };
 
-  // optionnel : si tu veux passer le plan
-  if (planCodeFromData.value) {
-    target.query = { plan: planCodeFromData.value };
+  if (rawPlanCode.value) {
+    target.query = { plan: rawPlanCode.value };
   }
 
   router.push(target);
 };
 
-// 🔻 Soft delete (archive / rendre privé)
-const softDelete = async () => {
+// (boutons abonnement : tu pourras activer quand endpoints prêts)
+const onSubscribe = async () => {
+  if (!currentPlan.value) return;
+  if (isPaying.value) return;
+
+  isPaying.value = true;
   try {
-    await $fetch(`/api/obituaries/${slug.value}`, {
-      method: 'DELETE',
+    const res = await $fetch('/api/subscriptions/checkout', {
+      method: 'POST',
+      body: {
+        planCode: currentPlan.value.code,
+        context: 'obituary',
+        obituarySlug: slug.value,
+        returnUrl: route.fullPath,
+      },
     });
 
-    if (toast) {
-      toast.success('Annonce archivée (retirée de la liste publique).');
-    }
+    const url = res?.url || res?.checkoutUrl;
+    if (process.client && url) window.location.href = url;
+    else toast?.error('Impossible de démarrer l’abonnement.');
+  } catch (err) {
+    console.error('Subscription checkout error', err);
+    toast?.error(err?.data?.message || err?.data?.statusMessage || 'Erreur abonnement.');
+  } finally {
+    isPaying.value = false;
+  }
+};
+
+const onManageSubscription = async () => {
+  if (isPaying.value) return;
+
+  isPaying.value = true;
+  try {
+    const res = await $fetch('/api/subscriptions/portal', {
+      method: 'POST',
+      body: { returnUrl: route.fullPath },
+    });
+
+    const url = res?.url || res?.portalUrl;
+    if (process.client && url) window.location.href = url;
+    else toast?.error('Impossible d’ouvrir le portail abonnement.');
+  } catch (err) {
+    console.error('Subscription portal error', err);
+    toast?.error(err?.data?.message || err?.data?.statusMessage || 'Erreur portail abonnement.');
+  } finally {
+    isPaying.value = false;
+  }
+};
+
+// -------------------- Delete actions --------------------
+const softDelete = async () => {
+  try {
+    await $fetch(`/api/obituaries/${slug.value}`, { method: 'DELETE' });
+    toast?.success('Annonce archivée (retirée de la liste publique).');
     await router.push('/obituaries');
   } catch (err) {
     console.error('Soft delete error', err);
-    if (toast) {
-      toast.error('Impossible d’archiver cette annonce pour le moment.');
-    }
+    toast?.error("Impossible d’archiver cette annonce pour le moment.");
   }
 };
 
-// 🔻 Hard delete (supprimer définitivement)
 const hardDelete = async () => {
   try {
-    await $fetch(`/api/obituaries/${slug.value}/hard`, {
-      method: 'DELETE',
-    });
-
-    if (toast) {
-      toast.success('Annonce supprimée définitivement.');
-    }
+    await $fetch(`/api/obituaries/${slug.value}/hard`, { method: 'DELETE' });
+    toast?.success('Annonce supprimée définitivement.');
     await router.push('/obituaries');
   } catch (err) {
     console.error('Hard delete error', err);
-    if (toast) {
-      toast.error('Impossible de supprimer définitivement cette annonce.');
-    }
+    toast?.error("Impossible de supprimer définitivement cette annonce.");
   }
 };
 
-// Ouverture des modals de confirmation
-
 const onSoftDeleteClick = async () => {
-  if (!confirmStore) {
-    return;
-  }
+  if (!confirmStore) return;
 
   const confirmed = await confirmStore.ask({
     title: t('obituaryReview.delete.softTitle') || 'Retirer cette annonce du site ?',
     message:
       t('obituaryReview.delete.softMessage') ||
-      'L’annonce ne sera plus visible publiquement, mais vous pourrez encore la retrouver dans votre compte.',
+      "L’annonce ne sera plus visible publiquement, mais vous pourrez encore la retrouver dans votre compte.",
     confirmLabel: t('common.actions.archive') || 'Retirer',
     cancelLabel: t('common.actions.cancel') || 'Annuler',
   });
 
-  if (confirmed) {
-    await softDelete();
-  }
+  if (confirmed) await softDelete();
 };
 
 const onHardDeleteClick = async () => {
-  if (!confirmStore) {
-    return;
-  }
+  if (!confirmStore) return;
 
   const confirmed = await confirmStore.ask({
-    title:
-      t('obituaryReview.delete.hardTitle') ||
-      'Supprimer définitivement cette annonce ?',
+    title: t('obituaryReview.delete.hardTitle') || 'Supprimer définitivement cette annonce ?',
     message:
       t('obituaryReview.delete.hardMessage') ||
       'Cette action est irréversible. Toutes les informations associées à cette annonce seront supprimées.',
@@ -1430,37 +1392,101 @@ const onHardDeleteClick = async () => {
     cancelLabel: t('common.actions.cancel') || 'Annuler',
   });
 
-  if (confirmed) {
-    await hardDelete();
-  }
+  if (confirmed) await hardDelete();
 };
-const createdAt = computed(() => {
-  const o = obituary.value;
-  if (!o) return null;
-  return o.createdAt || o.created_at || null;
+
+// -------------------- Cert overdue helpers --------------------
+const nowTick = ref(Date.now());
+let nowTimer = null;
+
+onMounted(() => {
+  if (!process.client) return;
+  // 1 minute = suffisant pour un compteur en jours
+  nowTimer = setInterval(() => {
+    nowTick.value = Date.now();
+  }, 60 * 1000);
 });
 
+onUnmounted(() => {
+  if (nowTimer) clearInterval(nowTimer);
+});
+
+const createdAt = computed(() => {
+  const o = obituary.value;
+  return o ? (o.createdAt || o.created_at || null) : null;
+});
 const isCertOverdue = computed(() => {
+  // 👇 rend le computed réactif au timer
+  const nowMs = nowTick.value;
+
+  if (!requiresDeathCertEver.value) return false;
   if (!createdAt.value) return false;
   if (hasDeathCertDoc.value) return false;
 
   const created = new Date(createdAt.value);
-  const now = new Date();
-  const diffMs = now.getTime() - created.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  const diffDays = (nowMs - created.getTime()) / (1000 * 60 * 60 * 24);
 
-  return diffDays >= 7;
+  return diffDays >= deathCertDeadlineDays.value;
 });
+
+
 const certDeadlineLabel = computed(() => {
+  if (!requiresDeathCertEver.value) return '';
   if (!createdAt.value) return '';
+
   const created = new Date(createdAt.value);
   const deadline = new Date(
-    created.getTime() + 7 * 24 * 60 * 60 * 1000,
+    created.getTime() + deathCertDeadlineDays.value * 24 * 60 * 60 * 1000
   );
   return formatDate(deadline);
 });
+const createdAtDate = computed(() => safeDate(createdAt.value));
+
+const certDeadlineDate = computed(() => {
+  if (!requiresDeathCertEver.value) return null;
+  const created = createdAtDate.value;
+  if (!created) return null;
+
+  return new Date(created.getTime() + deathCertDeadlineDays.value * 24 * 60 * 60 * 1000);
+});
+
+const certDaysLeft = computed(() => {
+  // force recalcul régulier
+  const now = nowTick.value;
+
+  const deadline = certDeadlineDate.value;
+  if (!deadline) return null;
+
+  const diffMs = deadline.getTime() - now;
+  // nb de jours restants "humain": J-1 => 1 jour restant
+  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return Math.max(0, days);
+});
+
+const certOverdueDays = computed(() => {
+  const now = nowTick.value;
+
+  const deadline = certDeadlineDate.value;
+  if (!deadline) return null;
+
+  const diffMs = now - deadline.getTime();
+  if (diffMs <= 0) return 0;
+
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+});
+const certCountdownLabel = computed(() => {
+  // force recalcul
+  nowTick.value;
+
+  const deadline = certDeadlineDate.value;
+  if (!deadline) return '';
+
+  // getCountdownString accepte Date (safeDate(new Date(date)) fonctionne)
+  return getCountdownString(deadline);
+});
 
 </script>
+
 
 
 <style scoped>
@@ -1821,10 +1847,12 @@ const certDeadlineLabel = computed(() => {
 
 .review-main {
   /* zone principale */
+  padding: 1px;
 }
 
 .review-side {
   /* colonne droite */
+  padding: 1px;
 }
 
 /* Desktop : grille avec zone "docs" en bas sur 2 colonnes */
@@ -2032,5 +2060,63 @@ const certDeadlineLabel = computed(() => {
   }
 }
 
+/* ✅ Padding global de la page */
+.app-main {
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+  padding-bottom: var(--space-4);
+}
+
+.section {
+  padding-top: var(--space-3);
+}
+
+@media (min-width: 900px) {
+  .app-main {
+    padding-left: var(--space-5);
+    padding-right: var(--space-5);
+  }
+}
+/* ✅ Donne de l'air à TOUT le contenu de la card principale */
+.review-main__body {
+  padding: 1rem;
+}
+
+@media (min-width: 900px) {
+  .review-main__body {
+    padding: 1.25rem;
+  }
+}
+
+/* ✅ Card droite + docs : même logique */
+.review-side__body,
+.review-docs__body {
+  padding: 1rem;
+}
+
+@media (min-width: 900px) {
+  .review-side__body,
+  .review-docs__body {
+    padding: 1.25rem;
+  }
+}
+/* ✅ Sections : padding vertical + séparation propre */
+.review-section {
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding: 0.9rem 0;     /* <-- avant tu n'avais que padding-bottom */
+}
+
+.review-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+/* ✅ Chaque ligne du récap a son propre "mini padding" */
+.review-dl__row {
+  padding: 0.35rem 0;
+}
+
+.review-dl__row dd {
+  padding-left: 0.1rem; /* micro confort visuel */
+}
 
 </style>

@@ -277,8 +277,27 @@
               </label>
             </div>
           </section>
+            <!-- Bloc image de couverture -->
+            <section
+              v-if="coverImageUrl"
+              class="review-section"
+            >
+              <h2 class="review-section__title">
+                {{ t('obituaryReview.sections.coverImage.title', 'Image de couverture') }}
+              </h2>
+              <p class="review-section__subtitle">
+                {{ t('obituaryReview.sections.coverImage.subtitle', 'Cette image sera affichée en haut de la page publique.') }}
+              </p>
+
+              <img
+                :src="coverImageUrl"
+                alt="Image de couverture"
+                class="review-cover-image"
+              />
+            </section>
 
           <!-- Bloc texte annonce -->
+                <!-- Bloc texte annonce -->
           <section class="form-section">
             <h2 class="form-section__title">
               {{ t('createObituary.sections.content.title') }}
@@ -330,7 +349,41 @@
                 </p>
               </div>
             </div>
+
+            <!-- 👇 Nouveau bloc image de couverture -->
+            <div class="form-row">
+              <div class="form-field">
+                <label class="form-label" for="coverImageUrl">
+                  Image de couverture (URL)
+                </label>
+                <input
+                  id="coverImageUrl"
+                  v-model.trim="form.coverImageUrl"
+                  class="form-control"
+                  type="url"
+                  placeholder="https://…"
+                />
+                <p class="form-section__subtitle" style="margin-top: 0.25rem;">
+                  Optionnel. Utilisée comme image principale sur la page publique.
+                </p>
+
+                <div
+                  v-if="form.coverImageUrl"
+                  style="margin-top: 0.5rem;"
+                >
+                  <p class="form-section__subtitle" style="margin-bottom: 0.25rem;">
+                    Aperçu :
+                  </p>
+                  <img
+                    :src="form.coverImageUrl"
+                    alt="Aperçu de l'image de couverture"
+                    style="max-width: 280px; max-height: 180px; border-radius: 0.5rem; display: block;"
+                  />
+                </div>
+              </div>
+            </div>
           </section>
+
 
           <!-- Bloc événement principal -->
           <section class="form-section">
@@ -644,7 +697,8 @@ const form = reactive({
   title: '',
   body: '',
   mainLanguage: '',
-
+  // 👇 NEW
+  coverImageUrl: '',
   event: {
     eventType: 'funeral',
     startsAt: '',
@@ -849,7 +903,7 @@ const buildPayload = () => {
       ]
     : [];
 
-  return {
+   return {
     deceasedFullName: form.deceasedFullName || undefined,
     identityStatus: form.identityStatus || undefined,
     deceasedGender: form.gender || undefined,
@@ -869,13 +923,17 @@ const buildPayload = () => {
     countryCode: form.countryCode || undefined,
     isRuralArea: form.isRuralArea,
 
+    // 👇 NEW
+    coverImageUrl: form.coverImageUrl || undefined,
+
     events: eventsPayload,
     contacts: contactsPayload,
 
-    // On ne régénère pas le slug par défaut depuis l'édition
     regenSlug: false,
   };
 };
+
+
 
 const resolveErrorMessage = (err) => {
   const status = err?.statusCode || err?.status;
@@ -980,6 +1038,12 @@ const onDeleteFromEdit = async () => {
     }
   }
 };
+const coverImageUrl = computed(() => {
+  // priorité au formulaire (éventuelle nouvelle URL)
+  if (form.coverImageUrl) return form.coverImageUrl;
+  // fallback sur ce qui vient du backend si jamais
+  return obituary.value?.coverImageUrl || '';
+});
 
 </script>
 
@@ -1142,4 +1206,12 @@ const onDeleteFromEdit = async () => {
   border-top: 1px solid rgba(239, 68, 68, 0.4);
   background: rgba(239, 68, 68, 0.04);
 }
+.review-cover-image {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 0.9rem;
+  border: 1px solid var(--color-border-subtle);
+}
+
 </style>

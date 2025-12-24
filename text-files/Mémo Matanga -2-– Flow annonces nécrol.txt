@@ -237,3 +237,77 @@ Introduire form.events[] au lieu de form.event unique,
 UI minimaliste pour ajouter / supprimer jusqu’à currentPlanFeatures.maxEvents,
 
 Garder un event principal (isMainEvent ou le premier par défaut).
+
+
+///// 
+Mémo express – Madizi / Matanga (déc 2025)
+
+Tech stack : Nuxt 4 SSR (JS), backend Nitro, MySQL. Auth JWT. On touche pas au schéma DB ni aux grosses fondations.
+
+Plans & durée
+
+Gratuit : indiv_free_7 → 14 jours de publication, pas 60.
+
+Payants : indiv_basic_21, indiv_essentiel_30, indiv_prestige_60 (21 / 30 / 60 jours).
+
+Durée réelle = publish_duration_days en DB (source de vérité).
+
+Certificat de décès
+
+CNI (id_card) obligatoire pour payer.
+
+Certificat (death_certificate) optionnel pendant 7 jours après création.
+
+Après 7 jours sans certif → considéré en retard (warning visible côté famille, future règle : archiver auto ou forcer admin).
+
+Page famille – /obituary/confirm/[slug]
+
+Gros récap : défunt, texte, événements, contacts.
+
+Bloc “Documents justificatifs” avec upload CNI + certificat, badges “manquant/déjà envoyé”.
+
+Boutons :
+
+Plan gratuit → “Publier gratuitement” → POST /api/obituaries/:slug/publish → public.
+
+Plan payant → “Confirmer et payer” → redirige vers /checkout/obituary/:slug.
+
+Si déjà payé → texte adapté “Paiement déjà enregistré”, pas de nouveau paiement.
+
+Archive / suppression avec modale de confirmation.
+
+Page édition – /obituary/edit/[slug]
+
+Charge l’annonce + events + contacts, pré-remplit le formulaire.
+
+Nouveau champ coverImageUrl (+ aperçu).
+
+Validation simple (nom défunt, titre, body, date event).
+
+PUT /api/obituaries/:slug : met à jour contenu + 1 event principal + 1 contact principal, sans toucher à la monétisation.
+
+Boutons : Annuler (retour confirm), Enregistrer (retour confirm), Supprimer (archive via DELETE).
+
+Admin – /admin/obituaries + API
+
+Page admin liste surtout les annonces payées (onlyPaid=true).
+
+Filtres vérification : all / pending / verified / rejected.
+
+Actions : voir page publique, voir page confirm, Valider ou Refuser les docs (avec ConfirmModal + toasts).
+
+API POST /api/admin/obituaries/:id/verification :
+
+verify → verification_status='verified', status='published' si besoin, visibility='public', dates publish/published/expires recalculées + notification “documents vérifiés”.
+
+reject → verification_status='rejected', status='rejected', note optionnelle + notification “document rejeté”.
+
+Bug important corrigé
+
+Avant : certaines annonces payantes étaient published mais restaient private.
+
+Corrigé en :
+
+Forçant visibility='public' sur verify.
+
+Proposant un UPDATE SQL pour remettre les anciennes lignes en cohérence.

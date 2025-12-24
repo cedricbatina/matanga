@@ -10,18 +10,145 @@ import {
 import {
   findPlanByCode,
   getDefaultIndividualFreePlan,
-} from "../../utils/pricingPlans.js";
+} from "~/utils/pricingPlans.js";
 
 const MIN_TITLE_LENGTH = 8;
 const MIN_BODY_LENGTH = 30;
-const FREE_OBITUARY_DURATION_DAYS = 7;
+
+// Tant que tu es en DRAFT, publish_at/published_at/expires_at restent vides.
+const publishDirect = false;
+
+// Event types autorisés (doivent matcher tes plans + tes enums métier)
+const DEFAULT_EVENT_TYPE = "wake";
+
+// Providers connus (ton enum est tronqué dans la capture, donc on fait robuste)
+const ALLOWED_MEDIA_PROVIDERS = new Set([
+  "upload",
+  "youtube",
+  "vimeo",
+  "facebook",
+  "tiktok",
+  "instagram",
+]);
 
 function isNonEmptyString(v) {
   return typeof v === "string" && v.trim().length > 0;
 }
-
 function sanitizeString(v) {
   return typeof v === "string" ? v.trim() : null;
+}
+function asNullableInt(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeEvents(
+  input,
+  fallbackCity,
+  fallbackRegion,
+  fallbackCountry,
+  fallbackCountryCode
+) {
+  const arr = Array.isArray(input) ? input : [];
+  const normalized = arr
+    .filter(Boolean)
+    .map((ev, idx) => {
+      const startsAt = ev.startsAt || ev.starts_at || null;
+      if (!startsAt) return null;
+
+      const eventTypeRaw = String(
+        ev.eventType || ev.event_type || DEFAULT_EVENT_TYPE
+      ).toLowerCase();
+
+      return {
+        eventType: eventTypeRaw,
+        title: sanitizeString(ev.title) || "Event",
+        description: sanitizeString(ev.description),
+        startsAt,
+        endsAt: ev.endsAt || ev.ends_at || null,
+        timezone: sanitizeString(ev.timezone),
+        venueName: sanitizeString(ev.venueName || ev.venue_name),
+        venueAddress: sanitizeString(ev.venueAddress || ev.venue_address),
+        city: sanitizeString(ev.city) || fallbackCity || null,
+        region: sanitizeString(ev.region) || fallbackRegion || null,
+        country: sanitizeString(ev.country) || fallbackCountry || null,
+        countryCode:
+          sanitizeString(ev.countryCode || ev.country_code) ||
+          fallbackCountryCode ||
+          null,
+        isMainEvent:
+          ev.isMainEvent === true || ev.is_main_event === true || idx === 0,
+      };
+    })
+    .filter(Boolean);
+
+  // Force un seul main event
+  let mainSeen = false;
+  for (const ev of normalized) {
+    if (ev.isMainEvent) {
+      if (mainSeen) ev.isMainEvent = false;
+      else mainSeen = true;
+    }
+  }
+  if (!mainSeen && normalized.length > 0) normalized[0].isMainEvent = true;
+
+  return normalized;
+}
+
+function normalizeMedia(input) {
+  const arr = Array.isArray(input) ? input : [];
+  const normalized = arr
+    .filter(Boolean)
+    .map((m, idx) => {
+      const mediaType = String(m.mediaType || m.media_type || "").toLowerCase();
+      if (mediaType !== "image" && mediaType !== "video") return null;
+
+      const url = sanitizeString(m.url);
+      if (!url) return null;
+
+      let provider = String(m.provider || "upload").toLowerCase();
+      if (!ALLOWED_MEDIA_PROVIDERS.has(provider)) provider = "upload";
+
+      const eventId = asNullableInt(m.eventId || m.event_id);
+      const durationSeconds = asNullableInt(
+        m.durationSeconds || m.duration_seconds
+      );
+
+      const isMain = m.isMain === true || m.is_main === true ? 1 : 0;
+
+      const sortOrder = Number.isFinite(Number(m.sortOrder))
+        ? Number(m.sortOrder)
+        : Number.isFinite(Number(m.sort_order))
+        ? Number(m.sort_order)
+        : idx;
+
+      return {
+        eventId,
+        mediaType, // enum('image','video')
+        provider, // enum(...)
+        url,
+        thumbnailUrl: sanitizeString(m.thumbnailUrl || m.thumbnail_url),
+        title: sanitizeString(m.title),
+        description: sanitizeString(m.description),
+        durationSeconds,
+        isMain,
+        sortOrder,
+      };
+    })
+    .filter(Boolean);
+
+  // Force un seul main media sur l’obituary
+  let mainSeen = false;
+  for (const m of normalized) {
+    if (m.isMain) {
+      if (mainSeen) m.isMain = 0;
+      else mainSeen = true;
+    }
+  }
+  if (!mainSeen && normalized.length > 0) normalized[0].isMain = 1;
+
+  return normalized;
 }
 
 export default defineEventHandler(async (event) => {
@@ -31,25 +158,23 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event);
 
-  // Champs attendus
   const {
     deceasedFullName,
     deceasedGivenNames,
     deceasedFamilyNames,
-    identityStatus, // 'known' | 'partial' | 'unknown'
-    deceasedGender, // 'male' | 'female' | null
+    identityStatus,
+    deceasedGender,
     dateOfBirth,
     dateOfDeath,
     ageDisplay,
-    religion, // 'christian' | 'muslim' | 'other'
+    religion,
     denomination,
 
-    // photo principale
     coverImageUrl,
 
     title,
-    content, // texte de l'annonce (body)
-    mainLanguage, // 'fr', 'en', 'pt', 'es'...
+    content,
+    mainLanguage,
 
     city,
     region,
@@ -57,29 +182,16 @@ export default defineEventHandler(async (event) => {
     countryCode,
     isRuralArea,
 
-    // contact principal (optionnel)
     familyContactName,
     familyContactPhone,
     familyContactWhatsapp,
     familyContactEmail,
 
-    // choix de plan (nouveau)
     planCode,
 
-    // monétisation (peuvent être surchargés par le plan)
-    isFree,
-    pricingTier,
-    currency,
-    amountPaid,
-    publishDurationDays,
-    paymentProvider,
-    paymentReference,
-
-    // événements associés (table obituary_events) – optionnels
     events,
-
-    // contacts détaillés (table obituary_contacts) – optionnels
     contacts,
+    media,
   } = body || {};
 
   logInfo("Create obituary attempt", {
@@ -88,18 +200,16 @@ export default defineEventHandler(async (event) => {
     requestId,
   });
 
-  // ---------- VALIDATION DE BASE ----------
+  // ---------------- VALIDATION DE BASE ----------------
 
   const fieldErrors = {};
 
   if (!isNonEmptyString(deceasedFullName)) {
     fieldErrors.deceasedFullName = "Full name of the deceased is required.";
   }
-
   if (!isNonEmptyString(title) || title.trim().length < MIN_TITLE_LENGTH) {
     fieldErrors.title = `Title is too short (min ${MIN_TITLE_LENGTH} characters).`;
   }
-
   if (!isNonEmptyString(content) || content.trim().length < MIN_BODY_LENGTH) {
     fieldErrors.content = `Announcement text is too short (min ${MIN_BODY_LENGTH} characters).`;
   }
@@ -126,27 +236,31 @@ export default defineEventHandler(async (event) => {
     fieldErrors.mainLanguage = "Invalid language.";
   }
 
-  // events optionnels, mais si fournis doivent être un tableau
   if (events != null && !Array.isArray(events)) {
     fieldErrors.events = "Events must be an array.";
   }
-
-  // contacts optionnels, mais si fournis doivent être un tableau
   if (contacts != null && !Array.isArray(contacts)) {
     fieldErrors.contacts = "Contacts must be an array.";
   }
+  if (media != null && !Array.isArray(media)) {
+    fieldErrors.media = "Media must be an array.";
+  }
 
-  // ---------- PLAN & MONÉTISATION ----------
+  // ---------------- PLAN ----------------
 
-  // 1) Résolution du plan (en fonction du planCode + account_type)
+  const accountType = session.accountType || "individual";
   let selectedPlan = null;
+
+  // Pro: on exige un plan oneoff tant que subscriptions pas implémentées
+  if (accountType === "pro" && !planCode) {
+    fieldErrors.planCode = "Plan is required for pro accounts.";
+  }
 
   if (planCode) {
     selectedPlan = findPlanByCode(planCode);
     if (!selectedPlan) {
       fieldErrors.planCode = "Unknown plan code.";
     } else {
-      const accountType = session.accountType || "individual";
       if (
         selectedPlan.accountType &&
         selectedPlan.accountType !== accountType
@@ -154,94 +268,127 @@ export default defineEventHandler(async (event) => {
         fieldErrors.planCode =
           "This plan is not available for your account type.";
       }
+      if (
+        selectedPlan.billingType === "subscription" ||
+        selectedPlan.scope === "account"
+      ) {
+        fieldErrors.planCode =
+          "Subscription plans cannot be selected per announcement.";
+      }
+      if (selectedPlan.scope !== "obituary") {
+        fieldErrors.planCode =
+          "This plan cannot be used to create an obituary.";
+      }
     }
-  } else {
-    // Pas de plan explicite → par défaut, plan gratuit pour les particuliers
-    const accountType = session.accountType || "individual";
-    if (accountType === "individual") {
-      selectedPlan = getDefaultIndividualFreePlan();
-    }
+  } else if (accountType === "individual") {
+    selectedPlan = getDefaultIndividualFreePlan();
   }
 
-  // 2) Valeurs monétisation / durée dérivées du plan
-  // 2) Valeurs monétisation / durée dérivées du plan
-  let isFreeValue = typeof isFree === "boolean" ? isFree : true;
-  let pricingTierValue = pricingTier || null;
-  let currencyValue = currency || null;
-  let amountPaidValue =
-    amountPaid != null && amountPaid !== "" ? Number(amountPaid) : null;
-  let publishDurationDaysValue =
-    publishDurationDays != null && publishDurationDays !== ""
-      ? Number(publishDurationDays)
-      : null;
-
-  if (selectedPlan) {
-    isFreeValue = selectedPlan.isFree;
-    pricingTierValue = selectedPlan.pricingTier;
-    currencyValue = selectedPlan.currency;
-
-    // 👇 SOURCE DE VÉRITÉ : gratuit = 7 jours
-    if (selectedPlan.isFree) {
-      publishDurationDaysValue = FREE_OBITUARY_DURATION_DAYS;
-    } else {
-      publishDurationDaysValue = selectedPlan.publishDurationDays;
-    }
+  if (!selectedPlan) {
+    fieldErrors.planCode = fieldErrors.planCode || "Plan is required.";
   }
 
-  if (!isFreeValue) {
-    if (!currencyValue) {
-      fieldErrors.currency = "Currency is required for paid announcements.";
-    }
-    if (amountPaidValue == null || amountPaidValue <= 0) {
-      fieldErrors.amountPaid =
-        "Amount paid must be greater than 0 for paid announcements.";
-    }
+  // Source de vérité plan -> DB
+  const isFreeValue = selectedPlan ? !!selectedPlan.isFree : true;
+  const pricingTierValue = selectedPlan
+    ? selectedPlan.pricingTier || selectedPlan.code
+    : null;
+  const currencyValue = selectedPlan ? selectedPlan.currency || null : null;
+  const publishDurationDaysValue = selectedPlan
+    ? selectedPlan.publishDurationDays
+    : null;
+
+  // ---------------- NORMALISATION (events / contacts / media) ----------------
+
+  const cityClean = sanitizeString(city);
+  const regionClean = sanitizeString(region);
+  const countryClean = sanitizeString(country);
+  const countryCodeClean = sanitizeString(countryCode);
+
+  const normalizedEvents = normalizeEvents(
+    events,
+    cityClean,
+    regionClean,
+    countryClean,
+    countryCodeClean
+  );
+
+  if (normalizedEvents.length === 0) {
+    fieldErrors.events = "At least one event with a start date is required.";
   }
 
-  if (
-    publishDurationDaysValue != null &&
-    Number(publishDurationDaysValue) <= 0
-  ) {
-    fieldErrors.publishDurationDays = "Publish duration must be positive.";
+  const normalizedMedia = normalizeMedia(media);
+
+  // Compat : si coverImageUrl est fourni mais media vide => on crée un media cover implicite
+  const coverUrlFallback = sanitizeString(coverImageUrl);
+  if (coverUrlFallback && normalizedMedia.length === 0) {
+    normalizedMedia.push({
+      eventId: null,
+      mediaType: "image",
+      provider: "upload",
+      url: coverUrlFallback,
+      thumbnailUrl: null,
+      title: null,
+      description: null,
+      durationSeconds: null,
+      isMain: 1,
+      sortOrder: 0,
+    });
   }
 
-  // 3) Caps de plan (events / event types / contacts)
+  // Caps plan: events/contacts/media
   if (selectedPlan && selectedPlan.features) {
     const f = selectedPlan.features;
 
-    // maxEvents
-    if (Array.isArray(events) && typeof f.maxEvents === "number") {
-      if (events.length > f.maxEvents) {
-        fieldErrors.events = `This plan allows up to ${f.maxEvents} event(s).`;
-      }
+    if (
+      typeof f.maxEvents === "number" &&
+      normalizedEvents.length > f.maxEvents
+    ) {
+      fieldErrors.events = `This plan allows up to ${f.maxEvents} event(s).`;
     }
 
-    // allowedEventTypes
-    if (Array.isArray(events) && Array.isArray(f.allowedEventTypes)) {
-      const invalidEvent = events.find((ev) => {
-        if (!ev) return false;
-        const evType = String(
-          ev.eventType || ev.event_type || ""
-        ).toLowerCase();
-        return evType && !f.allowedEventTypes.includes(evType);
-      });
-      if (invalidEvent) {
+    if (Array.isArray(f.allowedEventTypes)) {
+      const invalid = normalizedEvents.find(
+        (ev) => ev.eventType && !f.allowedEventTypes.includes(ev.eventType)
+      );
+      if (invalid) {
         fieldErrors.events =
           "One or more events use an event_type not allowed for this plan.";
       }
     }
 
-    // maxContacts
-    if (Array.isArray(contacts) && typeof f.maxContacts === "number") {
-      if (contacts.length > f.maxContacts) {
-        fieldErrors.contacts = `This plan allows up to ${f.maxContacts} contact(s).`;
-      }
+    if (
+      Array.isArray(contacts) &&
+      typeof f.maxContacts === "number" &&
+      contacts.length > f.maxContacts
+    ) {
+      fieldErrors.contacts = `This plan allows up to ${f.maxContacts} contact(s).`;
     }
 
-    // TODO plus tard :
-    // - contrôler les médias (obituary_media) contre maxPhotos, maxVideos,
-    //   maxExternalVideoLinks quand on exposera ces champs dans le payload.
-    // - contrôler les événements online (stream_url, is_online_only) contre maxOnlineEvents.
+    const photoCount = normalizedMedia.filter(
+      (m) => m.mediaType === "image"
+    ).length;
+    const videoCount = normalizedMedia.filter(
+      (m) => m.mediaType === "video"
+    ).length;
+
+    if (typeof f.maxPhotos === "number" && photoCount > f.maxPhotos) {
+      fieldErrors.media = `This plan allows up to ${f.maxPhotos} photo(s).`;
+    }
+    if (typeof f.maxVideos === "number" && videoCount > f.maxVideos) {
+      fieldErrors.media = `This plan allows up to ${f.maxVideos} video(s).`;
+    }
+  }
+
+  // En draft, on n’exige pas amountPaid/paymentProvider/paymentReference
+  if (!isFreeValue && !currencyValue) {
+    fieldErrors.currency = "Currency is required for paid announcements.";
+  }
+  if (
+    publishDurationDaysValue != null &&
+    Number(publishDurationDaysValue) <= 0
+  ) {
+    fieldErrors.publishDurationDays = "Publish duration must be positive.";
   }
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -252,18 +399,14 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // ---------- PRÉPARATION DES DONNÉES ----------
+  // ---------------- PREPARATION DONNEES ----------------
 
   const deceasedFullNameClean = sanitizeString(deceasedFullName);
   const deceasedGivenNamesClean = sanitizeString(deceasedGivenNames);
   const deceasedFamilyNamesClean = sanitizeString(deceasedFamilyNames);
+
   const titleClean = sanitizeString(title);
   const bodyClean = sanitizeString(content);
-
-  const cityClean = sanitizeString(city);
-  const regionClean = sanitizeString(region);
-  const countryClean = sanitizeString(country);
-  const countryCodeClean = sanitizeString(countryCode);
 
   const familyContactNameClean = sanitizeString(familyContactName);
   const familyContactPhoneClean = sanitizeString(familyContactPhone);
@@ -272,9 +415,11 @@ export default defineEventHandler(async (event) => {
 
   const denominationClean = sanitizeString(denomination);
   const ageDisplayClean = sanitizeString(ageDisplay);
-  const coverImageUrlClean = sanitizeString(coverImageUrl);
 
-  // Calcul de age_at_death si dateOfBirth & dateOfDeath fournis
+  const isRuralVal =
+    typeof isRuralArea === "boolean" ? (isRuralArea ? 1 : 0) : 0;
+
+  // Age_at_death
   let ageAtDeathValue = null;
   if (dateOfBirth && dateOfDeath) {
     try {
@@ -283,24 +428,15 @@ export default defineEventHandler(async (event) => {
       if (!Number.isNaN(dob.getTime()) && !Number.isNaN(dod.getTime())) {
         let age = dod.getFullYear() - dob.getFullYear();
         const m = dod.getMonth() - dob.getMonth();
-        if (m < 0 || (m === 0 && dod.getDate() < dob.getDate())) {
-          age--;
-        }
-        if (age >= 0 && age <= 130) {
-          ageAtDeathValue = age;
-        }
+        if (m < 0 || (m === 0 && dod.getDate() < dob.getDate())) age--;
+        if (age >= 0 && age <= 130) ageAtDeathValue = age;
       }
     } catch {
-      // on ignore si dates invalides
+      // ignore
     }
   }
 
-  // publish_at / published_at / expires_at
   const now = new Date();
-
-  // Pour l'instant : création en brouillon privé, publication plus tard via une étape dédiée
-  const publishDirect = false;
-
   const publishAtValue = publishDirect ? now : null;
   let expiresAtValue = null;
 
@@ -320,70 +456,80 @@ export default defineEventHandler(async (event) => {
   const formatDateTime = (d) =>
     d ? d.toISOString().slice(0, 19).replace("T", " ") : null;
 
-  // ---------- GÉNÉRATION DU SLUG ----------
+  // cover_image_url = media principal image, sinon coverImageUrl, sinon null
+  const mainCoverUrl =
+    normalizedMedia.find((m) => m.isMain && m.mediaType === "image")?.url ||
+    coverUrlFallback ||
+    null;
 
+  // Slug
   const baseSlug = buildObituaryBaseSlug({
     deceasedFullName: deceasedFullNameClean,
     city: cityClean,
     dateOfDeath,
   });
 
-  const slug = await ensureUniqueSlugForObituary(baseSlug, {
-    requestId,
-  });
+  const slug = await ensureUniqueSlugForObituary(baseSlug, { requestId });
 
-  // ---------- TRANSACTION : obituary + events + contacts ----------
+  // ---------------- TRANSACTION DB ----------------
 
   try {
     const result = await transaction(
       async (tx) => {
-        // 1. INSERT dans obituaries
+        // 1) obituaries
         const insertSql = `
-          INSERT INTO obituaries (
-            user_id, account_type,
-            deceased_full_name, deceased_given_names, deceased_family_names,
-            identity_status, deceased_gender, date_of_birth, date_of_death,
-            age_at_death, age_display,
-            religion, denomination,
-            title, body, main_language,
-            slug, visibility, status,
-            verification_status, moderation_status,
-            publish_at, published_at, expires_at,
-            announcement_type, related_obituary_id,
-            city, region, country, country_code, is_rural_area,
-            family_contact_name, family_contact_phone, family_contact_whatsapp, family_contact_email,
-            is_free, pricing_tier, currency, amount_paid,
-            publish_duration_days, payment_provider, payment_reference, cover_image_url,
-            view_count, created_at, updated_at
-          )
-          VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?,
-            ?, ?,
-            ?, ?, ?, ?, ?,
-            ?, ?, ?, ?,
-            ?, ?, ?, ?,
-            ?, ?, ?, ?,
-            0, NOW(), NOW()
-          )
-        `;
-
-        const isRuralVal = isRuralArea ? 1 : 0;
+        INSERT INTO obituaries (
+          user_id, account_type,
+          deceased_full_name, deceased_given_names, deceased_family_names,
+          identity_status, deceased_gender, date_of_birth, date_of_death,
+          age_at_death, age_display,
+          religion, denomination,
+          title, body, main_language,
+          slug, visibility, status,
+          verification_status, moderation_status,
+          publish_at, published_at, expires_at,
+          announcement_type, related_obituary_id,
+          city, region, country, country_code, is_rural_area,
+          family_contact_name, family_contact_phone, family_contact_whatsapp, family_contact_email,
+          is_free, pricing_tier, currency, amount_paid,
+          publish_duration_days, payment_provider, payment_reference, cover_image_url,
+          view_count, created_at, updated_at
+        )
+        VALUES (
+          ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?,
+          ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?,
+          ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          0, NOW(), NOW()
+        )
+      `;
 
         const insertParams = [
           session.userId,
-          session.accountType || "individual",
+          accountType,
 
           deceasedFullNameClean,
           deceasedGivenNamesClean,
           deceasedFamilyNamesClean,
+
           identityStatusValue,
           deceasedGender || null,
           dateOfBirth || null,
           dateOfDeath || null,
+
           ageAtDeathValue,
           ageDisplayClean,
+
           religion || null,
           denominationClean,
 
@@ -417,101 +563,74 @@ export default defineEventHandler(async (event) => {
           familyContactEmailClean,
 
           isFreeValue ? 1 : 0,
-          pricingTierValue || (isFreeValue ? "free_basic" : "paid"),
+          pricingTierValue,
+
           isFreeValue ? null : currencyValue,
-          isFreeValue
-            ? null
-            : amountPaidValue != null
-            ? Number(amountPaidValue)
-            : null,
+          null, // amount_paid (draft)
 
           publishDurationDaysValue != null
             ? Number(publishDurationDaysValue)
             : null,
-          isFreeValue ? null : paymentProvider || null,
-          isFreeValue ? null : paymentReference || null,
-          coverImageUrlClean,
+          null, // payment_provider (draft)
+          null, // payment_reference (draft)
+
+          mainCoverUrl,
         ];
 
         const obituaryRes = await tx.query(insertSql, insertParams);
         const obituaryId = obituaryRes.insertId;
 
-        // 2. INSERT des events (optionnels)
-        if (Array.isArray(events) && events.length > 0) {
+        // 2) obituary_events
+        if (normalizedEvents.length > 0) {
           const insertEventSql = `
-            INSERT INTO obituary_events (
-              obituary_id, event_type, title, description,
-              starts_at, ends_at, timezone,
-              venue_name, venue_address,
-              city, region, country, country_code,
-              is_main_event, created_at, updated_at
-            )
-            VALUES (
-              ?, ?, ?, ?,
-              ?, ?, ?,
-              ?, ?,
-              ?, ?, ?, ?,
-              ?, NOW(), NOW()
-            )
-          `;
+          INSERT INTO obituary_events (
+            obituary_id, event_type, title, description,
+            starts_at, ends_at, timezone,
+            venue_name, venue_address,
+            city, region, country, country_code,
+            is_main_event, created_at, updated_at
+          )
+          VALUES (
+            ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?,
+            ?, ?, ?, ?,
+            ?, NOW(), NOW()
+          )
+        `;
 
-          for (let index = 0; index < events.length; index++) {
-            const ev = events[index];
-            if (!ev) continue;
-
-            const evType = ev.eventType || ev.event_type || "wake";
-            const evTitle = sanitizeString(ev.title) || "Event";
-            const evDescription = sanitizeString(ev.description);
-            const evStartsAt = ev.startsAt || ev.starts_at;
-            const evEndsAt = ev.endsAt || ev.ends_at || null;
-            const evTimezone = sanitizeString(ev.timezone) || null;
-            const evVenueName = sanitizeString(ev.venueName || ev.venue_name);
-            const evVenueAddress = sanitizeString(
-              ev.venueAddress || ev.venue_address
-            );
-            const evCity = sanitizeString(ev.city || cityClean);
-            const evRegion = sanitizeString(ev.region || regionClean);
-            const evCountry = sanitizeString(ev.country || countryClean);
-            const evCountryCode = sanitizeString(
-              ev.countryCode || ev.country_code || countryCodeClean
-            );
-            const isMain =
-              ev.isMainEvent || ev.is_main_event || index === 0 ? 1 : 0;
-
-            // on ignore les événements sans date
-            if (!evStartsAt) continue;
-
+          for (const ev of normalizedEvents) {
             await tx.query(insertEventSql, [
               obituaryId,
-              evType,
-              evTitle,
-              evDescription,
-              evStartsAt,
-              evEndsAt,
-              evTimezone,
-              evVenueName,
-              evVenueAddress,
-              evCity,
-              evRegion,
-              evCountry,
-              evCountryCode,
-              isMain,
+              ev.eventType,
+              ev.title,
+              ev.description,
+              ev.startsAt,
+              ev.endsAt,
+              ev.timezone,
+              ev.venueName,
+              ev.venueAddress,
+              ev.city,
+              ev.region,
+              ev.country,
+              ev.countryCode,
+              ev.isMainEvent ? 1 : 0,
             ]);
           }
         }
 
-        // 3. INSERT des contacts détaillés (optionnels)
+        // 3) obituary_contacts
         if (Array.isArray(contacts) && contacts.length > 0) {
           const insertContactSql = `
-            INSERT INTO obituary_contacts (
-              obituary_id, label, name, phone, whatsapp_number, email,
-              is_public, is_primary, created_at, updated_at
-            )
-            VALUES (
-              ?, ?, ?, ?, ?, ?,
-              ?, ?, NOW(), NOW()
-            )
-          `;
+          INSERT INTO obituary_contacts (
+            obituary_id, label, name, phone, whatsapp_number, email,
+            is_public, is_primary, created_at, updated_at
+          )
+          VALUES (
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, NOW(), NOW()
+          )
+        `;
 
           for (const c of contacts) {
             if (!c) continue;
@@ -519,10 +638,15 @@ export default defineEventHandler(async (event) => {
             const label = sanitizeString(c.label);
             const name = sanitizeString(c.name);
             const phone = sanitizeString(c.phone);
-            const whatsapp = sanitizeString(c.whatsappNumber);
+            const whatsapp = sanitizeString(
+              c.whatsappNumber || c.whatsapp_number
+            );
             const email = sanitizeString(c.email);
             const isPublic = c.isPublic === false ? 0 : 1;
             const isPrimary = c.isPrimary ? 1 : 0;
+
+            // si complètement vide, on skip
+            if (!label && !name && !phone && !whatsapp && !email) continue;
 
             await tx.query(insertContactSql, [
               obituaryId,
@@ -533,6 +657,42 @@ export default defineEventHandler(async (event) => {
               email,
               isPublic,
               isPrimary,
+            ]);
+          }
+        }
+
+        // 4) obituary_media (TES noms de colonnes ✅)
+        if (normalizedMedia.length > 0) {
+          const insertMediaSql = `
+          INSERT INTO obituary_media (
+            obituary_id, event_id,
+            media_type, provider, url,
+            thumbnail_url, title, description,
+            duration_seconds, is_main, sort_order,
+            created_at, updated_at
+          )
+          VALUES (
+            ?, ?,
+            ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?,
+            NOW(), NOW()
+          )
+        `;
+
+          for (const m of normalizedMedia) {
+            await tx.query(insertMediaSql, [
+              obituaryId,
+              m.eventId, // peut être null
+              m.mediaType,
+              m.provider,
+              m.url,
+              m.thumbnailUrl,
+              m.title,
+              m.description,
+              m.durationSeconds,
+              m.isMain ? 1 : 0,
+              Number.isFinite(m.sortOrder) ? m.sortOrder : 0,
             ]);
           }
         }
@@ -563,9 +723,7 @@ export default defineEventHandler(async (event) => {
       requestId,
     });
 
-    if (err.statusCode) {
-      throw err;
-    }
+    if (err.statusCode) throw err;
 
     throw createError({
       statusCode: 500,

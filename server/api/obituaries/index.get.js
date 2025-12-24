@@ -30,7 +30,9 @@ function mapSummaryRow(row) {
     updatedAt: row.updated_at,
     publishedAt: row.published_at,
     expiresAt: row.expires_at,
-    coverImageUrl: row.cover_image_url || null, // 👈 NOUVEAU
+
+    coverImageUrl: row.cover_image_url || null,
+
     announcementType: row.announcement_type,
     deceased: {
       fullName: row.deceased_full_name,
@@ -43,7 +45,6 @@ function mapSummaryRow(row) {
     content: {
       title: row.title,
       mainLanguage: row.main_language,
-      // on n’envoie pas le body complet ici pour alléger le listing
       excerpt: row.body_excerpt,
     },
 
@@ -84,7 +85,7 @@ export default defineEventHandler(async (event) => {
   const requestId =
     event.context.requestId || Math.random().toString(36).slice(2, 10);
 
-  // Session optionnelle (plus tard on pourra filtrer différemment pour un admin)
+  // Session optionnelle (admin plus tard)
   const session = await getAuthSession(event);
 
   // ---------- Pagination ----------
@@ -93,6 +94,7 @@ export default defineEventHandler(async (event) => {
 
   if (Number.isNaN(page) || page < 1) page = 1;
   if (Number.isNaN(pageSize) || pageSize < 1) pageSize = 10;
+
   const MAX_PAGE_SIZE = 50;
   if (pageSize > MAX_PAGE_SIZE) pageSize = MAX_PAGE_SIZE;
 
@@ -103,9 +105,9 @@ export default defineEventHandler(async (event) => {
     queryParams.country_code || queryParams.countryCode || null;
   const city = queryParams.city || null;
   const language = queryParams.language || queryParams.lang || null;
-  const type = queryParams.type || null; // death, anniversary, memorial...
+  const type = queryParams.type || null;
   const isFreeFilter = parseBoolean(queryParams.is_free ?? queryParams.free);
-  const sort = queryParams.sort || "recent"; // recent | oldest | popular
+  const sort = queryParams.sort || "recent";
   const searchTerm = sanitizeSearch(queryParams.q || queryParams.search);
 
   logInfo("List obituaries request", {
@@ -122,11 +124,10 @@ export default defineEventHandler(async (event) => {
     requestId,
   });
 
-  // ---------- Construction dynamique du WHERE ----------
+  // ---------- WHERE ----------
   const whereParts = [];
   const params = [];
 
-  // Seulement les annonces publiées, non supprimées, visibles
   whereParts.push("o.status = 'published'");
   whereParts.push("o.moderation_status != 'removed'");
   whereParts.push("o.visibility = 'public'");
@@ -182,9 +183,8 @@ export default defineEventHandler(async (event) => {
   const whereSql =
     whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
 
-  // ---------- Tri ----------
+  // ---------- ORDER BY ----------
   let orderSql = "ORDER BY o.published_at DESC";
-
   switch (sort) {
     case "oldest":
       orderSql = "ORDER BY o.published_at ASC";
@@ -199,7 +199,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // ---------- Total pour pagination ----------
+    // ---------- Total pagination ----------
     const countRows = await query(
       `
       SELECT COUNT(*) AS total
@@ -217,17 +217,16 @@ export default defineEventHandler(async (event) => {
       return {
         ok: true,
         items: [],
-        pagination: {
-          page,
-          pageSize,
-          total,
-          totalPages,
-        },
+        pagination: { page, pageSize, total, totalPages },
       };
     }
 
-    // ---------- Récupération des annonces + main_event en LEFT JOIN ----------
-    // On utilise un sous-select pour récupérer l'événement principal par obituary
+    /**
+     * IMPORTANT (anti-doublons):
+     * On joint UN SEUL event par obituary via une sous-requête corrélée.
+     * (Ton ancienne version faisait MIN(starts_at) + join sur starts_at :
+     *  si plusieurs events ont la même starts_at, ça duplique l'obituary.)
+     */
     const listSql = `
       SELECT
         o.id,
@@ -238,7 +237,6 @@ export default defineEventHandler(async (event) => {
         o.deceased_gender,
         o.date_of_death,
         o.age_at_death,
-          o.cover_image_url,      -- 👈 AJOUT ICI
         o.age_display,
         o.title,
         o.body,
@@ -249,6 +247,7 @@ export default defineEventHandler(async (event) => {
         o.country,
         o.country_code,
         o.is_rural_area,
+        o.cover_image_url,
         o.is_free,
         o.pricing_tier,
         o.view_count,
@@ -258,7 +257,6 @@ export default defineEventHandler(async (event) => {
         o.created_at,
         o.updated_at,
 
-        -- extrait court du body pour le listing
         CASE
           WHEN LENGTH(o.body) <= 240 THEN o.body
           ELSE CONCAT(SUBSTRING(o.body, 1, 240), '…')
@@ -274,21 +272,14 @@ export default defineEventHandler(async (event) => {
 
       FROM obituaries o
 
-      LEFT JOIN (
-        SELECT
-          e1.*
-        FROM obituary_events e1
-        INNER JOIN (
-          SELECT
-            obituary_id,
-            MIN(starts_at) AS first_start
-          FROM obituary_events
-          GROUP BY obituary_id
-        ) e2
-          ON e1.obituary_id = e2.obituary_id
-         AND e1.starts_at = e2.first_start
-      ) me
-        ON me.obituary_id = o.id
+      LEFT JOIN obituary_events me
+        ON me.id = (
+          SELECT e2.id
+          FROM obituary_events e2
+          WHERE e2.obituary_id = o.id
+          ORDER BY e2.is_main_event DESC, e2.starts_at ASC, e2.id ASC
+          LIMIT 1
+        )
 
       ${whereSql}
       ${orderSql}
@@ -301,7 +292,7 @@ export default defineEventHandler(async (event) => {
     logDebug("List obituaries SQL", {
       whereSql,
       orderSql,
-      params,
+      listParams,
       page,
       pageSize,
       requestId,
@@ -309,17 +300,10 @@ export default defineEventHandler(async (event) => {
 
     const rows = await query(listSql, listParams, { requestId });
 
-    const items = rows.map(mapSummaryRow);
-
     return {
       ok: true,
-      items,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages,
-      },
+      items: rows.map(mapSummaryRow),
+      pagination: { page, pageSize, total, totalPages },
     };
   } catch (err) {
     logError("List obituaries failed", {

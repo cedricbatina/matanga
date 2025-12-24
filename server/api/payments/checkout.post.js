@@ -3,6 +3,7 @@ import { defineEventHandler, readBody, createError } from "h3";
 import { requireAuth } from "../../utils/authSession.js";
 import { query, transaction } from "../../utils/db.js";
 import { logInfo, logError } from "../../utils/logger.js";
+import { findPlanByCode } from "~/utils/pricingPlans.js";
 
 // 🧾 Stripe + Buffer (pour PayPal)
 import Stripe from "stripe";
@@ -153,6 +154,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+
+
     // 3) Vérif qu’il y a bien quelque chose à payer
     const isFree = !!obituaryRow.is_free;
     if (isFree) {
@@ -163,7 +166,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // ✅ 3bis) Calcul amount : priorité à amount_paid, sinon calcul depuis le plan
     let amount = null;
+
+    // a) Legacy/DB : amount_paid (si tu l’utilises encore)
     if (
       obituaryRow.amount_paid != null &&
       obituaryRow.amount_paid !== "" &&
@@ -172,7 +178,36 @@ export default defineEventHandler(async (event) => {
       amount = Number(obituaryRow.amount_paid);
     }
 
-    const currency = obituaryRow.currency || "EUR";
+    // b) Fallback plan : planCode (front) -> pricing_tier (DB)
+    const effectivePlanCode = planCode || obituaryRow.pricing_tier || null;
+    const plan = effectivePlanCode ? findPlanByCode(effectivePlanCode) : null;
+
+    // currency: plan d’abord, sinon DB, sinon EUR
+    const currency = (plan && plan.currency) || obituaryRow.currency || "EUR";
+
+    // si pas de amount_paid, on calcule depuis le plan (en euros)
+    if (amount == null && plan && plan.isFree !== true) {
+      // ⚠️ si tu as des abonnements "subscription" (plans compte pro),
+      // on bloque ici (flow différent d’un paiement "par annonce")
+      if (plan.billingType === "subscription") {
+        throw createError({
+          statusCode: 400,
+          statusMessage:
+            "This plan is a subscription and cannot be paid via obituary checkout.",
+        });
+      }
+
+      const cents =
+        typeof plan.basePriceCents === "number" && plan.basePriceCents > 0
+          ? plan.basePriceCents
+          : typeof plan.priceCents === "number" && plan.priceCents > 0
+          ? plan.priceCents
+          : null;
+
+      if (cents && cents > 0) {
+        amount = Number((cents / 100).toFixed(2)); // euros (ex: 25.00)
+      }
+    }
 
     if (amount == null || !(amount > 0)) {
       throw createError({
@@ -250,6 +285,15 @@ export default defineEventHandler(async (event) => {
         style: "currency",
         currency,
       }).format(amount);
+logInfo("Checkout amount resolved", {
+  obituaryId: obituaryRow.id,
+  pricingTier: obituaryRow.pricing_tier,
+  planCode,
+  effectivePlanCode,
+  amount,
+  currency,
+  requestId,
+});
 
       logInfo("Checkout created (bank transfer)", {
         userId: session.userId,

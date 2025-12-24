@@ -3,7 +3,7 @@ import { defineEventHandler, readBody, createError, getRouterParam } from "h3";
 import { requireAuth } from "../../../utils/authSession.js";
 import { transaction } from "../../../utils/db.js";
 import { logInfo, logError } from "../../../utils/logger.js";
-import { findPlanByCode } from "../../../utils/pricingPlans.js";
+import { findPlanByCode } from "~/utils/pricingPlans.js";
 
 const BANK_TRANSFER_CONFIG = {
   iban: process.env.MATANGA_BANK_IBAN || null,

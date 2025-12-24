@@ -18,31 +18,28 @@
             <p class="text-md mb-4">
               {{ t('home.hero.body') }}
             </p>
-<div class="flex flex-row flex-wrap items-center gap-3 mt-4">
-  <!-- Créer une annonce gratuite = plan indiv_free_7 -->
-  <NuxtLink
-    to="/obituary/create"
-    class="btn btn-primary btn-lg"
-  >
-    {{ t('home.hero.primaryCta') }}
+        
+
+<div class="hero-ctas" role="group" :aria-label="t('home.hero.ctaGroupAria')">
+  <!-- Publier une annonce -->
+  <NuxtLink to="/obituary/create" class="btn btn-primary btn-lg hero-cta">
+    <IconPlus class="hero-cta__icon" aria-hidden="true" />
+    <span class="hero-cta__text">{{ t('home.hero.primaryCta') }}</span>
   </NuxtLink>
 
-  <!-- Voir les plans = redirige vers /plans -->
-  <NuxtLink
-    to="/plans"
-    class="btn btn-secondary btn-lg"
-  >
-    {{ t('home.hero.viewPlansCta') }}
+  <!-- Voir les plans (PUBLIC) -->
+  <NuxtLink to="/plans" class="btn btn-secondary btn-lg hero-cta">
+    <IconCreditCard class="hero-cta__icon" aria-hidden="true" />
+    <span class="hero-cta__text">{{ t('home.hero.viewPlansCta') }}</span>
   </NuxtLink>
 
-  <!-- Voir les annonces existantes, en style plus léger -->
-  <NuxtLink
-    to="/obituaries"
-    class="btn btn-ghost btn-sm"
-  >
-    {{ t('home.hero.secondaryCta') }}
+  <!-- Voir les annonces -->
+  <NuxtLink to="/obituaries" class="btn btn-secondary btn-sm hero-cta hero-cta--light">
+    <IconList class="hero-cta__icon" aria-hidden="true" />
+    <span class="hero-cta__text">{{ t('home.hero.secondaryCta') }}</span>
   </NuxtLink>
 </div>
+
 
 
             <p class="text-xs text-soft mt-3">
@@ -96,14 +93,21 @@
             <label class="form-label" for="country">
               {{ t('home.search.country.label') }}
             </label>
-            <input
-              id="country"
-              v-model="localFilters.countryCode"
-              class="form-control"
-              type="text"
-              maxlength="2"
-              :placeholder="t('home.search.country.placeholder')"
-            />
+          <input
+  id="country"
+  v-model="localFilters.countryCode"
+  class="form-control"
+  type="text"
+  maxlength="2"
+  autocomplete="country"
+  inputmode="text"
+  aria-describedby="country-hint"
+  :placeholder="t('home.search.country.placeholder')"
+/>
+<p id="country-hint" class="form-hint">
+  {{ t('home.search.country.hint') }}
+</p>
+
             <p class="form-hint">
               {{ t('home.search.country.hint') }}
             </p>
@@ -367,7 +371,7 @@
 
 <script setup>
 import { computed, reactive, watch } from 'vue';
-import { useSeoMeta } from '#imports';
+import { useSeoMeta, useHead, useRoute, useRuntimeConfig } from '#imports';
 import { useI18n } from 'vue-i18n';
 import { useObituariesStore } from '~/stores/obituaries';
 import { useDateUtils } from '~/composables/useDateUtils';
@@ -376,7 +380,10 @@ import Pagination from '~/components/Pagination.vue';
 const { t, locale } = useI18n();
 const obituaries = useObituariesStore();
 const { formatDate, formattedDate, timeAgo } = useDateUtils();
-
+const route = useRoute();
+const config = useRuntimeConfig();
+const siteUrl = computed(() => (config.public?.siteUrl || 'https://madizi.com').replace(/\/$/, ''));
+const canonicalUrl = computed(() => `${siteUrl.value}${route.path}`);
 // SEO localisé
 const seoTitle = computed(() => t('home.meta.title'));
 const seoDescription = computed(() => t('home.meta.description'));
@@ -386,8 +393,73 @@ useSeoMeta({
   description: seoDescription,
   ogTitle: seoTitle,
   ogDescription: seoDescription,
+  ogType: 'website',
+  ogUrl: canonicalUrl,
+  twitterCard: 'summary_large_image',
 });
 
+// JSON-LD (WebSite + SearchAction + Organization + ItemList)
+const jsonLd = computed(() => {
+  const itemList = (obituaries.items || []).slice(0, 12).map((item, idx) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    url: `${siteUrl.value}/obituary/${item.slug}`,
+    name: item.content?.title || item.deceased?.fullName || `Annonce ${idx + 1}`,
+  }));
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${siteUrl.value}#org`,
+        name: 'Madizi',
+        url: siteUrl.value,
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${siteUrl.value}#website`,
+        url: siteUrl.value,
+        name: 'Madizi',
+        inLanguage: locale.value,
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${siteUrl.value}/obituaries?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${canonicalUrl.value}#webpage`,
+        url: canonicalUrl.value,
+        name: seoTitle.value,
+        description: seoDescription.value,
+        isPartOf: { '@id': `${siteUrl.value}#website` },
+        inLanguage: locale.value,
+      },
+      ...(itemList.length
+        ? [
+            {
+              '@type': 'ItemList',
+              '@id': `${canonicalUrl.value}#recent-obituaries`,
+              name: t('home.list.title'),
+              itemListElement: itemList,
+            },
+          ]
+        : []),
+    ],
+  };
+});
+
+useHead({
+  link: [{ rel: 'canonical', href: canonicalUrl }],
+  script: [
+    {
+      type: 'application/ld+json',
+      children: () => JSON.stringify(jsonLd.value),
+    },
+  ],
+});
 // Filtres locaux (UI)
 const localFilters = reactive({
   countryCode: obituaries.filters.countryCode || '',
@@ -485,4 +557,51 @@ watch(
 .obituary-card__content {
   padding: var(--space-4);
 }
+/* CTA hero : stable sur mobile/tablette/desktop */
+.hero-ctas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: var(--space-4);
+}
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  white-space: nowrap; /* évite le “bouton en boule” */
+}
+
+.hero-cta__icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex: 0 0 auto;
+}
+
+.hero-cta--light {
+  justify-content: flex-start;
+}
+
+/* Tablette+ : 2 CTA principaux en ligne, et le 3e en dessous */
+@media (min-width: 600px) {
+  .hero-ctas {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .hero-cta--light {
+    grid-column: 1 / -1;
+    width: auto;
+    justify-content: flex-start;
+  }
+}
+
+/* Desktop : on garde propre et pas trop “long” */
+@media (min-width: 1024px) {
+  .hero-ctas {
+    max-width: 520px;
+  }
+}
+
 </style>

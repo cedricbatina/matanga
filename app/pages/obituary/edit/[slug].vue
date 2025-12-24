@@ -469,73 +469,162 @@
     </div>
   </div>
 </section>
+<section class="form-section">
+  <h2 class="form-section__title">
+    Autres cérémonies associées (optionnel)
+  </h2>
+  <p class="form-section__subtitle">
+    Ajoutez veillée, inhumation, messe, etc.
+  </p>
+
+  <div
+    v-for="(extra, idx) in extraEvents"
+    :key="idx"
+    class="form-subsection__block"
+  >
+    <div class="form-grid-2-col">
+      <div class="form-field">
+        <label class="form-label">Type d’événement</label>
+        <select v-model="extra.eventType" class="form-control">
+          <option value="funeral">{{ t('home.eventTypes.funeral') }}</option>
+          <option value="wake">{{ t('home.eventTypes.wake') }}</option>
+          <option value="burial">{{ t('home.eventTypes.burial') }}</option>
+          <option value="memorial">{{ t('home.eventTypes.memorial') }}</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Date et heure</label>
+        <input v-model="extra.startsAt" type="datetime-local" class="form-control" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">Lieu / salle</label>
+        <input v-model.trim="extra.venueName" type="text" class="form-control" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">Adresse</label>
+        <input v-model.trim="extra.venueAddress" type="text" class="form-control" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <button type="button" class="btn btn-ghost btn-xs" @click="removeExtraEvent(idx)">
+        Supprimer cet événement
+      </button>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <button type="button" class="btn btn-outline btn-sm" @click="addExtraEvent">
+      Ajouter un autre événement
+    </button>
+  </div>
+</section>
 
 
           <!-- Bloc contact famille -->
-          <section class="form-section">
-            <h2 class="form-section__title">
-              {{ t('createObituary.sections.familyContact.title') }}
-            </h2>
-            <p class="form-section__subtitle">
-              {{ t('createObituary.sections.familyContact.subtitle') }}
-            </p>
+        <section class="form-section">
+  <h2 class="form-section__title">
+    {{ t('createObituary.sections.familyContact.title') }}
+  </h2>
+  <p class="form-section__subtitle">
+    {{ t('createObituary.sections.familyContact.subtitle') }}
+  </p>
 
-            <div class="form-grid-2-col">
-              <div class="form-field">
-                <label class="form-label" for="contactName">
-                  {{ t('createObituary.fields.familyContactName.label') }}
-                </label>
-                <input
-                  id="contactName"
-                  v-model.trim="form.familyContact.name"
-                  class="form-control"
-                  type="text"
-                  :placeholder="t('createObituary.fields.familyContactName.placeholder')"
-                />
-              </div>
+  <div
+    v-for="(contact, idx) in form.contacts"
+    :key="idx"
+    class="form-subsection__block form-subsection__block--contact"
+  >
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">
+          {{ t('createObituary.fields.familyContactName.label') }}
+          <span class="badge badge-soft">
+            <span v-if="idx === 0">Contact principal</span>
+            <span v-else>Contact {{ idx + 1 }}</span>
+          </span>
+        </label>
+        <input
+          v-model.trim="contact.name"
+          class="form-control"
+          type="text"
+          :placeholder="t('createObituary.fields.familyContactName.placeholder')"
+        />
+      </div>
+    </div>
 
-              <div class="form-field">
-                <label class="form-label" for="contactPhone">
-                  {{ t('createObituary.fields.familyContactPhone.label') }}
-                </label>
-                <input
-                  id="contactPhone"
-                  v-model.trim="form.familyContact.phone"
-                  class="form-control"
-                  type="tel"
-                  :placeholder="t('createObituary.fields.familyContactPhone.placeholder')"
-                />
-              </div>
-            </div>
+    <div class="form-grid-2-col">
+      <div class="form-field">
+        <label class="form-label">
+          {{ t('createObituary.fields.familyContactPhone.label') }}
+        </label>
+        <input
+          v-model.trim="contact.phone"
+          class="form-control"
+          type="tel"
+          :placeholder="t('createObituary.fields.familyContactPhone.placeholder')"
+        />
+      </div>
 
-            <div class="form-grid-2-col">
-              <div class="form-field">
-                <label class="form-label" for="contactWhatsapp">
-                  {{ t('createObituary.fields.familyContactWhatsapp.label') }}
-                </label>
-                <input
-                  id="contactWhatsapp"
-                  v-model.trim="form.familyContact.whatsapp"
-                  class="form-control"
-                  type="tel"
-                  :placeholder="t('createObituary.fields.familyContactWhatsapp.placeholder')"
-                />
-              </div>
+      <div class="form-field">
+        <label class="form-label">
+          {{ t('createObituary.fields.familyContactWhatsapp.label') }}
+        </label>
+        <input
+          v-model.trim="contact.whatsapp"
+          class="form-control"
+          type="tel"
+          :placeholder="t('createObituary.fields.familyContactWhatsapp.placeholder')"
+        />
+      </div>
+    </div>
 
-              <div class="form-field">
-                <label class="form-label" for="contactEmail">
-                  {{ t('createObituary.fields.familyContactEmail.label') }}
-                </label>
-                <input
-                  id="contactEmail"
-                  v-model.trim="form.familyContact.email"
-                  class="form-control"
-                  type="email"
-                  :placeholder="t('createObituary.fields.familyContactEmail.placeholder')"
-                />
-              </div>
-            </div>
-          </section>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">
+          {{ t('createObituary.fields.familyContactEmail.label') }}
+        </label>
+        <input
+          v-model.trim="contact.email"
+          class="form-control"
+          type="email"
+          :placeholder="t('createObituary.fields.familyContactEmail.placeholder')"
+        />
+      </div>
+    </div>
+
+    <div
+      v-if="form.contacts.length > 1"
+      class="form-row"
+    >
+      <button
+        type="button"
+        class="btn btn-ghost btn-xs"
+        @click="removeContact(idx)"
+      >
+        Supprimer ce contact
+      </button>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <button
+      type="button"
+      class="btn btn-outline btn-sm"
+      @click="addContact"
+    >
+      Ajouter un autre contact
+    </button>
+  </div>
+</section>
+
         </div>
 
         <!-- Footer actions -->
@@ -590,7 +679,7 @@ definePageMeta({
   middleware: ['auth'],
 });
 
-import { reactive, ref, computed, watch } from 'vue';
+import { reactive, ref, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter, useSeoMeta, useFetch, useNuxtApp } from '#imports';
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
@@ -602,6 +691,10 @@ const {
   normalizeDateTimeLocal,
 } = useDateUtils();
 
+const hydrating = ref(true);
+const eventsDirty = ref(false);
+const contactsDirty = ref(false);
+
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
@@ -611,6 +704,7 @@ const confirmStore = useConfirmStore(); // 👈 NEW
 
 
 const slug = computed(() => route.params.slug);
+const extraEvents = ref([]);
 
 // Chargement de l'annonce existante (accès restreint owner / admin / moderator côté API)
 const {
@@ -706,12 +800,10 @@ const form = reactive({
     venueAddress: '',
   },
 
-  familyContact: {
-    name: '',
-    phone: '',
-    whatsapp: '',
-    email: '',
-  },
+contacts: [
+  { name: '', phone: '', whatsapp: '', email: '' },
+],
+
 });
 
 const errors = reactive({
@@ -801,30 +893,76 @@ watch(
       form.event.venueName = '';
       form.event.venueAddress = '';
     }
+const others = (events.value || []).filter((ev) => !ev.isMainEvent);
+
+extraEvents.value = others.map((ev) => ({
+  eventType: ev.eventType || 'wake',
+  startsAt: ev.startsAt ? toDateTimeLocalInput(ev.startsAt) : '',
+  venueName: ev.venueName || '',
+  venueAddress: ev.venueAddress || '',
+}));
 
     // --- Contact principal ---
-    const primaryContact =
-      contacts.value.find((c) => c.isPrimary) ||
-      contacts.value[0] ||
-      null;
+  const list = (contacts.value || []).map((c) => ({
+  name: c.name || '',
+  phone: c.phone || '',
+  whatsapp: c.whatsappNumber || '',
+  email: c.email || '',
+}));
 
-    if (primaryContact) {
-      form.familyContact.name =
-        primaryContact.name || primaryContact.label || '';
-      form.familyContact.phone = primaryContact.phone || '';
-      form.familyContact.whatsapp =
-        primaryContact.whatsappNumber || '';
-      form.familyContact.email = primaryContact.email || '';
-    } else {
-      form.familyContact.name = '';
-      form.familyContact.phone = '';
-      form.familyContact.whatsapp = '';
-      form.familyContact.email = '';
-    }
+form.contacts = list.length ? list : [{ name: '', phone: '', whatsapp: '', email: '' }];
+nextTick(() => {
+  hydrating.value = false;
+  eventsDirty.value = false;
+  contactsDirty.value = false;
+});
+
   },
   { immediate: true }
 );
 
+const addContact = () => {
+  form.contacts.push({ name: '', phone: '', whatsapp: '', email: '' });
+};
+
+const removeContact = (idx) => {
+  if (form.contacts.length <= 1) return;
+  form.contacts.splice(idx, 1);
+};
+const addExtraEvent = () => {
+  extraEvents.value.push({
+    eventType: 'wake',
+    startsAt: '',
+    venueName: '',
+    venueAddress: '',
+  });
+};
+
+const removeExtraEvent = (idx) => {
+  extraEvents.value.splice(idx, 1);
+};
+watch(
+  () => [form.event.eventType, form.event.startsAt, form.event.venueName, form.event.venueAddress],
+  () => {
+    if (!hydrating.value) eventsDirty.value = true;
+  }
+);
+
+watch(
+  extraEvents,
+  () => {
+    if (!hydrating.value) eventsDirty.value = true;
+  },
+  { deep: true }
+);
+
+watch(
+  () => form.contacts,
+  () => {
+    if (!hydrating.value) contactsDirty.value = true;
+  },
+  { deep: true }
+);
 
 
 // Validation minimale (mêmes règles que création pour les champs clés)
@@ -862,75 +1000,111 @@ const validate = () => {
     !errors.eventStartsAt
   );
 };
+function buildConfirmQuery() {
+  const q = {};
+
+  // priorité: query actuelle, sinon planCode de l’obituary
+  const plan =
+    (typeof route.query.plan === 'string' && route.query.plan.trim()) ||
+    obituary.value?.planCode ||
+    null;
+
+  if (plan) q.plan = plan;
+
+  // on garde audience si présent
+  if (route.query.audience === 'pro') q.audience = 'pro';
+
+  return q;
+}
 
 const buildPayload = () => {
   // On ne touche pas à la monétisation / plan ici : on ne renvoie que les champs éditables
-  const eventsPayload = [
-    {
-      eventType: form.event.eventType || 'funeral',
-      title: form.title || null,
-      description: null,
-      startsAt: normalizeDateTimeLocal(form.event.startsAt),
-      endsAt: null,
-      timezone: null,
-      venueName: form.event.venueName || null,
-      venueAddress: form.event.venueAddress || null,
-      city: form.city || null,
-      region: form.region || null,
-      country: form.country || null,
-      countryCode: form.countryCode || null,
-      isMainEvent: true,
-    },
-  ];
+ const main = {
+  eventType: form.event.eventType || 'funeral',
+  title: form.title || null,
+  description: null,
+  startsAt: normalizeDateTimeLocal(form.event.startsAt),
+  endsAt: null,
+  timezone: null,
+  venueName: form.event.venueName || null,
+  venueAddress: form.event.venueAddress || null,
+  city: form.city || null,
+  region: form.region || null,
+  country: form.country || null,
+  countryCode: form.countryCode || null,
+  isMainEvent: true,
+};
 
-  const hasContact =
-    form.familyContact.name ||
-    form.familyContact.phone ||
-    form.familyContact.whatsapp ||
-    form.familyContact.email;
+const extras = extraEvents.value
+  .map((ev) => ({
+    eventType: ev.eventType || 'wake',
+    title: form.title || null,
+    description: null,
+    startsAt: normalizeDateTimeLocal(ev.startsAt),
+    endsAt: null,
+    timezone: null,
+    venueName: ev.venueName || null,
+    venueAddress: ev.venueAddress || null,
+    city: form.city || null,
+    region: form.region || null,
+    country: form.country || null,
+    countryCode: form.countryCode || null,
+    isMainEvent: false,
+  }))
+  .filter((ev) => ev.startsAt || ev.venueName || ev.venueAddress);
 
-  const contactsPayload = hasContact
-    ? [
-        {
-          label: t('createObituary.defaults.familyContactLabel'),
-          name: form.familyContact.name || null,
-          phone: form.familyContact.phone || null,
-          whatsappNumber: form.familyContact.whatsapp || null,
-          email: form.familyContact.email || null,
-          isPublic: true,
-          isPrimary: true,
-        },
-      ]
-    : [];
+const eventsPayload = [main, ...extras];
 
-   return {
-    deceasedFullName: form.deceasedFullName || undefined,
-    identityStatus: form.identityStatus || undefined,
-    deceasedGender: form.gender || undefined,
-    dateOfBirth: form.dateOfBirth || undefined,
-    dateOfDeath: form.dateOfDeath || undefined,
-    ageDisplay: form.ageDisplay || undefined,
-    religion: form.religion || undefined,
-    denomination: form.denomination || undefined,
 
-    title: form.title || undefined,
-    content: form.body || undefined,
-    mainLanguage: form.mainLanguage || undefined,
+const contactsPayload = form.contacts
+  .map((c, idx) => {
+    const hasAny = c.name || c.phone || c.whatsapp || c.email;
+    if (!hasAny) return null;
 
-    city: form.city || undefined,
-    region: form.region || undefined,
-    country: form.country || undefined,
-    countryCode: form.countryCode || undefined,
-    isRuralArea: form.isRuralArea,
+    return {
+      label: idx === 0 ? 'Contact principal' : `Contact ${idx + 1}`,
+      name: c.name || null,
+      phone: c.phone || null,
+      whatsappNumber: c.whatsapp || null,
+      email: c.email || null,
+      isPublic: true,
+      isPrimary: idx === 0,
+    };
+  })
+  .filter(Boolean);
 
-    // 👇 NEW
-    coverImageUrl: form.coverImageUrl || undefined,
 
-    events: eventsPayload,
-    contacts: contactsPayload,
+const payload = {
+  deceasedFullName: form.deceasedFullName || undefined,
+  identityStatus: form.identityStatus || undefined,
+  deceasedGender: form.gender || undefined,
+  dateOfBirth: form.dateOfBirth || undefined,
+  dateOfDeath: form.dateOfDeath || undefined,
+  ageDisplay: form.ageDisplay || undefined,
+  religion: form.religion || undefined,
+  denomination: form.denomination || undefined,
 
-    regenSlug: false,
-  };
+  title: form.title || undefined,
+  content: form.body || undefined,
+  mainLanguage: form.mainLanguage || undefined,
+
+  city: form.city || undefined,
+  region: form.region || undefined,
+  country: form.country || undefined,
+  countryCode: form.countryCode || undefined,
+  isRuralArea: form.isRuralArea,
+
+  coverImageUrl: form.coverImageUrl || undefined,
+
+  regenSlug: false,
+};
+
+// ✅ on n’envoie QUE si modifié
+if (eventsDirty.value) payload.events = eventsPayload;
+if (contactsDirty.value) payload.contacts = contactsPayload;
+
+return payload;
+
 };
 
 
@@ -947,8 +1121,12 @@ const resolveErrorMessage = (err) => {
 };
 
 const goBackToConfirm = () => {
-  router.push(`/obituary/confirm/${slug.value}`);
+  router.push({
+    path: `/obituary/confirm/${slug.value}`,
+    query: buildConfirmQuery(),
+  });
 };
+
 
 const onSubmit = async () => {
   if (isSubmitting.value) return;
@@ -970,7 +1148,11 @@ const onSubmit = async () => {
     }
 
     // Retour vers la page de confirmation
-    await router.push(`/obituary/confirm/${slug.value}`);
+    await router.push({
+  path: `/obituary/confirm/${slug.value}`,
+  query: buildConfirmQuery(),
+});
+
   } catch (err) {
     const fieldErrors = err?.data?.fieldErrors;
     if (fieldErrors && typeof fieldErrors === 'object') {

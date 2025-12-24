@@ -374,120 +374,119 @@
             </header>
 
             <div class="plans-grid">
-              <article
-                v-for="plan in proObituaryPlans"
-                :key="plan.code"
-                class="card plan-card plan-card--pro"
-              >
-                <div class="card-body plan-card__body">
-                  <header class="plan-card__header">
-                    <div class="plan-card__titles">
-                      <p class="plan-card__eyebrow plan-card__eyebrow--accent">
-                        {{ t('plans.pro.badgeSoon') }}
-                      </p>
-                      <h2 class="plan-card__title">
-                        {{ plan.label }}
-                      </h2>
-                      <p class="plan-card__subtitle">
-                        {{ plan.description }}
-                      </p>
-                    </div>
+   <article
+  v-for="plan in proObituaryPlans"
+  :key="plan.code"
+  class="card plan-card plan-card--pro"
+>
 
-                    <div class="plan-card__price">
-                      <span class="plan-card__price-main">
-                        {{ formatPrice(plan.basePriceCents) }}
-                      </span>
-                      <span class="plan-card__price-helper">
-                        {{ t('plans.price.onetime') }}
-                      </span>
-                    </div>
-                  </header>
+  <div class="card-body plan-card__body">
+    <header class="plan-card__header">
+      <div class="plan-card__titles">
+        <p class="plan-card__eyebrow plan-card__eyebrow--accent">
+          {{ t('plans.pro.badgeSoon') }}
+        </p>
+        <h2 class="plan-card__title">
+          {{ plan.label }}
+        </h2>
+        <p class="plan-card__subtitle">
+          {{ plan.description }}
+        </p>
+      </div>
 
-                  <ul class="plan-card__features" aria-label="Caractéristiques du plan pro">
-                    <li
-                      v-if="plan.publishDurationDays"
-                      class="plan-card__feature"
-                    >
-                      <i class="fas fa-clock plan-card__feature-icon" aria-hidden="true"></i>
-                      <span>
-                        <strong>{{ t('plans.features.duration.label') }}</strong>
-                        <span class="plan-card__feature-text">
-                          {{ t('plans.features.duration.value', { days: plan.publishDurationDays }) }}
-                        </span>
-                      </span>
-                    </li>
+      <div class="plan-card__price">
+        <span class="plan-card__price-main">
+          {{ formatPrice(plan.basePriceCents) }}
+        </span>
+        <span class="plan-card__price-helper">
+          {{ t('plans.price.onetime') }}
+        </span>
+      </div>
+    </header>
 
-                    <li
-                      v-if="plan.features?.maxEvents"
-                      class="plan-card__feature"
-                    >
-                      <i class="fas fa-calendar-alt plan-card__feature-icon" aria-hidden="true"></i>
-                      <span>
-                        <strong>{{ t('plans.features.events.label') }}</strong>
-                        <span class="plan-card__feature-text">
-                          {{ t('plans.features.events.value', { count: plan.features.maxEvents }) }}
-                        </span>
-                      </span>
-                    </li>
+    <ul class="plan-card__features" aria-label="Caractéristiques du plan pro">
+      <li
+        v-if="plan.publishDurationDays"
+        class="plan-card__feature"
+      >
+        <i class="fas fa-clock plan-card__feature-icon" aria-hidden="true"></i>
+        <span>
+          <strong>{{ t('plans.features.duration.label') }}</strong>
+          <span class="plan-card__feature-text">
+            {{ t('plans.features.duration.value', { days: plan.publishDurationDays }) }}
+          </span>
+        </span>
+      </li>
 
-                    <li
-                      v-if="plan.features?.maxActiveObituaries"
-                      class="plan-card__feature"
-                    >
-                      <i class="fas fa-layer-group plan-card__feature-icon" aria-hidden="true"></i>
-                      <span>
-                        <strong>{{ t('plans.pro.features.maxActive.label') }}</strong>
-                        <span class="plan-card__feature-text">
-                          {{ t('plans.pro.features.maxActive.value', {
-                            count: plan.features.maxActiveObituaries
-                          }) }}
-                        </span>
-                      </span>
-                    </li>
+      <li
+        v-if="plan.features?.maxEvents"
+        class="plan-card__feature"
+      >
+        <i class="fas fa-calendar-alt plan-card__feature-icon" aria-hidden="true"></i>
+        <span>
+          <strong>{{ t('plans.features.events.label') }}</strong>
+          <span class="plan-card__feature-text">
+            {{ t('plans.features.events.value', { count: plan.features.maxEvents }) }}
+          </span>
+        </span>
+      </li>
 
-                    <li
-                      v-if="plan.features?.maxUsers"
-                      class="plan-card__feature"
-                    >
-                      <i class="fas fa-user-friends plan-card__feature-icon" aria-hidden="true"></i>
-                      <span>
-                        <strong>{{ t('plans.pro.features.team.label') }}</strong>
-                        <span class="plan-card__feature-text">
-                          {{ t('plans.pro.features.team.value', {
-                            count: plan.features.maxUsers
-                          }) }}
-                        </span>
-                      </span>
-                    </li>
+      <li
+        v-if="plan.features?.maxActiveObituaries"
+        class="plan-card__feature"
+      >
+        <i class="fas fa-layer-group plan-card__feature-icon" aria-hidden="true"></i>
+        <span>
+          <strong>{{ t('plans.pro.features.maxActive.label') }}</strong>
+          <span class="plan-card__feature-text">
+            {{ t('plans.pro.features.maxActive.value', { count: plan.features.maxActiveObituaries }) }}
+          </span>
+        </span>
+      </li>
 
-                    <li
-                      v-if="plan.features?.includeSponsoredSlots"
-                      class="plan-card__feature"
-                    >
-                      <i class="fas fa-bullhorn plan-card__feature-icon" aria-hidden="true"></i>
-                      <span>
-                        <strong>{{ t('plans.pro.features.sponsored.label') }}</strong>
-                        <span class="plan-card__feature-text">
-                          {{ t('plans.pro.features.sponsored.value') }}
-                        </span>
-                      </span>
-                    </li>
-                  </ul>
-                </div>
+      <li
+        v-if="plan.features?.maxUsers"
+        class="plan-card__feature"
+      >
+        <i class="fas fa-user-friends plan-card__feature-icon" aria-hidden="true"></i>
+        <span>
+          <strong>{{ t('plans.pro.features.team.label') }}</strong>
+          <span class="plan-card__feature-text">
+            {{ t('plans.pro.features.team.value', { count: plan.features.maxUsers }) }}
+          </span>
+        </span>
+      </li>
 
-                <footer class="card-footer plan-card__footer">
-                  <button
-                    type="button"
-                    class="btn btn-outline btn-sm plan-card__cta"
-                    disabled
-                  >
-                    {{ t('plans.pro.ctaDisabled') }}
-                  </button>
-                  <p class="plan-card__legal">
-                    {{ t('plans.pro.helper') }}
-                  </p>
-                </footer>
-              </article>
+      <li
+        v-if="plan.features?.includeSponsoredSlots"
+        class="plan-card__feature"
+      >
+        <i class="fas fa-bullhorn plan-card__feature-icon" aria-hidden="true"></i>
+        <span>
+          <strong>{{ t('plans.pro.features.sponsored.label') }}</strong>
+          <span class="plan-card__feature-text">
+            {{ t('plans.pro.features.sponsored.value') }}
+          </span>
+        </span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ✅ même footer que les cartes pro du haut : plus de "sur demande" -->
+  <footer class="card-footer plan-card__footer">
+    <NuxtLink
+      class="btn btn-primary btn-sm plan-card__cta"
+      :to="{ path: '/obituary/create', query: { plan: plan.code, audience: 'pro' } }"
+    >
+      {{ t('plans.cta.startPaid') }}
+    </NuxtLink>
+
+    <p class="plan-card__legal">
+      {{ t('plans.legal.reminder') }}
+    </p>
+  </footer>
+</article>
+
             </div>
           </section>
 
@@ -533,6 +532,7 @@
                         {{ t('plans.price.onetime') }}
                       </span>
                     </div>
+
                   </header>
 
                   <ul class="plan-card__features" aria-label="Caractéristiques de l’abonnement pro">
@@ -581,18 +581,19 @@
                   </ul>
                 </div>
 
-                <footer class="card-footer plan-card__footer">
-                  <button
-                    type="button"
-                    class="btn btn-outline btn-sm plan-card__cta"
-                    disabled
-                  >
-                    {{ t('plans.pro.ctaDisabled') }}
-                  </button>
-                  <p class="plan-card__legal">
-                    {{ t('plans.pro.helper') }}
-                  </p>
-                </footer>
+               <footer class="card-footer plan-card__footer">
+  <NuxtLink
+    class="btn btn-primary btn-sm plan-card__cta"
+    :to="{ path: '/obituary/create', query: { plan: plan.code, audience: 'pro' } }"
+  >
+    {{ t('plans.cta.startPaid') }}
+  </NuxtLink>
+
+  <p class="plan-card__legal">
+    {{ t('plans.legal.reminder') }}
+  </p>
+</footer>
+
               </article>
             </div>
           </section>
@@ -608,7 +609,7 @@ import { useFetch, useSeoMeta } from '#imports';
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 // SEO
 useSeoMeta({
@@ -617,6 +618,11 @@ useSeoMeta({
   ogTitle: () => t('plans.meta.title'),
   ogDescription: () => t('plans.meta.description'),
 });
+
+const tr = (key, fallback, params) => {
+  if (!te(key)) return fallback;
+  return params ? t(key, params) : t(key);
+};
 
 // Audience sélectionnée : particulier par défaut
 const selectedAudience = ref('individual');
@@ -1022,4 +1028,16 @@ const formatPrice = (cents) => {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   }
 }
+.plan-card__titles{
+  flex: 1;
+  min-width: 0;              /* clé anti overflow en flex */
+  max-width: none;
+  overflow-wrap: anywhere;   /* casse proprement les longs textes */
+}
+
+.plan-card__price{
+  flex-shrink: 0;            /* évite que le prix “pousse” le titre hors cadre */
+  text-align: right;
+}
+
 </style>

@@ -11,12 +11,13 @@
 
     <section class="section">
       <div class="section-header">
-        <h1 class="section-title">
-          {{ t('createObituary.title') }}
-        </h1>
-        <p class="section-subtitle">
-          {{ t('createObituary.subtitle') }}
-        </p>
+       <h1 class="section-title">
+  {{ pageTitle }}
+</h1>
+<p class="section-subtitle">
+  {{ pageSubtitle }}
+</p>
+
 
         <!-- État de chargement / erreur des plans -->
         <div v-if="plansPending" class="plans-loading-inline">
@@ -58,30 +59,162 @@
             {{ selectedPlanText }}
           </p>
         </div>
+         <div v-if="draftMismatch" class="draft-banner">
+  <p class="text-sm">
+    Un brouillon existe pour un autre plan. Voulez-vous le restaurer ?
+  </p>
+  <div class="form-row">
+  <button type="button" class="btn btn-outline btn-xs" @click="onRestoreDraftClick">
+  Restaurer le brouillon
+</button>
+
+<button type="button" class="btn btn-ghost btn-xs" @click="onDiscardDraftClick">
+  Effacer le brouillon
+</button>
+
+  </div>
+</div>
+
+<div v-else-if="draftRestored" class="draft-banner">
+  <p class="text-sm">Brouillon restauré automatiquement.</p>
+  <button type="button" class="btn btn-ghost btn-xs" @click="clearDraft">
+    Effacer le brouillon
+  </button>
+</div>
+
+
+            <div class="form-row planchange">
+              <NuxtLink
+                to="/plans"
+                class="btn btn-primary btn-sm"
+              >
+                {{ t('createObituary.sections.publish.changePlanCta') }}
+              </NuxtLink>
+            </div>
       </div>
+
+  <!-- Bandeau mode pro -->
+<div v-if="isProAudience" class="selected-plan-banner selected-plan-banner--pro">
+  <div class="selected-plan-banner__main">
+    <span class="selected-plan-banner__label">{{ t('createObituary.pro.banner.label') }}</span>
+    <span class="selected-plan-banner__price">{{ formatPlanPrice(currentPlan) }}</span>
+  </div>
+  <p class="selected-plan-banner__helper">
+    {{ t('createObituary.pro.banner.helper') }}
+  </p>
+</div>
+
 
       <form
         class="card form"
         @submit.prevent="onSubmit"
       >
         <div class="card-body form-body">
+          <!-- ✅ Bloc PRO : infos structure -->
+<section v-if="isProAudience" class="form-section">
+ <h2 class="form-section__title">{{ sectionOrgTitle }}</h2>
+<p class="form-section__subtitle">{{ sectionOrgSubtitle }}</p>
+
+
+  <div class="form-row">
+    <div class="form-field">
+       <label class="form-label" for="orgName">{{ t('createObituary.pro.fields.orgName.label') }}</label>
+  <input
+    id="orgName"
+    v-model.trim="form.pro.orgName"
+    class="form-control"
+    type="text"
+    :placeholder="t('createObituary.pro.fields.orgName.placeholder')"
+  />
+    </div>
+  </div>
+
+  <div class="form-row form-row-inline">
+    <div class="form-field">
+      <label class="form-label" for="orgType">Type</label>
+      <select id="orgType" v-model="form.pro.orgType" class="form-control">
+        <option value="">—</option>
+        <option value="funeral_home">Pompes funèbres</option>
+        <option value="church">Église / paroisse</option>
+        <option value="mosque">Mosquée</option>
+        <option value="association">Association</option>
+        <option value="other">Autre</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="orgRef">Référent</label>
+      <input
+        id="orgRef"
+        v-model.trim="form.pro.orgContactName"
+        class="form-control"
+        type="text"
+        placeholder="Nom du contact"
+      />
+    </div>
+  </div>
+
+  <div class="form-row form-row-inline">
+    <div class="form-field">
+      <label class="form-label" for="orgEmail">Email</label>
+      <input
+        id="orgEmail"
+        v-model.trim="form.pro.orgEmail"
+        class="form-control"
+        type="email"
+        placeholder="contact@structure.fr"
+      />
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="orgPhone">Téléphone</label>
+      <input
+        id="orgPhone"
+        v-model.trim="form.pro.orgPhone"
+        class="form-control"
+        type="tel"
+        placeholder="+33…"
+      />
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-field">
+      <label class="form-label" for="orgAddress">Adresse</label>
+      <input
+        id="orgAddress"
+        v-model.trim="form.pro.orgAddress"
+        class="form-control"
+        type="text"
+        placeholder="Adresse de la structure (optionnel)"
+      />
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-field">
+      <label class="form-label" for="orgWebsite">Site web</label>
+      <input
+        id="orgWebsite"
+        v-model.trim="form.pro.orgWebsite"
+        class="form-control"
+        type="url"
+        placeholder="https://…"
+      />
+    </div>
+  </div>
+
+  <p class="form-hint">
+    (Pour l’instant, ces champs n’impactent pas la publication. On les activera côté API ensuite.)
+  </p>
+</section>
+
           <!-- Bloc 1 : Infos défunt -->
           <section class="form-section">
-            <h2 class="form-section__title">
-              {{ t('createObituary.sections.deceased.title') }}
-            </h2>
-            <p class="form-section__subtitle">
-              {{ t('createObituary.sections.deceased.subtitle') }}
-            </p>
+          <h2 class="form-section__title">{{ sectionDeceasedTitle }}</h2>
+<p class="form-section__subtitle">{{ sectionDeceasedSubtitle }}</p>
 
-            <div class="form-row">
-              <NuxtLink
-                to="/plans"
-                class="btn btn-ghost btn-sm"
-              >
-                {{ t('createObituary.sections.publish.changePlanCta') }}
-              </NuxtLink>
-            </div>
+           
 
             <!-- Nom complet -->
             <div class="form-row">
@@ -333,12 +466,9 @@
 
           <!-- Bloc 2 : Texte de l'annonce -->
           <section class="form-section">
-            <h2 class="form-section__title">
-              {{ t('createObituary.sections.content.title') }}
-            </h2>
-            <p class="form-section__subtitle">
-              {{ t('createObituary.sections.content.subtitle') }}
-            </p>
+          <h2 class="form-section__title">{{ sectionContentTitle }}</h2>
+<p class="form-section__subtitle">{{ sectionContentSubtitle }}</p>
+
 
             <div class="form-row">
               <div class="form-field">
@@ -393,12 +523,9 @@
 
           <!-- Bloc 3 : Événement principal + événements supplémentaires -->
           <section class="form-section">
-            <h2 class="form-section__title">
-              {{ t('createObituary.sections.mainEvent.title') }}
-            </h2>
-            <p class="form-section__subtitle">
-              {{ t('createObituary.sections.mainEvent.subtitle') }}
-            </p>
+          <h2 class="form-section__title">{{ sectionMainEventTitle }}</h2>
+<p class="form-section__subtitle">{{ sectionMainEventSubtitle }}</p>
+
 
             <!-- Hint sur nombre total d’événements autorisés -->
             <p
@@ -408,7 +535,7 @@
               Vous pouvez saisir jusqu’à {{ currentPlanFeatures.maxEvents }} événement(s)
               pour cette annonce (cérémonie principale + éventuels rendez-vous associés).
             </p>
-
+      
             <!-- Événement principal (obligatoire) -->
             <div class="form-subsection">
               <h3 class="form-subsection__title">
@@ -606,12 +733,8 @@
 
           <!-- Bloc 4 : Contacts famille / organisation (multiples) -->
           <section class="form-section">
-            <h2 class="form-section__title">
-              {{ t('createObituary.sections.familyContact.title') }}
-            </h2>
-            <p class="form-section__subtitle">
-              {{ t('createObituary.sections.familyContact.subtitle') }}
-            </p>
+         <h2 class="form-section__title">{{ sectionContactsTitle }}</h2>
+<p class="form-section__subtitle">{{ sectionContactsSubtitle }}</p>
 
             <div
               v-for="(contact, idx) in form.contacts"
@@ -711,12 +834,11 @@
 
           <!-- Bloc 5 : Photo & publication -->
           <section class="form-section">
-            <h2 class="form-section__title">
-              {{ t('createObituary.sections.publish.title') }}
-            </h2>
-            <p class="form-section__subtitle">
-              {{ selectedPlanText }}
-            </p>
+<h2 class="form-section__title">{{ sectionPublishTitle }}</h2>
+<p class="form-section__subtitle">{{ sectionPublishSubtitle }}</p>
+<p class="form-hint">{{ selectedPlanText }}</p>
+
+
 
             <!-- Hints dynamiques sur médias & contacts -->
             <p
@@ -881,18 +1003,13 @@
             {{ t('createObituary.actions.cancel') }}
           </NuxtLink>
 
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :disabled="isSubmitting || !currentPlan"
-          >
-            <span v-if="isSubmitting">
-              {{ t('createObituary.actions.submitting') }}
-            </span>
-            <span v-else>
-              {{ t('createObituary.actions.submit') }}
-            </span>
-          </button>
+       <button type="submit" class="btn btn-primary" :disabled="isSubmitting || !currentPlan">
+  <span v-if="isSubmitting">{{ t('createObituary.actions.submitting') }}</span>
+  <span v-else>
+    {{ isAuthenticated ? t('createObituary.actions.submit') : 'Se connecter pour continuer' }}
+  </span>
+</button>
+
         </div>
 
         <div
@@ -909,14 +1026,14 @@
 </template>
 
 <script setup>
-definePageMeta({
-  middleware: ['auth'],
-});
 
-import { reactive, ref, computed, watch } from 'vue';
-import { useRouter, useRoute, useSeoMeta, useFetch } from '#imports';
+
+import { reactive, ref, computed, watch,onMounted } from 'vue';
+import { useRouter, useRoute, useSeoMeta, useFetch, navigateTo } from '#imports';
+
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
+import { findPlanByCode } from '~/utils/pricingPlans';
 
 // Config minimale de fallback
 const DEFAULT_PLAN_FEATURES = {
@@ -926,10 +1043,22 @@ const DEFAULT_PLAN_FEATURES = {
   maxContacts: 1,
   maxOnlineEvents: 0,
 };
+const { $useToast } = useNuxtApp();
+const toast = $useToast ? $useToast() : null;
 
-const { t, locale } = useI18n();
+
+const { t, locale, te } = useI18n();
 const router = useRouter();
 const route = useRoute();
+const tKey = (primaryKey, fallbackKey, params) => {
+  return te(primaryKey) ? t(primaryKey, params) : t(fallbackKey, params);
+};
+
+const tr = (key, fallback, params) => {
+  if (!te(key)) return fallback;
+  return params ? t(key, params) : t(key);
+};
+
 
 // 🔹 Chargement des plans depuis l'API
 const {
@@ -942,20 +1071,25 @@ const {
     individualObituary: [],
     individualMemorial: [],
     proObituary: [],
-    proMemorial: [],
+    proMemorial: [],        // vieux alias
+    proSubscriptions: [],   // ✅ nouveau
   }),
 });
+
+
 
 // 🔹 Helper : tous les plans
 const allPlans = computed(() => {
   const d = plansData.value || {};
+  const proSubs = d.proSubscriptions || d.proMemorial || []; // ✅ accepte les deux
   return [
     ...(d.individualObituary || []),
     ...(d.individualMemorial || []),
     ...(d.proObituary || []),
-    ...(d.proMemorial || []),
+    ...(proSubs || []),
   ];
 });
+
 
 // 🔹 Code de plan issu de la query (si présent)
 const selectedPlanCodeFromQuery = computed(() => {
@@ -965,20 +1099,47 @@ const selectedPlanCodeFromQuery = computed(() => {
   }
   return null;
 });
+const audienceFromQuery = computed(() => route.query.audience === 'pro');
 
-// 🔹 Plan courant : on cherche d'abord par code, sinon fallback sur le gratuit famille
+function planLooksPro(p) {
+  const code = String(p?.code || '');
+  if (code.startsWith('pro_')) return true;
+
+  const tier = String(p?.pricingTier || '');
+  if (tier.startsWith('pro')) return true;
+
+  const aud = String(p?.audience || '');
+  if (aud === 'pro') return true;
+
+  return false;
+}
+
 const currentPlan = computed(() => {
   const plans = allPlans.value;
   const code = selectedPlanCodeFromQuery.value;
 
+  // 1) si code dans URL → priorité
   if (code && plans.length) {
     const found = plans.find((p) => p.code === code);
     if (found) return found;
   }
 
   const d = plansData.value || {};
-  const indivObituary = d.individualObituary || [];
 
+  // 2) si audience=pro → fallback pro (proObituary puis proMemorial)
+ if (audienceFromQuery.value) {
+  const proAll = [
+    ...(d.proObituary || []),
+    ...((d.proSubscriptions || d.proMemorial || [])),
+  ];
+
+  const firstPaid = proAll.find((p) => !p.isFree) || proAll[0];
+  return firstPaid || null;
+}
+
+
+  // 3) sinon → fallback individuel (comme avant)
+  const indivObituary = d.individualObituary || [];
   const free = indivObituary.find((p) => p.isFree);
   if (free) return free;
 
@@ -986,6 +1147,80 @@ const currentPlan = computed(() => {
 
   return plans[0] || null;
 });
+
+const isProAudience = computed(() => {
+  if (audienceFromQuery.value) return true;
+  return planLooksPro(currentPlan.value);
+});
+
+
+const pageTitle = computed(() => {
+  if (isProAudience.value) {
+    return tr(
+      'createObituary.pro.title',
+      'Créer une annonce pro'
+    );
+  }
+  return tr(
+    'createObituary.title',
+    'Créer une annonce'
+  );
+});
+
+const pageSubtitle = computed(() => {
+  if (isProAudience.value) {
+    return tr(
+      'createObituary.pro.subtitle',
+      'Publiez au nom d’une structure (pompes funèbres, paroisse, association…).'
+    );
+  }
+  return tr(
+    'createObituary.subtitle',
+    'Publiez une annonce en quelques minutes.'
+  );
+});
+const sectionOrgTitle = computed(() =>
+  t('createObituary.pro.sections.organization.title')
+);
+const sectionOrgSubtitle = computed(() =>
+  t('createObituary.pro.sections.organization.subtitle')
+);
+
+const sectionDeceasedTitle = computed(() =>
+  tKey('createObituary.pro.sections.deceased.title', 'createObituary.sections.deceased.title')
+);
+const sectionDeceasedSubtitle = computed(() =>
+  tKey('createObituary.pro.sections.deceased.subtitle', 'createObituary.sections.deceased.subtitle')
+);
+
+const sectionContentTitle = computed(() =>
+  tKey('createObituary.pro.sections.content.title', 'createObituary.sections.content.title')
+);
+const sectionContentSubtitle = computed(() =>
+  tKey('createObituary.pro.sections.content.subtitle', 'createObituary.sections.content.subtitle')
+);
+
+const sectionMainEventTitle = computed(() =>
+  tKey('createObituary.pro.sections.mainEvent.title', 'createObituary.sections.mainEvent.title')
+);
+const sectionMainEventSubtitle = computed(() =>
+  tKey('createObituary.pro.sections.mainEvent.subtitle', 'createObituary.sections.mainEvent.subtitle')
+);
+
+const sectionContactsTitle = computed(() =>
+  tKey('createObituary.pro.sections.familyContact.title', 'createObituary.sections.familyContact.title')
+);
+const sectionContactsSubtitle = computed(() =>
+  tKey('createObituary.pro.sections.familyContact.subtitle', 'createObituary.sections.familyContact.subtitle')
+);
+
+const sectionPublishTitle = computed(() =>
+  tKey('createObituary.pro.sections.publish.title', 'createObituary.sections.publish.title')
+);
+const sectionPublishSubtitle = computed(() =>
+  tKey('createObituary.pro.sections.publish.subtitle', 'createObituary.sections.publish.subtitle')
+);
+
 
 // 🔹 Scope mémorial ou pas (pour ajuster le type d'événement par défaut)
 const isMemorialPlan = computed(() => {
@@ -1019,15 +1254,41 @@ const currentPlanLabel = computed(() => {
   const p = currentPlan.value;
   return (p && p.label) || 'Plan Madizi';
 });
-
 const selectedPlanText = computed(() => {
   const p = currentPlan.value;
   if (!p) return '';
-  return t('createObituary.sections.publish.selectedPlan', {
-    plan: currentPlanLabel.value,
-    days: p.publishDurationDays || 0,
-  });
+
+  const label = currentPlanLabel.value;
+
+  // ✅ abonnement : pas de "jours"
+  if (p.billingType === 'subscription') {
+    const per = p.billingPeriod === 'year' ? 'annuel' : 'mensuel';
+
+    const key = isProAudience.value
+      ? 'createObituary.pro.sections.publish.selectedSubscriptionPlan'
+      : 'createObituary.sections.publish.selectedSubscriptionPlan';
+
+    return tr(key, `Abonnement ${label} (${per})`, { plan: label, period: per });
+  }
+
+  const days = typeof p.publishDurationDays === 'number' ? p.publishDurationDays : 0;
+
+  if (days > 0) {
+    const key = isProAudience.value
+      ? 'createObituary.pro.sections.publish.selectedPlan'
+      : 'createObituary.sections.publish.selectedPlan';
+
+    return tr(key, `Plan sélectionné : ${label} — visibilité ${days} jours`, { plan: label, days });
+  }
+
+  const keyNoDays = isProAudience.value
+    ? 'createObituary.pro.sections.publish.selectedPlanNoDays'
+    : 'createObituary.sections.publish.selectedPlanNoDays';
+
+  return tr(keyNoDays, `Plan sélectionné : ${label}`, { plan: label });
 });
+
+
 
 // 🔹 Événements supplémentaires (au-delà du principal)
 const extraEvents = ref([]);
@@ -1095,8 +1356,20 @@ const removePhoto = (index) => {
   extraPhotos.value.splice(index, 1);
 };
 
+
+
+
 // 🔹 Formulaire principal
 const form = reactive({
+    pro: {
+    orgName: '',
+    orgType: '',
+    orgContactName: '',
+    orgEmail: '',
+    orgPhone: '',
+    orgAddress: '',
+    orgWebsite: '',
+  },
   deceasedFullName: '',
   dateOfBirth: '',
   dateOfDeath: '',
@@ -1148,10 +1421,26 @@ const coverUploadError = ref('');
 const isUploadingCover = ref(false);
 
 // SEO
-const seoTitle = computed(() => t('createObituary.meta.title'));
-const seoDescription = computed(
-  () => t('createObituary.meta.description') || '',
-);
+const seoTitle = computed(() => {
+  if (isProAudience.value) {
+    return tr('createObituary.pro.meta.title', 'Créer une annonce pro – Madizi');
+  }
+  return tr('createObituary.meta.title', 'Créer une annonce – Madizi');
+});
+
+const seoDescription = computed(() => {
+  if (isProAudience.value) {
+    return tr(
+      'createObituary.pro.meta.description',
+      'Création d’annonce pour professionnels : structure, contact, événements, publication.'
+    );
+  }
+  return tr(
+    'createObituary.meta.description',
+    'Création d’annonce : défunt, texte, événements, contacts, publication.'
+  );
+});
+
 
 useSeoMeta({
   title: seoTitle,
@@ -1217,14 +1506,33 @@ const removeContact = (index) => {
 };
 
 // 🔹 Affichage du prix du plan (même format que sur /plans)
-const formatPlanPrice = (plan) => {
-  if (!plan || plan.isFree) {
-    return t('plans.price.free');
-  }
-  const cents = plan.basePriceCents || 0;
-  const euros = (cents / 100).toFixed(2);
+const formatPriceCents = (cents) => {
+  const euros = (Number(cents || 0) / 100).toFixed(2);
   return t('plans.price.paid', { amount: euros });
 };
+
+const formatPlanPrice = (plan) => {
+  if (!plan) return '—';
+  if (plan.isFree) return t('plans.price.free');
+
+  // ✅ abonnement
+  if (plan.billingType === 'subscription') {
+    const price = formatPriceCents(plan.priceCents ?? plan.basePriceCents ?? 0);
+    const per = plan.billingPeriod === 'year' ? ' / an' : ' / mois';
+    return `${price}${per}`;
+  }
+
+  // ✅ oneoff
+  const cents =
+    (typeof plan.basePriceCents === 'number' && plan.basePriceCents > 0)
+      ? plan.basePriceCents
+      : (typeof plan.priceCents === 'number' && plan.priceCents > 0)
+        ? plan.priceCents
+        : 0;
+
+  return formatPriceCents(cents);
+};
+
 
 // 🔹 Upload cover (fichier → /api/uploads/obituary-cover → URL)
 const onCoverFileChange = async (event) => {
@@ -1263,10 +1571,15 @@ const onCoverFileChange = async (event) => {
     }
 
     form.coverImageUrl = res.url;
+     toast?.success?.(tr('toast.coverUploadSuccess', 'Image sauvegardée avec succès !'));
+
+
   } catch (err) {
     console.error('Upload cover failed', err);
     coverUploadError.value =
       'Échec de l’envoi de la photo. Veuillez réessayer.';
+toast?.error?.(tr('toast.coverUploadFail', "Impossible d'envoyer la photo"));
+
   } finally {
     isUploadingCover.value = false;
   }
@@ -1288,7 +1601,7 @@ const validate = () => {
   if (!form.title || form.title.length < 8) {
     errors.title = t('createObituary.errors.titleRequired');
   }
-  if (!form.body || form.body.length < 40) {
+  if (!form.body || form.body.length < 30) {
     errors.body = t('createObituary.errors.bodyTooShort');
   }
   if (!form.event.startsAt) {
@@ -1312,12 +1625,13 @@ const buildPayload = () => {
 
   const currency =
     isPaid && plan && plan.currency ? plan.currency : null;
-  const amountPaid =
-    isPaid &&
-    plan &&
-    typeof plan.basePriceCents === 'number'
-      ? plan.basePriceCents / 100
-      : null;
+ const isSubscription = plan?.billingType === 'subscription';
+
+const amountPaid =
+  isPaid && !isSubscription && plan && typeof plan.basePriceCents === 'number'
+    ? plan.basePriceCents / 100
+    : null;
+
 
   // Événement principal
   const mainEvent = {
@@ -1341,7 +1655,7 @@ const buildPayload = () => {
     .map((ev) => ({
       eventType:
         ev.eventType ||
-        (isMemorialPlan.value ? 'memorial' : 'other'),
+        (isMemorialPlan.value ? 'memorial' : 'wake'),
       title: form.title,
       description: null,
       startsAt: normalizeDateTimeLocal(ev.startsAt),
@@ -1438,56 +1752,205 @@ const buildPayload = () => {
     media.splice(maxPhotosAllowed);
   }
 
-  return {
-    deceasedFullName: form.deceasedFullName,
-    deceasedGivenNames: null,
-    deceasedFamilyNames: null,
+ return {
+  deceasedFullName: form.deceasedFullName,
+  deceasedGivenNames: null,
+  deceasedFamilyNames: null,
 
-    identityStatus: form.identityStatus || 'known',
-    deceasedGender: form.gender || null,
-    dateOfBirth: form.dateOfBirth || null,
-    dateOfDeath: form.dateOfDeath || null,
-    ageDisplay: form.ageDisplay || null,
-    religion: form.religion || null,
-    denomination: form.denomination || null,
+  identityStatus: form.identityStatus || "known",
+  deceasedGender: form.gender || null,
+  dateOfBirth: form.dateOfBirth || null,
+  dateOfDeath: form.dateOfDeath || null,
+  ageDisplay: form.ageDisplay || null,
+  religion: form.religion || null,
+  denomination: form.denomination || null,
 
-    coverImageUrl: form.coverImageUrl || null,
+  coverImageUrl: form.coverImageUrl || null,
 
-    title: form.title,
-    content: form.body,
-    mainLanguage: locale.value || 'fr',
+  title: form.title,
+  content: form.body,
+  mainLanguage: locale.value || "fr",
 
-    city: form.city || null,
-    region: form.region || null,
-    country: form.country || null,
-    countryCode: form.countryCode || null,
-    isRuralArea: !!form.isRuralArea,
+  city: form.city || null,
+  region: form.region || null,
+  country: form.country || null,
+  countryCode: form.countryCode || null,
+  isRuralArea: !!form.isRuralArea,
 
-    // On garde le résumé principal dans la table obituaries
-    familyContactName: primaryContact?.name || null,
-    familyContactPhone: primaryContact?.phone || null,
-    familyContactWhatsapp: primaryContact?.whatsappNumber || null,
-    familyContactEmail: primaryContact?.email || null,
+  // résumé principal (ok)
+  familyContactName: primaryContact?.name || null,
+  familyContactPhone: primaryContact?.phone || null,
+  familyContactWhatsapp: primaryContact?.whatsappNumber || null,
+  familyContactEmail: primaryContact?.email || null,
 
-    // Aligné sur le plan courant
-    isFree: !!(plan && plan.isFree),
-    pricingTier: plan ? plan.pricingTier : null,
-    currency,
-    amountPaid,
-    publishDurationDays: plan ? plan.publishDurationDays : null,
-    paymentProvider: null,
-    paymentReference: null,
+  // ✅ seule source de vérité pour le plan :
+  planCode: currentPlan.value?.code || null,
 
-    events: allEvents,
+  // événements
+  events: allEvents.map((ev) => ({
+    ...ev,
+    // ✅ jamais "other"
+    eventType: ev.eventType || (isMemorialPlan.value ? "memorial" : "wake"),
+  })),
 
-    contacts: contactsPayload,
+  // contacts détaillés
+  contacts: contactsPayload,
 
-    media,
+  // media: tu peux le garder si tu veux (le backend l’ignore pour l’instant)
+  media,
 
-    // Code du plan pour contrôle côté backend
-    planCode: plan ? plan.code : null,
-  };
 };
+
+};
+const { isAuthenticated } = useAuth(); // ton composable existant
+
+// -------------------- DRAFT (localStorage) --------------------
+const DRAFT_KEY = 'madizi.obituaryDraft.v1';
+const draftRestored = ref(false);
+
+function safeClone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function saveDraftDraftState() {
+  if (process.server) return;
+  try {
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        savedAt: new Date().toISOString(),
+        planCode: currentPlan.value?.code || null,
+        audience: isProAudience.value ? 'pro' : 'individual',
+        form: safeClone(form),
+        extraEvents: safeClone(extraEvents.value),
+        extraPhotos: safeClone(extraPhotos.value),
+      })
+    );
+  } catch {}
+}
+function onRestoreDraftClick() {
+  if (!pendingDraft.value) return;
+  applyDraft(pendingDraft.value);
+  pendingDraft.value = null;
+  draftMismatch.value = false;
+  draftRestored.value = true;
+}
+
+function onDiscardDraftClick() {
+  clearDraft();
+  pendingDraft.value = null;
+  draftMismatch.value = false;
+}
+
+function applyDraft(d) {
+  if (!d?.form) return;
+
+  Object.assign(form, d.form);
+  if (Array.isArray(d.extraEvents)) extraEvents.value = d.extraEvents;
+  if (Array.isArray(d.extraPhotos)) extraPhotos.value = d.extraPhotos;
+
+  if (d.planCode && typeof d.planCode === 'string') {
+    const nextQ = { ...route.query, plan: d.planCode };
+
+    // ✅ restaurer l’audience depuis le draft (source de vérité)
+    if (d.audience === 'pro') nextQ.audience = 'pro';
+    else delete nextQ.audience;
+
+    router.replace({ query: nextQ });
+  }
+}
+
+
+function loadDraft() {
+  if (process.server) return null;
+  try {
+    return JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  if (process.server) return;
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {}
+}
+
+
+const pendingDraft = ref(null);
+const draftMismatch = ref(false);
+
+function isDraftMeaningful(d) {
+  const f = d?.form;
+  if (!f) return false;
+
+  const hasMain =
+    (f.deceasedFullName || '').trim() ||
+    (f.title || '').trim() ||
+    (f.body || '').trim() ||
+    (f.event?.startsAt || '').trim() ||
+    (f.coverImageUrl || '').trim();
+
+  const hasExtras =
+    (Array.isArray(d.extraEvents) && d.extraEvents.length) ||
+    (Array.isArray(d.extraPhotos) && d.extraPhotos.length);
+
+  const hasAnyContact =
+    Array.isArray(f.contacts) && f.contacts.some(c =>
+      (c?.name || '').trim() || (c?.phone || '').trim() || (c?.email || '').trim() || (c?.whatsapp || '').trim()
+    );
+
+  return !!(hasMain || hasExtras || hasAnyContact);
+}
+
+onMounted(() => {
+  const d = loadDraft();
+  if (!isDraftMeaningful(d)) {
+    clearDraft();            // supprime les vieux “drafts fantômes”
+    return;
+  }
+
+  const urlPlan = selectedPlanCodeFromQuery.value;
+  const draftPlan = d.planCode;
+
+  if (urlPlan && draftPlan && draftPlan !== urlPlan) {
+    pendingDraft.value = d;
+    draftMismatch.value = true;
+    return;
+  }
+
+  applyDraft(d);
+  draftRestored.value = true;
+});
+
+// -------------------- AUTOSAVE (debounce) --------------------
+
+// -------------------- AUTOSAVE (debounce) --------------------
+// -------------------- AUTOSAVE (debounce) --------------------
+let autosaveTimer = null;
+
+function scheduleAutosave() {
+  if (process.server) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => {
+    saveDraftDraftState();
+  }, 500);
+}
+
+// ✅ Un seul set de watchers
+watch(form, scheduleAutosave, { deep: true });
+watch(extraEvents, scheduleAutosave, { deep: true });
+watch(extraPhotos, scheduleAutosave, { deep: true });
+watch(() => selectedPlanCodeFromQuery.value, scheduleAutosave);
+
+
+const buildConfirmQuery = () => {
+  const q = { plan: currentPlan.value?.code };
+  if (isProAudience.value) q.audience = 'pro';
+  return q;
+};
+
 
 const onSubmit = async () => {
   if (isSubmitting.value) return;
@@ -1498,7 +1961,19 @@ const onSubmit = async () => {
     return;
   }
 
+  // Option: on valide avant même de rediriger vers login (UX + sérieux)
   if (!validate()) return;
+
+  // ✅ Sauvegarde systématique juste avant l’étape “auth / création”
+  if (process.client) saveDraftDraftState();
+
+  // ✅ Pas connecté => redirect login (et le draft est déjà sauvé)
+  if (!isAuthenticated.value) {
+   return navigateTo(
+  `/login?redirect=${encodeURIComponent(route.fullPath)}&reason=publish_requires_auth`
+);
+
+  }
 
   isSubmitting.value = true;
   submitError.value = '';
@@ -1509,27 +1984,39 @@ const onSubmit = async () => {
     const res = await $fetch('/api/obituaries', {
       method: 'POST',
       body: payload,
+      credentials: 'include',
     });
 
     const slug = res?.slug;
 
-    if (slug) {
-      await router.push({
-        path: `/obituary/confirm/${slug}`,
-        query: { plan: currentPlan.value.code },
-      });
-    } else {
-      await router.push('/obituaries');
-    }
+    // ✅ Créé => on nettoie le draft
+    if (process.client) clearDraft();
+
+if (slug) {
+      toast?.success?.("Annonce créee avec succès !");
+
+  await router.push({
+    path: `/obituary/confirm/${slug}`,
+    query: buildConfirmQuery(),
+  });
+} else {
+  await router.push('/obituaries');
+}
+
   } catch (err) {
     console.error('Create obituary failed', err);
+      toast?.error?.("Erreur lors de la création de l'annonce !");
+
     submitError.value =
       t('createObituary.errors.submitFailed') ||
       'Une erreur est survenue lors de la création de l’annonce.';
+
   } finally {
     isSubmitting.value = false;
   }
 };
+
+
 </script>
 
 
@@ -1634,4 +2121,18 @@ const onSubmit = async () => {
   gap: 0.45rem;
   font-size: 0.9rem;
 }
+.planchange {
+  margin-top : 5px
+}
+.draft-banner{
+  margin-top: var(--space-3);
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:0.75rem;
+}
+
 </style>

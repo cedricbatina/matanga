@@ -1,8 +1,10 @@
-// utils/pricingPlans.js
+// utils/pricingPlans.js au m^émé niveau que app/ et server/
 // Central registry for all pricing plans (particulier + pro).
 // !! Single source of truth for codes, durations, prices and main features !!
 // Other parts of the app (API / UI) should rely on these objects or on
 // findPlanByCode / ALL_PLANS_BY_CODE rather than redefining plans locally.
+
+
 
 /**
  * Common notes:
@@ -14,6 +16,41 @@
  *   un texte marketing du type « à vie (10 ans renouvelables gratuitement) »).
  * - basePriceCents / priceCents: prix TTC en centimes d’euro.
  */
+// ---------------------------------------------------------------------------
+// Docs policy (single source of truth)
+// ---------------------------------------------------------------------------
+//
+// Business rules:
+// - individual (familles):
+//   - ID document required to create + to publish
+//   - death certificate required within 7 days (not blocking publish)
+// - pro:
+//   - no ID / no death certificate required in this workflow
+//
+export const DOCS_POLICY = {
+  individual: {
+    idDocument: {
+      requiredForCreate: true,
+      requiredForPublish: true,
+    },
+    deathCertificate: {
+      required: true,
+      deadlineDays: 7,
+      requiredForPublish: false,
+    },
+  },
+  pro: {
+    idDocument: {
+      requiredForCreate: false,
+      requiredForPublish: false,
+    },
+    deathCertificate: {
+      required: false,
+      deadlineDays: null,
+      requiredForPublish: false,
+    },
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Plans particuliers (par annonce)
@@ -21,9 +58,9 @@
 
 export const INDIVIDUAL_PLANS = {
   // Gratuit – annonce simple 14 jours
-  FREE_7: {
-    code: "indiv_free_7",
-    labelKey: "plans.codes.indiv_free_7",
+  FREE_14: {
+    code: "indiv_free_14",
+    labelKey: "plans.codes.indiv_free_14",
     label: "Annonce découverte – 14 jours",
     description:
       "Annonce simple, visible 14 jours avec un événement principal et quelques photos.",
@@ -33,7 +70,7 @@ export const INDIVIDUAL_PLANS = {
 
     isFree: true,
     isPublic: true,
-    pricingTier: "indiv_free_7",
+    pricingTier: "indiv_free_14",
     currency: null,
     basePriceCents: 0,
     priceCents: 0,
@@ -58,17 +95,15 @@ export const INDIVIDUAL_PLANS = {
     },
 
     // Tous les plans, même gratuits, exigent les docs
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+ 
 
     sortOrder: 10,
   },
 
   // Essentiel – 30 jours (entrée de gamme payante)
-  BASIC_21: {
-    code: "indiv_basic_21",
-    labelKey: "plans.codes.indiv_basic_21",
+  BASIC_30: {
+    code: "indiv_basic_30",
+    labelKey: "plans.codes.indiv_basic_30",
     label: "Formule Essentiel – 30 jours",
     description:
       "Pour annoncer dignement les obsèques, avec plusieurs événements et plus de photos.",
@@ -78,7 +113,7 @@ export const INDIVIDUAL_PLANS = {
 
     isFree: false,
     isPublic: true,
-    pricingTier: "indiv_basic_21",
+    pricingTier: "indiv_basic_30",
     currency: "EUR",
     basePriceCents: 1450, // 14,50 €
     priceCents: 1450,
@@ -102,17 +137,14 @@ export const INDIVIDUAL_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
 
     sortOrder: 20,
   },
 
   // Confort – 45 jours
-  ESSENTIEL_30: {
-    code: "indiv_essentiel_30",
-    labelKey: "plans.codes.indiv_essentiel_30",
+  ESSENTIEL_45: {
+    code: "indiv_essentiel_45",
+    labelKey: "plans.codes.indiv_essentiel_45",
     label: "Formule Confort – 45 jours",
     description:
       "Annonce plus complète, visible plus longtemps, avec plusieurs événements et davantage de médias.",
@@ -122,7 +154,7 @@ export const INDIVIDUAL_PLANS = {
 
     isFree: false,
     isPublic: true,
-    pricingTier: "indiv_essentiel_30",
+    pricingTier: "indiv_essentiel_45",
     currency: "EUR",
     basePriceCents: 2500, // 25 €
     priceCents: 2500,
@@ -146,17 +178,15 @@ export const INDIVIDUAL_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+
 
     sortOrder: 30,
   },
 
   // Prestige – 90 jours
-  PRESTIGE_60: {
-    code: "indiv_prestige_60",
-    labelKey: "plans.codes.indiv_prestige_60",
+  PRESTIGE_90: {
+    code: "indiv_prestige_90",
+    labelKey: "plans.codes.indiv_prestige_90",
     label: "Formule Prestige – 90 jours",
     description:
       "Visibilité longue durée, jusqu’à 10 événements, 15 photos, vidéos et mur de condoléances.",
@@ -166,7 +196,7 @@ export const INDIVIDUAL_PLANS = {
 
     isFree: false,
     isPublic: true,
-    pricingTier: "indiv_prestige_60",
+    pricingTier: "indiv_prestige_90",
     currency: "EUR",
     basePriceCents: 3500, // 35 €
     priceCents: 3500,
@@ -190,9 +220,7 @@ export const INDIVIDUAL_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+ 
 
     sortOrder: 40,
   },
@@ -239,9 +267,7 @@ export const INDIVIDUAL_MEMORIAL_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+   
 
     sortOrder: 110,
   },
@@ -283,9 +309,7 @@ export const INDIVIDUAL_MEMORIAL_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+  
 
     sortOrder: 120,
   },
@@ -327,9 +351,7 @@ export const INDIVIDUAL_MEMORIAL_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+  
 
     sortOrder: 130,
   },
@@ -376,9 +398,7 @@ export const PRO_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+    
 
     sortOrder: 210,
   },
@@ -419,9 +439,7 @@ export const PRO_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+
 
     sortOrder: 220,
   },
@@ -462,9 +480,7 @@ export const PRO_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
+
 
     sortOrder: 230,
   },
@@ -505,9 +521,6 @@ export const PRO_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-    requireIdDocument: true,
-    requireDeathCertificate: true,
-    deathCertificateDeadlineDays: 7,
 
     sortOrder: 240,
   },
@@ -627,13 +640,18 @@ const ALL_PLANS_BY_CODE = {};
 function registerPlan(plan) {
   if (!plan || !plan.code) return;
 
-  const clone = { ...plan };
+  const docsPolicy =
+    plan.accountType === "pro" ? DOCS_POLICY.pro : DOCS_POLICY.individual;
+
+  const clone = { ...plan, docsPolicy };
+
   ALL_PLANS_BY_CODE[plan.code] = clone;
 
   if (plan.pricingTier && plan.pricingTier !== plan.code) {
     ALL_PLANS_BY_CODE[plan.pricingTier] = clone;
   }
 }
+
 
 Object.values(INDIVIDUAL_PLANS).forEach(registerPlan);
 Object.values(INDIVIDUAL_MEMORIAL_PLANS).forEach(registerPlan);
@@ -655,5 +673,26 @@ export function findPlanByCode(planCode) {
  * Plan gratuit par défaut pour les particuliers.
  */
 export function getDefaultIndividualFreePlan() {
-  return INDIVIDUAL_PLANS.FREE_7;
+  return INDIVIDUAL_PLANS.FREE_14;
+}
+
+// utils/pricingPlans.js
+
+// ... tes exports existants (findPlanByCode etc.)
+
+/**
+ * Retourne la liste de tous les plans (particulier + pro).
+ * Triés par sortOrder (si présent).
+ */
+export function getAllPlans() {
+  const lists = [
+    ...Object.values(INDIVIDUAL_PLANS || {}),
+    ...Object.values(INDIVIDUAL_MEMORIAL_PLANS || {}),
+    ...Object.values(PRO_PLANS || {}),
+    ...Object.values(PRO_SUBSCRIPTION_PLANS || {}),
+  ];
+
+  return lists
+    .filter(Boolean)
+    .sort((a, b) => (a?.sortOrder ?? 9999) - (b?.sortOrder ?? 9999));
 }

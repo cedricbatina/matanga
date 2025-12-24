@@ -1,4 +1,11 @@
 // nuxt.config.js
+
+
+
+//const isProd = process.env.NODE_ENV === "production";
+
+
+
 const isProd = process.env.NODE_ENV === "production";
 
 export default defineNuxtConfig({
@@ -12,6 +19,11 @@ export default defineNuxtConfig({
   },
 
   css: ["~/assets/css/main.css"],
+ plugins: [
+ 
+    { src: "~/plugins/toast.client.js" },
+ 
+  ],
 
   modules: [
     "@pinia/nuxt",

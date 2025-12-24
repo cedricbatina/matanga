@@ -364,7 +364,12 @@ const onPageChange = (page) => {
 
 // Filtre langue + premier chargement
 obituaries.setFilters({ language: locale.value });
-await obituaries.fetchList();
+
+// ✅ évite le 2e fetch client si SSR a déjà rempli le store
+if (!obituaries.items?.length) {
+  await obituaries.fetchList();
+}
+
 
 watch(
   () => locale.value,
