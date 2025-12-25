@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
   const requestId =
     event.context.requestId || Math.random().toString(36).slice(2, 10);
 
-  // Session optionnelle (admin plus tard)
+  // Session optionnelle (pas utilisée ici, mais utile pour logs / futur admin)
   const session = await getAuthSession(event);
 
   // ---------- Pagination ----------
@@ -128,9 +128,13 @@ export default defineEventHandler(async (event) => {
   const whereParts = [];
   const params = [];
 
+  // Public listing constraints
   whereParts.push("o.status = 'published'");
-  whereParts.push("o.moderation_status != 'removed'");
   whereParts.push("o.visibility = 'public'");
+  // Si la colonne existe et que tu l'utilises dans ton schéma
+  whereParts.push(
+    "(o.moderation_status IS NULL OR o.moderation_status != 'removed')"
+  );
   whereParts.push("(o.publish_at IS NULL OR o.publish_at <= NOW())");
   whereParts.push("(o.expires_at IS NULL OR o.expires_at > NOW())");
 
@@ -224,8 +228,6 @@ export default defineEventHandler(async (event) => {
     /**
      * IMPORTANT (anti-doublons):
      * On joint UN SEUL event par obituary via une sous-requête corrélée.
-     * (Ton ancienne version faisait MIN(starts_at) + join sur starts_at :
-     *  si plusieurs events ont la même starts_at, ça duplique l'obituary.)
      */
     const listSql = `
       SELECT
@@ -307,8 +309,8 @@ export default defineEventHandler(async (event) => {
     };
   } catch (err) {
     logError("List obituaries failed", {
-      error: err.message,
-      stack: err.stack,
+      error: err?.message,
+      stack: err?.stack,
       requestId,
     });
 

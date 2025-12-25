@@ -29,41 +29,66 @@ function isAdminOrModerator(session) {
   const roles = Array.isArray(session.roles) ? session.roles : [];
   return roles.includes("admin") || roles.includes("moderator");
 }
-function normalizeMedia(list) {
-  if (!Array.isArray(list)) return [];
+const ALLOWED_MEDIA_TYPES = ["image", "video"];
+const ALLOWED_MEDIA_PROVIDERS = [
+  "upload",
+  "youtube",
+  "vimeo",
+  "facebook",
+  "tiktok",
+  "instagram",
+  "x",
+  "other",
+];
 
-  const allowedTypes = new Set(["image", "video", "link", "other"]);
-  const out = [];
+function normalizeMedia(input) {
+  if (!Array.isArray(input)) return [];
 
-  for (const raw of list) {
-    if (!raw) continue;
+  return input
+    .map((m, idx) => {
+      if (!m) return null;
 
-    const mediaType = String(
-      raw.mediaType || raw.media_type || "image"
-    ).toLowerCase();
-    if (!allowedTypes.has(mediaType)) continue;
+      const mediaType = sanitizeString(m.mediaType || m.media_type) || "image";
+      const provider = sanitizeString(m.provider) || "upload"; // ✅ default DB-compatible
+      const url = sanitizeString(m.url);
+      const thumbnailUrl = sanitizeString(m.thumbnailUrl || m.thumbnail_url);
+      const title = sanitizeString(m.title);
+      const description = sanitizeString(m.description);
+      const durationSeconds =
+        m.durationSeconds != null ? Number(m.durationSeconds) : null;
 
-    const url = sanitizeString(raw.url);
-    if (!url) continue; // obligatoire
+      const isMain = !!(m.isMain || m.is_main);
+      const sortOrder = Number.isFinite(Number(m.sortOrder))
+        ? Number(m.sortOrder)
+        : idx;
 
-    out.push({
-      eventId: raw.eventId ?? raw.event_id ?? null,
-      mediaType,
-      provider: sanitizeString(raw.provider) || "direct",
-      url,
-      thumbnailUrl:
-        sanitizeString(raw.thumbnailUrl || raw.thumbnail_url) || null,
-      title: sanitizeString(raw.title) || null,
-      description: sanitizeString(raw.description) || null,
-      durationSeconds: raw.durationSeconds ?? raw.duration_seconds ?? null,
-      isMain: !!(raw.isMain || raw.is_main),
-      sortOrder: Number(raw.sortOrder ?? raw.sort_order ?? 0) || 0,
-    });
-  }
+      const eventIdRaw = m.eventId ?? m.event_id ?? null;
+      const eventId = eventIdRaw == null ? null : Number(eventIdRaw);
 
-  // optionnel : trier par sortOrder
-  out.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  return out;
+      if (!url) return null;
+      if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return null;
+
+      // ✅ IMPORTANT: provider doit matcher enum
+      const providerSafe = ALLOWED_MEDIA_PROVIDERS.includes(provider)
+        ? provider
+        : "upload";
+
+      return {
+        mediaType,
+        provider: providerSafe,
+        url,
+        thumbnailUrl,
+        title,
+        description,
+        durationSeconds: Number.isFinite(durationSeconds)
+          ? Math.max(0, Math.floor(durationSeconds))
+          : null,
+        isMain,
+        sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
+        eventId: Number.isFinite(eventId) ? eventId : null,
+      };
+    })
+    .filter(Boolean);
 }
 
 
@@ -577,6 +602,30 @@ export default defineEventHandler(async (event) => {
     await tx.query("DELETE FROM obituary_media WHERE obituary_id = ?", [
       existing.id,
     ]);
+ if (normalizedMedia.some((m) => m.eventId != null)) {
+   const eventIds = [
+     ...new Set(normalizedMedia.map((m) => m.eventId).filter(Boolean)),
+   ];
+
+   if (eventIds.length) {
+     const ok = await tx.query(
+       `SELECT id FROM obituary_events WHERE obituary_id = ? AND id IN (?)`,
+       [existing.id, eventIds]
+     );
+
+     const okSet = new Set((ok || []).map((r) => r.id));
+     const bad = eventIds.filter((id) => !okSet.has(id));
+     if (bad.length) {
+       throw createError({
+         statusCode: 400,
+         statusMessage: "Invalid obituary data.",
+         data: {
+           fieldErrors: { media: "Some media references an unknown event." },
+         },
+       });
+     }
+   }
+ }
 
     if (normalizedMedia.length > 0) {
       const insertMediaSql = `
@@ -631,6 +680,18 @@ export default defineEventHandler(async (event) => {
       obituaryId: result.obituaryId,
       slug: result.slug,
       message: "Obituary updated successfully.",
+      media: {
+        url,
+        provider: "upload", // ✅ IMPORTANT: enum DB
+        mediaType: mime.startsWith("video/") ? "video" : "image",
+        thumbnailUrl: null,
+        title: null,
+        description: null,
+        isMain: false,
+        sortOrder: 0,
+        eventId: null,
+        durationSeconds: null,
+      },
     };
   } catch (err) {
     logError("Update obituary failed", {
