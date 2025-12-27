@@ -41,19 +41,52 @@ const ALLOWED_MEDIA_PROVIDERS = [
   "other",
 ];
 
+function isSafeMediaUrl(u) {
+  if (!u) return false;
+  const s = String(u).trim();
+
+  // bloque les schémas dangereux
+  if (/^(javascript:|data:)/i.test(s)) return false;
+
+  // autorise les urls relatives (ex: /api/s3/..., /uploads/...)
+  if (s.startsWith("/")) return true;
+
+  // autorise http/https seulement
+  return /^https?:\/\//i.test(s);
+}
+
 function normalizeMedia(input) {
   if (!Array.isArray(input)) return [];
 
-  return input
+  const out = input
     .map((m, idx) => {
       if (!m) return null;
 
-      const mediaType = sanitizeString(m.mediaType || m.media_type) || "image";
-      const provider = sanitizeString(m.provider) || "upload"; // ✅ default DB-compatible
+      const mediaTypeRaw = sanitizeString(m.mediaType || m.media_type);
       const url = sanitizeString(m.url);
+      if (!url) return null;
+
+      let mediaType = mediaTypeRaw || "image";
+      if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return null;
+
+      // provider: default selon type
+      let provider = sanitizeString(m.provider);
+      if (!provider) provider = mediaType === "video" ? "other" : "upload";
+
+      // normalize provider
+      provider = ALLOWED_MEDIA_PROVIDERS.includes(provider)
+        ? provider
+        : mediaType === "video"
+        ? "other"
+        : "upload";
+
+      // règle business: pas de vidéo uploadée
+      if (mediaType === "video" && provider === "upload") return null;
+
       const thumbnailUrl = sanitizeString(m.thumbnailUrl || m.thumbnail_url);
       const title = sanitizeString(m.title);
       const description = sanitizeString(m.description);
+
       const durationSeconds =
         m.durationSeconds != null ? Number(m.durationSeconds) : null;
 
@@ -65,17 +98,9 @@ function normalizeMedia(input) {
       const eventIdRaw = m.eventId ?? m.event_id ?? null;
       const eventId = eventIdRaw == null ? null : Number(eventIdRaw);
 
-      if (!url) return null;
-      if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return null;
-
-      // ✅ IMPORTANT: provider doit matcher enum
-      const providerSafe = ALLOWED_MEDIA_PROVIDERS.includes(provider)
-        ? provider
-        : "upload";
-
       return {
         mediaType,
-        provider: providerSafe,
+        provider,
         url,
         thumbnailUrl,
         title,
@@ -89,7 +114,10 @@ function normalizeMedia(input) {
       };
     })
     .filter(Boolean);
+
+  return out;
 }
+
 
 
 export default defineEventHandler(async (event) => {
@@ -596,39 +624,75 @@ export default defineEventHandler(async (event) => {
             }
           }
         }
-  if (hasMediaKey) {
-    const normalizedMedia = normalizeMedia(media);
+if (hasMediaKey) {
+  const normalizedMedia = normalizeMedia(media);
 
-    await tx.query("DELETE FROM obituary_media WHERE obituary_id = ?", [
-      existing.id,
-    ]);
- if (normalizedMedia.some((m) => m.eventId != null)) {
-   const eventIds = [
-     ...new Set(normalizedMedia.map((m) => m.eventId).filter(Boolean)),
-   ];
+  // validations strictes
+  for (const m of normalizedMedia) {
+    if (!isSafeMediaUrl(m.url)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Invalid obituary data.",
+        data: { fieldErrors: { media: "Invalid media url." } },
+      });
+    }
+    if (m.thumbnailUrl && !isSafeMediaUrl(m.thumbnailUrl)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Invalid obituary data.",
+        data: { fieldErrors: { media: "Invalid thumbnail url." } },
+      });
+    }
+    if (m.mediaType === "video" && m.provider === "upload") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Invalid obituary data.",
+        data: { fieldErrors: { media: "Video upload is not allowed." } },
+      });
+    }
+  }
 
-   if (eventIds.length) {
-     const ok = await tx.query(
-       `SELECT id FROM obituary_events WHERE obituary_id = ? AND id IN (?)`,
-       [existing.id, eventIds]
-     );
+  // option: garantir 1 seul is_main
+  let mainAlready = false;
+  for (const m of normalizedMedia) {
+    if (m.isMain) {
+      if (mainAlready) m.isMain = false;
+      else mainAlready = true;
+    }
+  }
 
-     const okSet = new Set((ok || []).map((r) => r.id));
-     const bad = eventIds.filter((id) => !okSet.has(id));
-     if (bad.length) {
-       throw createError({
-         statusCode: 400,
-         statusMessage: "Invalid obituary data.",
-         data: {
-           fieldErrors: { media: "Some media references an unknown event." },
-         },
-       });
-     }
-   }
- }
+  // wipe & replace (simple et cohérent avec ton UI actuelle)
+  await tx.query("DELETE FROM obituary_media WHERE obituary_id = ?", [
+    existing.id,
+  ]);
 
-    if (normalizedMedia.length > 0) {
-      const insertMediaSql = `
+  // validate event ids referenced by media
+  const eventIds = [
+    ...new Set(normalizedMedia.map((m) => m.eventId).filter((v) => v != null)),
+  ];
+
+  if (eventIds.length) {
+    const placeholders = eventIds.map(() => "?").join(",");
+    const ok = await tx.query(
+      `SELECT id FROM obituary_events WHERE obituary_id = ? AND id IN (${placeholders})`,
+      [existing.id, ...eventIds]
+    );
+
+    const okSet = new Set((ok || []).map((r) => Number(r.id)));
+    const bad = eventIds.filter((id) => !okSet.has(Number(id)));
+    if (bad.length) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Invalid obituary data.",
+        data: {
+          fieldErrors: { media: "Some media references an unknown event." },
+        },
+      });
+    }
+  }
+
+  if (normalizedMedia.length > 0) {
+    const insertMediaSql = `
       INSERT INTO obituary_media (
         obituary_id, event_id,
         media_type, provider, url,
@@ -645,23 +709,24 @@ export default defineEventHandler(async (event) => {
       )
     `;
 
-      for (const m of normalizedMedia) {
-        await tx.query(insertMediaSql, [
-          existing.id,
-          m.eventId,
-          m.mediaType,
-          m.provider,
-          m.url,
-          m.thumbnailUrl,
-          m.title,
-          m.description,
-          m.durationSeconds,
-          m.isMain ? 1 : 0,
-          Number.isFinite(m.sortOrder) ? m.sortOrder : 0,
-        ]);
-      }
+    for (const m of normalizedMedia) {
+      await tx.query(insertMediaSql, [
+        existing.id,
+        m.eventId,
+        m.mediaType,
+        m.provider,
+        m.url,
+        m.thumbnailUrl,
+        m.title,
+        m.description,
+        m.durationSeconds,
+        m.isMain ? 1 : 0,
+        Number.isFinite(m.sortOrder) ? m.sortOrder : 0,
+      ]);
     }
   }
+}
+
 
         return { obituaryId: existing.id, slug: finalSlug };
       },
@@ -680,18 +745,7 @@ export default defineEventHandler(async (event) => {
       obituaryId: result.obituaryId,
       slug: result.slug,
       message: "Obituary updated successfully.",
-      media: {
-        url,
-        provider: "upload", // ✅ IMPORTANT: enum DB
-        mediaType: mime.startsWith("video/") ? "video" : "image",
-        thumbnailUrl: null,
-        title: null,
-        description: null,
-        isMain: false,
-        sortOrder: 0,
-        eventId: null,
-        durationSeconds: null,
-      },
+    
     };
   } catch (err) {
     logError("Update obituary failed", {

@@ -404,3 +404,108 @@ bien refléter “Gratuit 14 jours”
 messages clairs quand “Paiement déjà enregistré”
 
 messages docs en retard / obligatoires.
+
+Journal de dev — Médias (S3) + PUT obituary + page d’édition
+Contexte
+
+Objectif : permettre d’ajouter des souvenirs publics (photos/vidéos) à une annonce via upload S3 (Infomaniak), stocker uniquement l’URL en DB (obituary_media), et gérer l’édition côté UI (Nuxt).
+
+✅ Avancées
+
+Endpoint upload média public : POST /api/obituaries/:slug/media
+
+Auth obligatoire + ACL : owner ou admin/mod.
+
+Lecture multipart (readMultipartFormData), récupération file.
+
+Détection mediaType : image vs vidéo selon MIME.
+
+Upload via AWS SDK (PutObjectCommand) vers bucket S3.
+
+Génération URL publique via helper centralisé buildPublicObjectUrl().
+
+Insert DB dans obituary_media (provider = 'upload', media_type = image|video, url = storedUrl).
+
+Retour JSON ok: true + objet media.
+
+Centralisation config S3 : server/utils/s3.js
+
+Validation env : USE_S3, S3_ENDPOINT (normalisé avec scheme), S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY, S3_REGION, S3_PUBLIC_BASE_URL.
+
+Expose getS3Client() et buildPublicObjectUrl().
+
+PUT obituary : ajout support media
+
+normalizeMedia() pour sécuriser: mediaType, provider (enum), url obligatoire.
+
+Transaction : si media présent → delete + insert complet.
+
+Vérification eventId si fourni : doit appartenir à obituary_events de l’obituary.
+
+UI édition : pages/obituary/edit/[slug].vue
+
+Section Souvenirs : upload multi fichiers vers /api/obituaries/:slug/media.
+
+UI affiche grille image/video + actions :
+
+définir comme couverture
+
+toggle “principal”
+
+supprimer
+
+title/description optionnels
+
+mediaDirty (tracking) : n’envoie payload.media dans PUT que si modifié.
+
+Si pas de coverImageUrl, la première image uploadée devient cover.
+
+⚠️ Difficultés / bugs identifiés
+
+PUT renvoyait un champ media utilisant url et mime non définis → crash possible au return.
+
+Décision : supprimer media du return (PUT n’upload rien).
+
+media.post.js : oubli probable de import crypto from "crypto"; après refacto vers utils/s3.js.
+
+Nom de fichier S3 : risque d’avoir photo.jpg.jpg car on ajoute .ext même si filename contient déjà une extension.
+
+UI : fonction detectProvider() définie mais pas utilisée → provider restait “other” même pour YouTube/Vimeo.
+
+✅ Correctifs prévus (patch minimal)
+
+PUT /api/obituaries/:slug
+
+Retirer return.media (variables undefined).
+
+POST /api/obituaries/:slug/media
+
+Ajouter import crypto from "crypto".
+
+Éviter double extension : strip extension avant d’ajouter .ext.
+
+Nettoyage : supprimer buildPublicUrl() devenu inutile.
+
+UI
+
+Utiliser detectProvider(url) dans addExternalMedia().
+
+🧪 Tests à faire
+
+Upload d’une image + vérifier :
+
+URL S3 OK
+
+insertion obituary_media OK
+
+affichage preview sur page edit OK
+
+coverImageUrl auto si vide
+
+Upload d’une vidéo + vérifier preview <video> + mediaType=video
+
+Ajouter lien YouTube/Vimeo + vérifier provider détecté
+
+Cliquer “Enregistrer” → vérifier que PUT réécrit bien obituary_media avec les items UI
+
+Vérifier ACL : un autre user ne peut pas upload / modifier

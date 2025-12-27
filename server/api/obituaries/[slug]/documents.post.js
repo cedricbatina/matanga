@@ -188,11 +188,11 @@ export default defineEventHandler(async (event) => {
             // ACL: "private" // on laisse privé, ce sont des docs sensibles
           })
         );
-
+function encodeKeyPath(key) {
+  return key.split("/").map(encodeURIComponent).join("/");
+}
         const base = S3_PUBLIC_BASE_URL.replace(/\/$/, "");
-        storedUrl = base
-          ? `${base}/${S3_BUCKET}/${objectKey}`
-          : `s3://${S3_BUCKET}/${objectKey}`;
+       storedUrl = `/api/media/${encodeKeyPath(objectKey)}`;
 
         logInfo("S3 upload obituary document success", {
           slug: slugParam,

@@ -206,105 +206,7 @@
             </div>
           </section>
 
-          <!-- Aperçu cover -->
-          <section v-if="coverImageUrl" class="review-section">
-            <h2 class="review-section__title">
-              {{ t('obituaryReview.sections.coverImage.title', 'Image de couverture') }}
-            </h2>
-            <p class="review-section__subtitle">
-              {{ t('obituaryReview.sections.coverImage.subtitle', 'Cette image sera affichée en haut de la page publique.') }}
-            </p>
-            <img :src="coverImageUrl" alt="Image de couverture" class="review-cover-image" />
-          </section>
-
-          <!-- Souvenirs (public) -->
-          <section class="form-section">
-            <h2 class="form-section__title">Souvenirs (photos / vidéos)</h2>
-            <p class="form-section__subtitle">
-              Les souvenirs sont <strong>publics</strong> et visibles sur la page de l’annonce.
-              Le fichier est uploadé sur S3 (Infomaniak) et on ne stocke ici que l’URL.
-            </p>
-
-            <div class="form-grid-2-col">
-              <div class="form-field">
-                <label class="form-label">Ajouter des fichiers (S3)</label>
-                <input
-                  type="file"
-                  class="form-control"
-                  accept="image/*,video/*"
-                  multiple
-                  @change="onPickMediaFiles"
-                />
-                <p class="form-section__subtitle" v-if="uploadingMedia">Upload en cours…</p>
-              </div>
-
-              <div class="form-field">
-                <label class="form-label">Ajouter un lien (YouTube/Vimeo/etc.)</label>
-                <div class="inline-row">
-                  <input
-                    v-model.trim="externalMediaUrl"
-                    class="form-control"
-                    type="url"
-                    placeholder="https://…"
-                  />
-                  <button type="button" class="btn btn-outline btn-sm" @click="addExternalMedia">
-                    Ajouter
-                  </button>
-                </div>
-                <p class="form-section__subtitle">
-                  Astuce : pour YouTube/Vimeo, colle le lien. Le provider sera “other” pour l’instant.
-                </p>
-              </div>
-            </div>
-
-            <p v-if="!mediaItems.length" class="text-sm text-soft">
-              Aucun souvenir pour le moment.
-            </p>
-
-            <div v-else class="media-grid">
-              <article v-for="(m, idx) in mediaItems" :key="m.url + ':' + idx" class="media-card">
-                <div class="media-card__thumb" v-if="m.mediaType === 'image'">
-                  <img :src="m.thumbnailUrl || m.url" alt="" loading="lazy" />
-                </div>
-
-                <div class="media-card__thumb" v-else>
-                  <video :src="m.url" controls preload="metadata" />
-                </div>
-
-                <div class="media-card__body">
-                  <p class="text-xs text-soft" style="margin:0 0 .35rem;">
-                    {{ m.provider }} · {{ m.mediaType }}
-                  </p>
-
-                  <div class="inline-row" style="gap:.5rem; flex-wrap:wrap;">
-                    <button type="button" class="btn btn-ghost btn-xs" @click="setAsCover(m)">
-                      Définir comme couverture
-                    </button>
-                    <button type="button" class="btn btn-ghost btn-xs" @click="toggleMain(m)">
-                      {{ m.isMain ? 'Retirer (principal)' : 'Marquer (principal)' }}
-                    </button>
-                    <button type="button" class="btn btn-ghost btn-xs" @click="removeMedia(idx)">
-                      Supprimer
-                    </button>
-                  </div>
-
-                  <div class="form-row" style="margin-top:.6rem;">
-                    <label class="form-label">Titre (optionnel)</label>
-                    <input v-model.trim="m.title" class="form-control" type="text" placeholder="Ex: Photo souvenir" />
-                  </div>
-
-                  <div class="form-row">
-                    <label class="form-label">Description (optionnel)</label>
-                    <textarea v-model.trim="m.description" class="form-control form-control--textarea" rows="2" placeholder="…" />
-                  </div>
-                </div>
-              </article>
-            </div>
-
-            <p v-if="mediaDirty" class="text-xs text-soft" style="margin-top:.75rem;">
-              Modifications médias en attente : n’oublie pas de cliquer “Enregistrer”.
-            </p>
-          </section>
+       
 
           <!-- Documents (privés) -->
           <section class="form-section">
@@ -425,6 +327,7 @@
               </div>
             </div>
           </section>
+
 
           <!-- Bloc événement principal -->
           <section class="form-section">
@@ -608,6 +511,115 @@
               </button>
             </div>
           </section>
+             <!-- Aperçu cover -->
+          <section v-if="coverImageUrl" class="review-section">
+            <h2 class="review-section__title">
+              {{ t('obituaryReview.sections.coverImage.title', 'Image de couverture') }}
+            </h2>
+            <p class="review-section__subtitle">
+              {{ t('obituaryReview.sections.coverImage.subtitle', 'Cette image sera affichée en haut de la page publique.') }}
+            </p>
+            <img :src="coverImageUrl" alt="Image de couverture" class="review-cover-image" />
+          </section>
+  
+          <!-- Souvenirs (public) -->
+          <section class="form-section">
+            <h2 class="form-section__title">Souvenirs (photos / vidéos)</h2>
+            <p class="form-section__subtitle">
+              Les souvenirs sont <strong>publics</strong> et visibles sur la page de l’annonce.
+              Le fichier est uploadé sur S3 (Infomaniak) et on ne stocke ici que l’URL.
+            </p>
+
+            <div class="form-grid-2-col">
+              <div class="form-field">
+                <label class="form-label">Ajouter des fichiers (S3)</label>
+                <input
+                  type="file"
+                  class="form-control"
+                 accept="image/*"
+
+                  multiple
+                  @change="onPickMediaFiles"
+                />
+                <p class="form-section__subtitle" v-if="uploadingMedia">Upload en cours…</p>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label">Ajouter un lien (YouTube/Vimeo/etc.)</label>
+                <div class="inline-row">
+                  <input
+                    v-model.trim="externalMediaUrl"
+                    class="form-control"
+                    type="url"
+                    placeholder="https://…"
+                  />
+                  <button type="button" class="btn btn-outline btn-sm" @click="addExternalMedia">
+                    Ajouter
+                  </button>
+                </div>
+                <p class="form-section__subtitle">
+                  Astuce : pour YouTube/Vimeo, colle le lien. Le provider sera “other” pour l’instant.
+                </p>
+              </div>
+            </div>
+
+            <p v-if="!mediaItems.length" class="text-sm text-soft">
+              Aucun souvenir pour le moment.
+            </p>
+
+            <div v-else class="media-grid">
+              <article v-for="(m, idx) in mediaItems" :key="m.url + ':' + idx" class="media-card">
+                <div class="media-card__thumb" v-if="m.mediaType === 'image'">
+                  <img :src="m.thumbnailUrl || m.url" alt="" loading="lazy" />
+                </div>
+
+                 <div class="media-card__thumb" v-else>
+  <a :href="m.url" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+    Ouvrir la vidéo ({{ m.provider }})
+  </a>
+</div>
+
+
+
+                <div class="media-card__body">
+                  <p class="text-xs text-soft" style="margin:0 0 .35rem;">
+                    {{ m.provider }} · {{ m.mediaType }}
+                  </p>
+                   <p class="text-xs" style="margin:0 0 .5rem;">
+  <a :href="m.url" target="_blank" rel="noopener">
+    Ouvrir le fichier
+  </a>
+</p>
+
+                  <div class="inline-row" style="gap:.5rem; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-ghost btn-xs" @click="setAsCover(m)">
+                      Définir comme couverture
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-xs" @click="toggleMain(m)">
+                      {{ m.isMain ? 'Retirer (principal)' : 'Marquer (principal)' }}
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-xs" @click="removeMedia(idx)">
+                      Supprimer
+                    </button>
+                  </div>
+
+                  <div class="form-row" style="margin-top:.6rem;">
+                    <label class="form-label">Titre (optionnel)</label>
+                    <input v-model.trim="m.title" class="form-control" type="text" placeholder="Ex: Photo souvenir" />
+                  </div>
+
+                  <div class="form-row">
+                    <label class="form-label">Description (optionnel)</label>
+                    <textarea v-model.trim="m.description" class="form-control form-control--textarea" rows="2" placeholder="…" />
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <p v-if="mediaDirty" class="text-xs text-soft" style="margin-top:.75rem;">
+              Modifications médias en attente : n’oubliez pas de cliquer “Enregistrer”.
+            </p>
+          </section>
         </div>
 
         <!-- Footer actions -->
@@ -671,6 +683,78 @@ const docType = ref('id_card');
 const { data, pending, error, refresh } = await useFetch(() => `/api/obituaries/${slug.value}`, {
   key: () => `obituary-edit-${slug.value}`,
 });
+const uploadingCover = ref(false);
+function pickMediaFromUploadResponse(res) {
+  if (!res) return null;
+  if (res.media && typeof res.media === "object") return res.media;
+  if (res.item && typeof res.item === "object") return res.item;
+  // cas: API renvoie direct { url: "...", ... }
+  if (typeof res.url === "string") return res;
+  if (typeof res.fileUrl === "string") return { url: res.fileUrl };
+  if (typeof res.location === "string") return { url: res.location }; // classique AWS SDK
+  return null;
+}
+
+function normalizeMediaItem(m, idx = 0) {
+  const url = m?.url || m?.fileUrl || m?.location || "";
+  return {
+    id: m?.id ?? null,
+    url,
+    thumbnailUrl: m?.thumbnailUrl ?? m?.thumbnail_url ?? null,
+    mediaType: m?.mediaType ?? m?.media_type ?? "image", // ✅ default image
+    provider: m?.provider ?? "upload",
+    title: m?.title ?? "",
+    description: m?.description ?? "",
+    durationSeconds: m?.durationSeconds ?? m?.duration_seconds ?? null,
+    isMain: !!(m?.isMain ?? m?.is_main),
+    sortOrder: Number.isFinite(Number(m?.sortOrder ?? m?.sort_order)) ? Number(m?.sortOrder ?? m?.sort_order) : idx,
+    eventId: m?.eventId ?? m?.event_id ?? null,
+  };
+}
+
+const onPickCoverFile = async (e) => {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+
+  // sécurité : image uniquement
+  if (!String(file.type || "").startsWith("image/")) {
+    const msg = "Seules les images sont autorisées pour la couverture.";
+    if (toast?.error) toast.error(msg);
+    if (e?.target) e.target.value = "";
+    return;
+  }
+
+  uploadingCover.value = true;
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+
+    // on réutilise le endpoint media (upload S3) qui renvoie une URL
+    const res = await $fetch(`/api/obituaries/${slug.value}/media`, {
+      method: "POST",
+      body: fd,
+    });
+
+    const url = res?.media?.url;
+   const uploaded = pickMediaFromUploadResponse(res);
+const item = uploaded ? normalizeMediaItem(uploaded, mediaItems.value.length) : null;
+
+if (item?.url) {
+  form.coverImageUrl = item.url;
+
+  const exists = mediaItems.value.some((m) => m?.url === item.url);
+  if (!exists) mediaItems.value.push(item);
+}
+
+  } catch (err) {
+    const msg = err?.data?.message || err?.message || "Upload cover failed";
+    if (toast?.error) toast.error(msg);
+    else console.error(msg, err);
+  } finally {
+    uploadingCover.value = false;
+    if (e?.target) e.target.value = "";
+  }
+};
 
 // Chargement documents (privés)
 const {
@@ -818,19 +902,8 @@ watch(
     form.contacts = list.length ? list : [{ name: '', phone: '', whatsapp: '', email: '' }];
 
     // Médias (payload.media)
-    mediaItems.value = (obituaryPayload.value?.media || []).map((m, idx) => ({
-      id: m.id,
-      url: m.url,
-      thumbnailUrl: m.thumbnailUrl || m.thumbnail_url || null,
-      mediaType: m.mediaType || m.media_type || 'image',
-      provider: m.provider || 'upload', // IMPORTANT: enum DB (upload / youtube / vimeo / ...)
-      title: m.title || '',
-      description: m.description || '',
-      durationSeconds: m.durationSeconds || m.duration_seconds || null,
-      isMain: !!(m.isMain || m.is_main),
-      sortOrder: Number.isFinite(Number(m.sortOrder ?? m.sort_order)) ? Number(m.sortOrder ?? m.sort_order) : idx,
-      eventId: m.eventId || m.event_id || null,
-    }));
+mediaItems.value = (obituaryPayload.value?.media || []).map((m, idx) => normalizeMediaItem(m, idx));
+
 
     nextTick(() => {
       hydrating.value = false;
@@ -879,44 +952,80 @@ const removeMedia = (idx) => mediaItems.value.splice(idx, 1);
 
 const toggleMain = (m) => {
   if (!m) return;
-  m.isMain = !m.isMain;
+  const next = !m.isMain;
+  mediaItems.value = mediaItems.value.map((x) => ({
+    ...x,
+    isMain: x.url === m.url ? next : false,
+  }));
 };
+
 
 const setAsCover = (m) => {
   if (!m?.url) return;
   form.coverImageUrl = m.url;
-  // Optionnel: un seul isMain "image"
-  mediaItems.value = mediaItems.value.map((x) => ({ ...x, isMain: x.url === m.url ? true : x.isMain }));
+
+  mediaItems.value = mediaItems.value.map((x) => ({
+    ...x,
+    isMain: x.url === m.url ? true : x.isMain,
+  }));
 };
 
+function detectProvider(url) {
+  const u = String(url || "");
+  if (/youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\//i.test(u)) return "youtube";
+  if (/vimeo\.com/i.test(u)) return "vimeo";
+  return "other";
+}
+
 const addExternalMedia = () => {
-  const url = (externalMediaUrl.value || '').trim();
+  const url = (externalMediaUrl.value || "").trim();
   if (!url) return;
+
+  // ✅ accepte http(s) uniquement
+  if (!/^https?:\/\//i.test(url)) {
+    const msg = "Lien invalide. Colle une URL complète qui commence par http:// ou https://";
+    if (toast?.error) toast.error(msg);
+    return;
+  }
 
   mediaItems.value.push({
     url,
     thumbnailUrl: null,
-    mediaType: 'video',
-    provider: 'other',
-    title: '',
-    description: '',
+    mediaType: "video",
+    provider: detectProvider(url), // youtube/vimeo/other
+    title: "",
+    description: "",
     durationSeconds: null,
     isMain: false,
     sortOrder: mediaItems.value.length,
     eventId: null,
   });
 
-  externalMediaUrl.value = '';
+  externalMediaUrl.value = "";
 };
+
 
 // Upload media files to S3 via API endpoint
 const onPickMediaFiles = async (e) => {
-  const files = Array.from(e.target?.files || []);
+    const files = Array.from(e.target?.files || []);
   if (!files.length) return;
+
+  // ✅ sécurité : images uniquement
+  const images = files.filter((f) => String(f?.type || "").startsWith("image/"));
+  const rejected = files.length - images.length;
+  if (rejected > 0) {
+    const msg = "Vidéos interdites en upload. Ajoute plutôt un lien (YouTube/Vimeo/…).";
+    if (toast?.error) toast.error(msg);
+    else console.warn(msg);
+  }
+  if (!images.length) {
+    if (e?.target) e.target.value = "";
+    return;
+  }
 
   uploadingMedia.value = true;
   try {
-    for (const file of files) {
+    for (const file of images) {
       const fd = new FormData();
       fd.append('file', file);
 
@@ -926,21 +1035,17 @@ const onPickMediaFiles = async (e) => {
         body: fd,
       });
 
-      if (res?.media?.url) {
-        mediaItems.value.push({
-          ...res.media,
-          provider: res.media.provider || 'upload',
-          sortOrder: mediaItems.value.length,
-          title: res.media.title || '',
-          description: res.media.description || '',
-          isMain: !!res.media.isMain,
-        });
+  const uploaded = pickMediaFromUploadResponse(res);
+const item = uploaded ? normalizeMediaItem(uploaded, mediaItems.value.length) : null;
 
-        // si pas de cover et que c’est une image, on met la première image en cover
-        if (!form.coverImageUrl && res.media.mediaType === 'image') {
-          form.coverImageUrl = res.media.url;
-        }
-      }
+if (item?.url) {
+  mediaItems.value.push(item);
+
+  if (!form.coverImageUrl && item.mediaType === "image") {
+    form.coverImageUrl = item.url;
+  }
+}
+
     }
   } catch (err) {
     const msg = err?.data?.message || err?.message || 'Upload media failed';
@@ -1242,6 +1347,174 @@ const coverImageUrl = computed(() => form.coverImageUrl || obituary.value?.cover
 .doc-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; }
 .doc-item { display:flex; align-items:flex-start; justify-content: space-between; gap: .75rem; padding: .75rem; border: 1px solid var(--color-border-subtle); border-radius: .9rem; background: var(--color-surface); }
 .doc-title { margin: 0 0 .25rem; display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+
+.edit-card {
+  margin-top: var(--space-3);
+}
+
+.edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Sections */
+.form-section {
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-bottom: var(--space-4);
+}
+.form-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.form-section__title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.form-section__subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+}
+
+/* Grilles */
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.form-grid-2-col,
+.form-grid-3-col,
+.form-grid-4-col {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.form-grid-2-col {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.form-grid-3-col {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.form-grid-4-col {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+/* Champs */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-elevated);
+  font-size: 0.92rem;
+}
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.form-control--textarea {
+  resize: vertical;
+  min-height: 5rem;
+}
+
+/* Aides / erreurs */
+.form-error {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-danger);
+}
+
+.form-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+/* Footer */
+.edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Loading / error */
+.edit-loading {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.edit-skeleton {
+  height: 120px;
+  border-radius: 1rem;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.18),
+    rgba(148, 163, 184, 0.35),
+    rgba(148, 163, 184, 0.18)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite;
+}
+
+.edit-error {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(239, 68, 68, 0.7);
+  background: rgba(239, 68, 68, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.edit-error__text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.card-footer--error {
+  border-top: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.04);
+}
+.review-cover-image {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 0.9rem;
+  border: 1px solid var(--color-border-subtle);
+}
+
 </style>
+
 
 
