@@ -274,6 +274,10 @@
 >
   {{ t('adminObituaries.actions.viewDocs') || 'Voir documents' }}
 </button>
+<NuxtLink :to="`/admin/obituaries/${item.slug}`" class="btn btn-ghost btn-sm">
+  Modérer (docs)
+</NuxtLink>
+
 
               <!-- Valider les documents -->
               <button
