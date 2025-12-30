@@ -78,10 +78,10 @@ export const INDIVIDUAL_PLANS = {
 
     features: {
       maxEvents: 1,
-      maxPhotos: 3,
+      maxPhotos: 1,
       maxVideos: 0,
       maxContacts: 1,
-      maxTextChars: 400,
+      maxTextChars: 600,
       allowedEventTypes: ["wake", "funeral", "burial", "memorial"],
       hasCondolenceWall: false,
       allowCondolences: false,
@@ -95,7 +95,6 @@ export const INDIVIDUAL_PLANS = {
     },
 
     // Tous les plans, même gratuits, exigent les docs
- 
 
     sortOrder: 10,
   },
@@ -105,6 +104,7 @@ export const INDIVIDUAL_PLANS = {
     code: "indiv_basic_30",
     labelKey: "plans.codes.indiv_basic_30",
     label: "Formule Essentiel – 30 jours",
+    aliases: [], // ✅ compat
     description:
       "Pour annoncer dignement les obsèques, avec plusieurs événements et plus de photos.",
     accountType: "individual",
@@ -121,10 +121,10 @@ export const INDIVIDUAL_PLANS = {
 
     features: {
       maxEvents: 3,
-      maxPhotos: 6,
-      maxVideos: 0,
-      maxContacts: 3,
-      maxTextChars: 500,
+      maxPhotos: 3,
+      maxVideos: 2,
+      maxContacts: 2,
+      maxTextChars: 600,
       allowedEventTypes: ["wake", "funeral", "burial", "memorial"],
       hasCondolenceWall: false,
       allowCondolences: false,
@@ -137,8 +137,48 @@ export const INDIVIDUAL_PLANS = {
       secondaryVisibilityDays: 0,
     },
 
-
     sortOrder: 20,
+  },
+  // Essentiel – 30 jours (legacy / compat : utilisé par des annonces existantes)
+  ESSENTIEL_30_LEGACY: {
+    code: "indiv_essentiel_30",
+    labelKey: "plans.codes.indiv_essentiel_30",
+    label: "Formule Essentiel – 30 jours",
+    description:
+      "Plan historique (compatibilité) pour des annonces existantes.",
+    accountType: "individual",
+    scope: "obituary",
+    billingType: "oneoff",
+
+    isFree: false,
+    isPublic: false,
+    isRecommended: false,
+    label: "Formule Essentiel – 30 jours (legacy)",
+    pricingTier: "indiv_essentiel_30",
+    currency: "EUR",
+    basePriceCents: 2500, // cohérent avec amountPaid=25.00
+    priceCents: 2500,
+    publishDurationDays: 30, // cohérent avec monetization.publishDurationDays=30
+
+    features: {
+      maxEvents: 2,
+      maxPhotos: 3,
+      maxVideos: 2,
+      maxContacts: 2,
+      maxTextChars: 600,
+      allowedEventTypes: ["wake", "funeral", "burial", "memorial"],
+      hasCondolenceWall: false,
+      allowCondolences: false,
+      allowCandles: false,
+      allowFlowers: false,
+      highlightedListing: false,
+      analyticsLevel: "basic",
+      supportLevel: "standard",
+      primaryVisibilityDays: 30,
+      secondaryVisibilityDays: 0,
+    },
+
+    sortOrder: 19,
   },
 
   // Confort – 45 jours
@@ -151,7 +191,7 @@ export const INDIVIDUAL_PLANS = {
     accountType: "individual",
     scope: "obituary",
     billingType: "oneoff",
-
+    isRecommended: true,
     isFree: false,
     isPublic: true,
     pricingTier: "indiv_essentiel_45",
@@ -161,10 +201,10 @@ export const INDIVIDUAL_PLANS = {
     publishDurationDays: 45,
 
     features: {
-      maxEvents: 6,
-      maxPhotos: 10,
-      maxVideos: 1,
-      maxContacts: 5,
+      maxEvents: 4,
+      maxPhotos: 5,
+      maxVideos: 3,
+      maxContacts: 3,
       maxTextChars: 600,
       allowedEventTypes: ["wake", "funeral", "burial", "memorial"],
       hasCondolenceWall: true,
@@ -177,8 +217,6 @@ export const INDIVIDUAL_PLANS = {
       primaryVisibilityDays: 45,
       secondaryVisibilityDays: 0,
     },
-
-
 
     sortOrder: 30,
   },
@@ -205,8 +243,8 @@ export const INDIVIDUAL_PLANS = {
     features: {
       maxEvents: 10,
       maxPhotos: 15, // limite globale souhaitée
-      maxVideos: 2,
-      maxContacts: 8,
+      maxVideos: 5,
+      maxContacts: 5,
       maxTextChars: 600,
       allowedEventTypes: ["wake", "funeral", "burial", "memorial"],
       hasCondolenceWall: true,
@@ -219,8 +257,6 @@ export const INDIVIDUAL_PLANS = {
       primaryVisibilityDays: 90,
       secondaryVisibilityDays: 0,
     },
-
- 
 
     sortOrder: 40,
   },
@@ -245,8 +281,8 @@ export const INDIVIDUAL_MEMORIAL_PLANS = {
     isPublic: true,
     pricingTier: "indiv_memorial_6m",
     currency: "EUR",
-    basePriceCents: 2900, // 29 €
-    priceCents: 2900,
+    basePriceCents: 4900, // 49 €
+    priceCents: 4900,
     publishDurationDays: 180,
 
     features: {
@@ -287,15 +323,15 @@ export const INDIVIDUAL_MEMORIAL_PLANS = {
     isPublic: true,
     pricingTier: "indiv_memorial_1y",
     currency: "EUR",
-    basePriceCents: 4900, // 49 €
-    priceCents: 4900,
+    basePriceCents: 6900, // 49 €
+    priceCents: 6900,
     publishDurationDays: 365,
 
     features: {
       maxEvents: 10,
       maxPhotos: 15,
-      maxVideos: 3,
-      maxContacts: 8,
+      maxVideos: 6,
+      maxContacts: 6,
       maxTextChars: 600,
       allowedEventTypes: ["memorial"],
       hasCondolenceWall: true,
@@ -336,8 +372,8 @@ export const INDIVIDUAL_MEMORIAL_PLANS = {
     features: {
       maxEvents: 10,
       maxPhotos: 15,
-      maxVideos: 3,
-      maxContacts: 10,
+      maxVideos: 10,
+      maxContacts: 7,
       maxTextChars: 600,
       allowedEventTypes: ["memorial"],
       hasCondolenceWall: true,
@@ -650,7 +686,15 @@ function registerPlan(plan) {
   if (plan.pricingTier && plan.pricingTier !== plan.code) {
     ALL_PLANS_BY_CODE[plan.pricingTier] = clone;
   }
+
+  // ✅ aliases (compat)
+  if (Array.isArray(plan.aliases)) {
+    for (const a of plan.aliases) {
+      if (a) ALL_PLANS_BY_CODE[a] = clone;
+    }
+  }
 }
+
 
 
 Object.values(INDIVIDUAL_PLANS).forEach(registerPlan);

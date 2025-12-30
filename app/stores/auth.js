@@ -1,5 +1,6 @@
 // stores/auth.js
 import { defineStore } from "pinia";
+import { useRequestHeaders } from "#imports";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -28,45 +29,50 @@ export const useAuthStore = defineStore("auth", {
       this.initialized = false;
     },
 
-    async fetchMe() {
-      this.loading = true;
-      this.error = null;
+  async fetchMe() {
+  this.loading = true;
+  this.error = null;
 
-      try {
-        const res = await $fetch("/api/auth/me", {
-          method: "GET",
-        });
+  try {
+    // ✅ important en SSR : forward cookie -> /api/auth/me voit la session
+    const headers = process.server ? useRequestHeaders(["cookie"]) : undefined;
 
-        if (res?.ok) {
-          this.user = res.user
-            ? {
-                id: res.user.userId,
-                email: res.user.email,
-                accountType: res.user.accountType,
-                roles: res.user.roles || [],
-                city: res.user.city,
-                country: res.user.country,
-                locale: res.user.locale,
-                firstName: res.user.firstName || null,
-                lastName: res.user.lastName || null,
-                organizationName: res.user.organizationName || null,
-                displayName: res.user.displayName || null,
-              }
-            : null;
-        } else {
-          this.user = null;
-        }
-      } catch (err) {
-        this.error =
-          err?.data?.statusMessage ||
-          err.message ||
-          "Erreur lors de la récupération du profil";
-        this.user = null;
-      } finally {
-        this.loading = false;
-        this.initialized = true;
-      }
-    },
+    const res = await $fetch("/api/auth/me", {
+      method: "GET",
+      headers,
+    });
+
+    if (res?.ok) {
+      this.user = res.user
+        ? {
+            id: res.user.userId,
+            email: res.user.email,
+            accountType: res.user.accountType,
+            roles: res.user.roles || [],
+            city: res.user.city,
+            country: res.user.country,
+            locale: res.user.locale,
+            firstName: res.user.firstName || null,
+            lastName: res.user.lastName || null,
+            organizationName: res.user.organizationName || null,
+            displayName: res.user.displayName || null,
+          }
+        : null;
+    } else {
+      this.user = null;
+    }
+  } catch (err) {
+    this.error =
+      err?.data?.statusMessage ||
+      err.message ||
+      "Erreur lors de la récupération du profil";
+    this.user = null;
+  } finally {
+    this.loading = false;
+    this.initialized = true;
+  }
+}
+,
 
     async ensureAuthLoaded() {
       if (this.initialized) return;

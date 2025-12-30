@@ -1,0 +1,339 @@
+Journal de dev — (Hier + Aujourd’hui)
+Contexte / objectif
+Journal de dev — Addendum (Docs + Médias)
+✅ 5) EDIT obituary — Médias (images + vidéos externes) : quotas + normalisation + persistance
+
+Objectif : rendre l’édition médias fiable, compatible avec l’API, et respecter les limites du plan.
+
+Normalisation robuste des réponses upload
+
+Ajout de pickMediaFromUploadResponse(res) :
+
+supporte plusieurs formes API (res.media, res.item, res.url, res.fileUrl, res.location)
+
+évite les bugs “URL introuvable” selon le format backend
+
+Normalisation des items médias côté UI
+
+Ajout de normalizeMediaItem(m, idx) :
+
+normalise url, thumbnailUrl, mediaType, provider, isMain, sortOrder, eventId
+
+corrige les cas vidéo détectée mais mediaType=image
+
+construit thumbnail YouTube si possible (via parseYouTubeId + youtubeThumbnailFromUrl)
+
+Gestion des quotas selon plan
+
+calculs : photosCount, videosCount, remainingPhotos, remainingVideos
+
+règles :
+
+upload fichier : images uniquement (accept="image/*" + filtre MIME)
+
+ajout lien : consommé comme vidéo (YouTube/Vimeo/other)
+
+blocage UI si quota atteint (canUploadMorePhotos, canAddMoreVideos)
+
+si user sélectionne trop de fichiers → on garde slice(0, remainingPhotos) + message “ignorés”
+
+Couverture / image principale
+
+setAsCover(m) :
+
+force “un seul main”
+
+synchronise cover + main
+
+persiste via persistMediaAndCover()
+
+si suppression de la cover → bascule sur la prochaine image dispo
+
+Persistance dédiée
+
+persistMediaAndCover() :
+
+PUT /api/obituaries/:slug avec { coverImageUrl, media[], regenSlug }
+
+mediaDirty remis à false après succès
+
+gère le cas regenSlug si changement du nom du défunt
+
+si slug change → router.replace pour garder URL cohérente
+
+Upload cover via endpoint media
+
+onPickCoverFile() :
+
+upload image via /api/obituaries/:slug/media
+
+récupère URL via pickMediaFromUploadResponse
+
+ajoute au mediaItems si pas déjà présent
+
+set coverImageUrl automatiquement
+
+✅ 6) EDIT obituary — Documents (privés) : statut, historique, remplacement, suppression
+
+Objectif : rendre l’upload et le suivi des documents clair et cohérent (CNI / certificat / autres).
+
+Typage docs et affichage par type
+
+DOC_TYPES standardisés :
+
+id_card, death_certificate, other
+
+docsByType computed :
+
+garantit 1 doc affiché par type (conforme contrainte DB uq type)
+
+currentDocForSelectedType :
+
+facilite le remplacement (workflow UX)
+
+Affichage statut + note admin
+
+UI “doc-status-grid” :
+
+badge type + badge statut (accepted, rejected, under_review, sinon missing)
+
+affichage adminNote si présent
+
+boutons “Open” + “Delete” si applicable
+
+Historique via <details> :
+
+liste complète des documents avec date (createdAt) + note admin + actions
+
+Upload document : workflow remplacement
+
+onPickDocumentFile() :
+
+si doc du même type existe déjà :
+
+modal confirm “remplacer”
+
+DELETE /api/obituaries/:slug/documents/:id (pour éviter contrainte unique)
+
+refresh list
+
+POST /api/obituaries/:slug/documents (FormData : type, file)
+
+refresh + message inline + toast succès
+
+Ajout docInlineMessage + docInlineTone (success/danger/info) pour UX non-bloquante
+
+Suppression document
+
+onDeleteDocument(d) :
+
+confirmation via confirmStore.ask
+
+DELETE endpoint
+
+refresh + toast succès
+
+CSS/UX statuts
+
+docStatusClass() map :
+
+accepted → badge-success
+
+rejected → badge-warning
+
+under_review → badge-neutral
+
+défaut → badge-soft
+
+✅ 7) Cohérence “plan → limites”
+
+Les limites plan (maxEvents, maxPhotos, maxVideos, maxContacts, maxTextChars) pilotent :
+
+ajout d’événements extra (canAddExtraEvent)
+
+ajout contacts (canAddContact)
+
+upload photos / ajout vidéos (canUploadMorePhotos, canAddMoreVideos)
+
+validation validate() bloque si dépassement (texte, contacts, médias, events)
+
+Ajout de compteurs UI :
+
+usedEventsCount / limits.maxEvents
+
+usedContactsCount / limits.maxContacts
+
+photosCount / limits.maxPhotos
+
+videosCount / limits.maxVideos
+Problème constaté : incohérences sur la page /plans (doublons “Essentiel 30”, prix contradictoires, badge “Recommandé” instable, tri pas fiable).
+
+Objectif : établir une seule source de vérité (pricingPlans.js), rendre l’API plans cohérente, et éviter toute confusion côté UI (plans vs obituary).
+
+✅ 1) Source de vérité des plans : utils/pricingPlans.js
+
+Mise en place/renforcement d’un registre central des plans (particuliers + pro + mémorials + abonnements).
+
+Ajout / clarification des champs structurants :
+
+code, pricingTier, aliases (compat legacy)
+
+publishDurationDays, basePriceCents/priceCents, features, sortOrder
+
+isPublic, isRecommended
+
+Docs policy centralisée :
+
+DOCS_POLICY.individual : CNI requise create + publish, certificat requis sous 7 jours (non-bloquant publish)
+
+DOCS_POLICY.pro : pas de docs requis dans ce workflow
+
+registerPlan() :
+
+enregistre sous plan.code
+
+enregistre aussi sous plan.pricingTier si différent
+
+enregistre aussi sous aliases[] pour compat avec anciens codes
+
+injecte docsPolicy au plan cloné
+
+Ajout getAllPlans() triés par sortOrder (utile pour admin / debug / futures pages).
+
+✅ 2) API Plans : server/api/plans/index.get.js
+
+Normalisation stable via mapBasePlan() :
+
+expose au front : isPublic, isRecommended, sortOrder, aliases
+
+fournit docsPolicy de manière cohérente
+
+Tri côté API :
+
+individualObituary trié par sortOrder
+
+Clarification des catégories retournées :
+
+individualObituary, individualMemorial
+
+proObituary, proMemorialOneOff
+
+proSubscriptions
+
+(alias temporaire proMemorial → ancien front)
+
+✅ 3) UI /plans : correction logique “recommended” + plan legacy
+
+Constat : le doublon “Essentiel 30 legacy” apparaît en public et casse la perception prix :
+
+BASIC_30 = 14,50 €
+
+LEGACY_30 = 25,00 €
+
+Confort 45 = 25,00 €
+=> incohérent pour l’utilisateur et badge “Recommandé” tombait sur le mauvais code (hardcodé).
+
+Décisions prises / proposées :
+
+Le plan legacy (indiv_essentiel_30) doit être compatibilité uniquement :
+
+✅ rester dans registry (aliases / findPlanByCode)
+
+❌ ne pas être affiché sur /plans
+
+Le “Recommandé” doit être piloté par plan.isRecommended (dans pricingPlans.js), pas par code hardcodé.
+
+Correctifs concrets (à appliquer/terminer) :
+
+Dans pricingPlans.js :
+
+ESSENTIEL_30_LEGACY.isPublic = false
+
+ESSENTIEL_30_LEGACY.isRecommended = false
+
+ESSENTIEL_45.isRecommended = true (choix produit actuel)
+
+Dans /plans page :
+
+filtrer isPublic !== false (affichage)
+
+remplacer toutes les conditions plan.code === recommendedIndividualCode par plan.isRecommended
+
+éviter tri “par prix” : préférer sortOrder (sinon le legacy peut se recaler bizarrement si un jour son prix change)
+
+✅ 4) Correction importante : confusion data vs plansData dans EDIT
+
+Bug/risque identifié :
+
+Dans pages/obituary/edit/[slug].vue :
+
+data = réponse /api/obituaries/:slug
+
+plansData = réponse /api/plans
+
+Des computed plans utilisaient data.value?.individualObituary → faux (c’était l’obituary payload)
+
+Décision :
+
+Dans EDIT, on ne liste pas les plans. Donc on supprime toute logique visible/sortByOrder/individualObituaryPlans/... si elle n’est pas utile.
+
+Si besoin futur, ces computed doivent lire plansData, jamais data.
+
+Hardening recommandé :
+
+renommer data (obituary) en obituaryData pour éviter toute confusion.
+
+Points ouverts / à faire immédiatement
+A) Finaliser /plans proprement
+
+ Mettre indiv_essentiel_30 (legacy) en isPublic:false dans pricingPlans.js
+
+ Page /plans/index.vue :
+
+ filtrage isPublic !== false
+
+ badge “Recommandé” = plan.isRecommended
+
+ tri par sortOrder
+
+ supprimer le recommendedIndividualCode hardcodé
+
+B) Page de vérification / validation documents (prochaine étape)
+
+Constat actuel :
+
+Page utilise une ancienne logique et un filtrage incohérent entre statuts :
+
+verified, draft, published, etc.
+
+Il faut remettre une grammaire unique des statuts, alignée DB + API + UI.
+
+Objectif :
+
+Unifier le statut d’une annonce (workflow) :
+
+draft / pending_review / published / archived (ou votre set exact)
+
+Unifier le statut des documents :
+
+missing / under_review / accepted / rejected
+
+Refaire les filtres admin/modo :
+
+“À vérifier” (annonces + docs) doit être déterministe
+
+séparer : statut annonce vs statut docs vs visibilité
+
+Prochaine action (proposée)
+
+Patch final pricingPlans.js : hide legacy + recommended sur 45j.
+
+Patch /plans/index.vue : filtre isPublic + badge isRecommended + tri sortOrder.
+
+On attaque ensuite la page de vérification docs :
+
+on recense les statuts existants (DB + API)
+
+on définit une table de mapping unique
+
+on patch la page + endpoint(s) si besoin

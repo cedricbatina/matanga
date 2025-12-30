@@ -1033,7 +1033,6 @@ import { useRouter, useRoute, useSeoMeta, useFetch, navigateTo } from '#imports'
 
 import { useI18n } from 'vue-i18n';
 import PageNavBar from '~/components/PageNavBar.vue';
-import { findPlanByCode } from '~/utils/pricingPlans';
 
 // Config minimale de fallback
 const DEFAULT_PLAN_FEATURES = {

@@ -97,10 +97,11 @@
                 v-for="plan in individualObituaryPlans"
                 :key="plan.code"
                 class="card plan-card"
-                :class="{
-                  'plan-card--highlight': plan.code === recommendedIndividualCode,
-                  'plan-card--free': plan.isFree
-                }"
+               :class="{
+  'plan-card--highlight': plan.isRecommended,
+  'plan-card--free': plan.isFree
+}"
+
               >
                 <div class="card-body plan-card__body">
                   <header class="plan-card__header">
@@ -111,12 +112,13 @@
                       >
                         {{ t('plans.badges.free') }}
                       </p>
-                      <p
-                        v-else-if="plan.code === recommendedIndividualCode"
-                        class="plan-card__eyebrow plan-card__eyebrow--accent"
-                      >
-                        {{ t('plans.badges.recommended') }}
-                      </p>
+                     <p
+  v-else-if="plan.isRecommended"
+  class="plan-card__note plan-card__note--accent"
+>
+  {{ t('plans.notes.essentiel') }}
+</p>
+
 
                       <h2 class="plan-card__title">
                         {{ plan.label }}
@@ -237,12 +239,13 @@
                   >
                     {{ t('plans.notes.free') }}
                   </p>
-                  <p
-                    v-else-if="plan.code === recommendedIndividualCode"
-                    class="plan-card__note plan-card__note--accent"
-                  >
-                    {{ t('plans.notes.essentiel') }}
-                  </p>
+                <p
+  v-else-if="plan.isRecommended"
+  class="plan-card__eyebrow plan-card__eyebrow--accent"
+>
+  {{ t('plans.badges.recommended') }}
+</p>
+
                 </div>
 
                 <footer class="card-footer plan-card__footer">
@@ -643,50 +646,52 @@ const {
 });
 
 // Tri : gratuits d'abord, puis prix croissant
-const sortPlans = (plans) => {
-  return [...plans].sort((a, b) => {
-    if (a.isFree && !b.isFree) return -1;
-    if (!a.isFree && b.isFree) return 1;
+const visible = (list) => (list || []).filter(p => p?.isPublic !== false);
 
-    const aPrice = a.basePriceCents || 0;
-    const bPrice = b.basePriceCents || 0;
-    if (aPrice !== bPrice) return aPrice - bPrice;
-
-    return (a.label || '').localeCompare(b.label || '');
-  });
+const sortByOrder = (plans) => {
+  return [...plans].sort((a, b) => (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999));
 };
 
 const individualObituaryPlans = computed(() =>
-  sortPlans(data.value?.individualObituary || []),
-);
-const individualMemorialPlans = computed(() =>
-  sortPlans(data.value?.individualMemorial || []),
-);
-const proObituaryPlans = computed(() =>
-  sortPlans(data.value?.proObituary || []),
-);
-const proMemorialPlans = computed(() =>
-  sortPlans(data.value?.proMemorial || []),
+  sortByOrder(visible(data.value?.individualObituary || []))
 );
 
+const individualMemorialPlans = computed(() =>
+  sortByOrder(visible(data.value?.individualMemorial || []))
+);
+
+const proObituaryPlans = computed(() =>
+  sortByOrder(visible(data.value?.proObituary || []))
+);
+
+const proMemorialPlans = computed(() =>
+  sortByOrder(visible(data.value?.proMemorial || []))
+);
+
+
 // Plan individuel recommandé (Essentiel 30j)
-const recommendedIndividualCode = 'indiv_essentiel_30';
+const recommendedIndividualCode = computed(() => {
+  return (individualObituaryPlans.value || []).find(p => p?.isRecommended)?.code || null;
+});
+
 
 const planCtaLabelKey = (plan) => {
   if (plan.isFree) {
     return 'plans.cta.startFree';
   }
-  if (plan.code === recommendedIndividualCode) {
-    return 'plans.cta.startRecommended';
-  }
+  if (recommendedIndividualCode.value && plan.code === recommendedIndividualCode.value) {
+  return 'plans.cta.startRecommended';
+}
+
   return 'plans.cta.startPaid';
 };
 
 const planCtaClasses = (plan) => {
   const base = ['btn', 'btn-primary', 'btn-sm', 'plan-card__cta'];
-  if (!plan.isFree && plan.code !== recommendedIndividualCode) {
-    base.push('btn-outline');
-  }
+ if (!plan.isFree && plan.code !== recommendedIndividualCode.value) {
+  base.push('btn-outline');
+}
+
   return base.join(' ');
 };
 

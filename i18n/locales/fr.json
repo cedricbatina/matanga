@@ -335,10 +335,16 @@
   },
   "common": {
   "backToHome": "Retour à l’accueil",
+   "archive": "Retirer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "open":"Ouvrir"
+    ,
       "actions": {
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "archive": "Retirer du site"
+      "archive": "Retirer du site",
+      "open": "Ouvrir"
     }
 },
 
@@ -578,13 +584,14 @@
 }
 
     },
-    "defaults": {
+ "defaults": {
       "familyContactLabel": "Famille"
     },
     "actions": {
       "cancel": "Annuler",
       "submit": "Publier l’annonce",
-      "submitting": "Publication en cours…"
+      "submitting": "Publication en cours…",
+      "viewPublic": "Voir l’annonce"
     },
     "errors": {
       "deceasedFullNameRequired": "Le nom complet du défunt est obligatoire.",
@@ -951,7 +958,8 @@
     "actions": {
       "archive": "Retirer",
       "cancel": "Annuler",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "open":"Ouvrir"
     }
   },
   "toasts": {
@@ -974,31 +982,238 @@
   }
 }
 ,
- "editObituary": {
-    "title": "Modifier l’annonce",
-    "subtitle": "Corrigez ou complétez les informations avant la publication.",
-    "meta": {
-      "title": "Modifier l’annonce nécrologique",
-      "description": "Modifiez les informations de l’avis de décès avant la publication sur la plateforme Madizi."
+  "editObituary": {
+      "title": "Modifier l’annonce",
+  "subtitle": "Mettez à jour les informations, événements, contacts et souvenirs.",
+    "aria": {
+      "nav": "Navigation édition d'annonce"
     },
+      "common": {
+   
+      "archive": "Retirer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "open":"Ouvrir"
+    
+  },
     "sections": {
-      "events": {
-        "subtitle": "Vous pouvez ajuster le type de cérémonie, la date et le lieu de l’événement principal."
+      "documents": {
+        "title": "Documents de vérification (privés)",
+        "subtitle": "Ces documents (CNI, certificat de décès) sont réservés aux propriétaires / admins. Ils ne sont pas affichés sur la page publique."
+,
+       "subtitle_before": "Ces documents (CNI, certificat de décès) sont réservés aux propriétaires / admins. Ils ne sont",
+"subtitle_strong": "pas",
+"subtitle_after": "affichés sur la page publique."
+   
+
+      },
+      "extraEvents": {
+        "title": "Autres cérémonies associées (optionnel)",
+        "subtitle": "Ajoutez veillée, inhumation, messe, etc."
+      },
+      "media": {
+        "title": "Souvenirs (photos / vidéos)",
+       "subtitle_before": "Les souvenirs sont",
+"subtitle_strong": "publics",
+"subtitle_after": "et visibles sur la page de l’annonce. Le fichier est uploadé sur S3 (Infomaniak) et on ne stocke ici que l’URL.",
+ "confirmDelete": {
+      "title": "Supprimer ce souvenir ?",
+      "message": "Il ne sera plus visible sur l’annonce après enregistrement."
+    }
+
       }
     },
-    "actions": {
-      "cancel": "Annuler",
-      "save": "Enregistrer les modifications",
-      "saving": "Enregistrement en cours…",
-      "retry": "Réessayer",
-      "delete": "Supprimer l’annonce"
-    },
-    "errors": {
-      "notFound": "Cette annonce n’existe pas ou n’est plus disponible.",
-      "forbidden": "Vous n’avez pas les droits pour modifier cette annonce.",
-      "generic": "Une erreur est survenue lors de l’enregistrement. Merci de réessayer."
-    }
+      "toasts": {
+    "updated": "Annonce mise à jour."
   },
+  "errors": {
+    "notFound": "Annonce introuvable.",
+    "forbidden": "Accès refusé.",
+    "generic": "Une erreur est survenue."
+  },
+  "meta": {
+    "title": "Modifier l’annonce",
+    "description": "Modifiez votre annonce de décès."
+  },
+   "planBanner": {
+      "helper": "Limites de votre formule : {photos} photo(s), {videos} vidéo(s), {contacts} contact(s), {events} événement(s).",
+      "upgradeCta": "Changer / améliorer ma formule"
+    },
+     "confirmReplace": {
+        "title": "Remplacer le document ?",
+        "message": "Un document existe déjà pour « {type} ». Voulez-vous le remplacer ?",
+        "confirm": "Remplacer"
+      },
+      "inline": {
+        "uploadedOk": "Document « {type} » téléversé avec succès."
+      },
+    "documents": {
+        "status": {
+        "uploaded": "Téléversé",
+        "under_review": "En vérification",
+        "accepted": "Validé",
+        "rejected": "Refusé",
+        "missing": "Non envoyé"
+      },
+      "type": {
+         "upload": {
+        "label": "Ajouter un document"
+      },
+        "label": "Type de document",
+        "options": {
+          "id_card": "CNI / pièce d’identité",
+          "death_certificate": "Certificat de décès",
+          "other": "Autre"
+        },  "labels": {
+        "id_card": "Pièce d'identité",
+        "death_certificate": "Acte / certificat de décès",
+        "other": "Autre"
+      }
+      },
+      "upload": {
+        "label": "Uploader un document (S3)",
+        "uploading": "Upload en cours…"
+      },
+      "list": {
+        "loading": "Chargement des documents…",
+        "error": "Impossible de charger les documents.",
+        "empty": "Aucun document uploadé."
+      },
+      "adminNoteLabel": "Note admin :",
+          "confirmDelete": {
+      "title": "Supprimer ce document ?",
+      "message": "Il ne sera plus disponible après suppression."
+    },
+      "toasts": {
+        "uploaded": "Document uploadé.",
+         "deleted": "Document supprimé."
+      },
+      "errors": {
+        "uploadFailed": "Échec de l’upload du document."
+      }
+    },
+    "coverImage": {
+      "label": "Image de couverture (URL)",
+      "placeholder": "https://… ou /api/media/…",
+      "help": "Optionnel. Utilisée comme image principale sur la page publique. Tu peux aussi cliquer “Définir comme couverture” sur un souvenir.",
+      "previewLabel": "Aperçu :",
+      "previewAlt": "Aperçu de l'image de couverture",
+      "errors": {
+        "imagesOnly": "Seules les images sont autorisées pour la couverture.",
+        "uploadFailed": "Échec de l’upload de la couverture."
+      }
+    },
+    "extraEvents": {
+      "fields": {
+        "type": "Type d’événement",
+        "datetime": "Date et heure",
+        "venueName": "Lieu / salle",
+        "venueAddress": "Adresse"
+      },
+      "actions": {
+        "remove": "Supprimer cet événement",
+        "add": "Ajouter un autre événement"
+      }
+    },
+      "actions": {
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "viewPublic": "Voir l’annonce"
+  },
+    "contacts": {
+      "labels": {
+        "primary": "Contact principal",
+        "secondary": "Contact {n}"
+      },
+      "actions": {
+        "remove": "Supprimer ce contact",
+        "add": "Ajouter un autre contact",
+           "retry": "Réessayer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…"
+      }
+    },
+    "coverPreview": {
+      "title": "Image de couverture",
+      "subtitle": "Cette image sera affichée en haut de la page publique.",
+      "alt": "Image de couverture"
+    },
+    "media": {
+      "addFiles": {
+        "label": "Ajouter des fichiers (S3)",
+        "uploading": "Upload en cours…"
+      },
+      "addLink": {
+        "label": "Ajouter un lien (YouTube/Vimeo/etc.)",
+        "placeholder": "https://…",
+        "actions": {
+          "add": "Ajouter"
+        },
+        "tip": "Astuce : pour YouTube/Vimeo, colle le lien. Le provider sera “other” pour l’instant."
+      },
+      "list": {
+        "empty": "Aucun souvenir pour le moment.",
+        "pendingSave": "Modifications médias en attente : n’oubliez pas de cliquer “Enregistrer”."
+      },
+      "actions": {
+        "openVideo": "Ouvrir la vidéo ({provider})",
+        "openFile": "Ouvrir le fichier",
+        "setCover": "Définir comme couverture",
+        "markMain": "Marquer (principal)",
+        "unmarkMain": "Retirer (principal)",
+        "remove": "Supprimer",
+        "retry": "Réessayer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…"
+      },
+      "fields": {
+        "title": {
+          "label": "Titre (optionnel)",
+          "placeholder": "Ex: Photo souvenir"
+        },
+        "description": {
+          "label": "Description (optionnel)",
+          "placeholder": "…"
+        }
+      },
+      "confirmDelete": {
+        "title": "Supprimer ce souvenir ?",
+        "message": "Il ne sera plus visible sur l’annonce après enregistrement."
+      },
+      "errors": {
+        "invalidLink": "Lien invalide. Colle une URL complète qui commence par http:// ou https://",
+        "videosUploadForbidden": "Vidéos interdites en upload. Ajoute plutôt un lien (YouTube/Vimeo/…).",
+        "uploadFailed": "Échec de l’upload du média.",
+        "saveFailed": "Erreur enregistrement médias."
+      },
+      "toasts": {
+        "saved": "Médias enregistrés."
+      }
+    },
+     "limits": {
+      "contactsReached": "Limite atteinte : {max} contact(s) maximum pour ce plan.",
+      "eventsReached": "Limite atteinte : {max} événement(s) maximum pour ce plan.",
+      "photosReached": "Limite atteinte : {max} photo(s) maximum pour ce plan.",
+      "videosReached": "Limite atteinte : {max} vidéo(s) maximum pour ce plan.",
+      "photosSomeIgnored": "{ignored} photo(s) ignorée(s) : vous êtes limité à {max} photo(s) sur ce plan.",
+      "textTooLong": "Texte trop long : {max} caractères maximum pour ce plan.",
+      "tooManyContacts": "Trop de contacts : {max} maximum pour ce plan. Supprimez-en ou changez de formule.",
+      "tooManyPhotos": "Trop de photos : {max} maximum pour ce plan. Supprimez-en ou changez de formule.",
+      "tooManyVideos": "Trop de vidéos : {max} maximum pour ce plan. Supprimez-en ou changez de formule.",
+      "tooManyEvents": "Trop d’événements : {max} maximum pour ce plan. Supprimez-en ou changez de formule.",
+      "photosCounter": "Photos : {used}/{max}",
+      "videosCounter": "Vidéos : {used}/{max}"
+    }
+  }
+,
+
   "toasts": {
   "obituary": {
     "publishFreeSuccess": "Annonce publiée avec succès.",

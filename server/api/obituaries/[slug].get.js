@@ -60,7 +60,11 @@ function mapObituaryRow(row) {
       whatsapp: row.family_contact_whatsapp,
       email: row.family_contact_email,
     },
-
+    // ✅ alias “plats” pour le front
+    pricingTier: row.pricing_tier || null,
+    planCode: row.pricing_tier || null,
+    publishDurationDays: row.publish_duration_days ?? null,
+    isFree: !!row.is_free,
     monetization: {
       isFree: !!row.is_free,
       pricingTier: row.pricing_tier,

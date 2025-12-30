@@ -22,27 +22,35 @@
       <!-- Barre de filtres / recherche -->
       <div class="adminobits-toolbar">
         <!-- Filtres statut vérification -->
-        <nav
-          class="adminobits-filters"
-          aria-label="Filtrer les annonces par état de vérification"
-        >
-          <button
-            v-for="option in verificationOptions"
-            :key="option.value"
-            type="button"
-            class="adminobits-filter-chip"
-            :class="{
-              'adminobits-filter-chip--active':
-                option.value === verificationFilter
-            }"
-            :aria-pressed="option.value === verificationFilter"
-            @click="onVerificationChange(option.value)"
-          >
-            <span class="adminobits-filter-label">
-              {{ t(option.labelKey) }}
-            </span>
-          </button>
-        </nav>
+       <!-- ✅ Filtres statut annonce -->
+  <nav class="adminobits-filters" aria-label="Filtrer les annonces par statut">
+    <button
+      v-for="opt in statusOptions"
+      :key="opt.value"
+      type="button"
+      class="adminobits-filter-chip"
+      :class="{ 'adminobits-filter-chip--active': opt.value === statusFilter }"
+      :aria-pressed="opt.value === statusFilter"
+      @click="onStatusChange(opt.value)"
+    >
+      <span class="adminobits-filter-label">{{ t(opt.labelKey) }}</span>
+    </button>
+  </nav>
+
+  <!-- ✅ Filtres vérification docs -->
+  <nav class="adminobits-filters" aria-label="Filtrer les annonces par état de vérification">
+    <button
+      v-for="option in verificationOptions"
+      :key="option.value"
+      type="button"
+      class="adminobits-filter-chip"
+      :class="{ 'adminobits-filter-chip--active': option.value === verificationFilter }"
+      :aria-pressed="option.value === verificationFilter"
+      @click="onVerificationChange(option.value)"
+    >
+      <span class="adminobits-filter-label">{{ t(option.labelKey) }}</span>
+    </button>
+  </nav>
 
         <!-- Recherche + tri -->
         <div class="adminobits-controls">
@@ -258,10 +266,18 @@
               >
                 {{ t('adminObituaries.actions.viewConfirm') }}
               </NuxtLink>
+<!-- Voir documents (preview avant validation) -->
+<button
+  type="button"
+  class="btn btn-ghost btn-sm"
+  @click="openDocs(item)"
+>
+  {{ t('adminObituaries.actions.viewDocs') || 'Voir documents' }}
+</button>
 
               <!-- Valider les documents -->
               <button
-                v-if="item.verificationStatus !== 'verified'"
+                v-if="item.verificationStatus !== 'pending'"
                 type="button"
                 class="btn btn-primary btn-sm"
                 :disabled="processingId === item.id"
@@ -277,7 +293,7 @@
 
               <!-- Refuser les documents -->
               <button
-                v-if="item.verificationStatus !== 'rejected'"
+                v-if="item.verificationStatus !== 'pending'"
                 type="button"
                 class="btn btn-danger btn-sm"
                 :disabled="processingId === item.id"
@@ -312,6 +328,106 @@
           />
         </div>
       </div>
+      <Teleport to="body">
+  <div v-if="docsModalOpen" class="admin-docs-modal__backdrop" @click.self="closeDocs">
+    <div class="card admin-docs-modal">
+      <div class="card-body">
+        <header class="admin-docs-modal__header">
+          <div>
+            <h3 style="margin:0;">
+              {{ t('adminObituaries.docs.title') || 'Documents' }}
+            </h3>
+            <p class="text-xs text-soft" style="margin:.25rem 0 0;">
+              {{ docsTarget?.deceased?.fullName || docsTarget?.content?.title || docsTarget?.slug || '' }}
+            </p>
+          </div>
+
+          <button type="button" class="btn btn-ghost btn-sm" @click="closeDocs">
+            {{ t('common.close') || 'Fermer' }}
+          </button>
+        </header>
+
+        <div v-if="docsLoading" class="text-sm text-soft" style="margin-top:.75rem;">
+          {{ t('common.loading') || 'Chargement…' }}
+        </div>
+
+        <div v-else-if="docsErrorMsg" class="text-sm text-danger" style="margin-top:.75rem;">
+          {{ docsErrorMsg }}
+        </div>
+
+        <div v-else style="margin-top:.75rem;">
+          <p v-if="!docsList.length" class="text-sm text-soft">
+            {{ t('adminObituaries.docs.empty') || 'Aucun document.' }}
+          </p>
+
+          <ul v-else class="admin-docs-list">
+            <li v-for="d in docsList" :key="d.id" class="admin-docs-item">
+              <div>
+                <p style="margin:0; display:flex; gap:.4rem; align-items:center; flex-wrap:wrap;">
+                  <span class="badge badge-soft">
+                    {{ d.type }}
+                  </span>
+
+                  <span class="badge" :class="docStatusClass(d.status)">
+                    {{ docStatusLabel(d.status) }}
+                  </span>
+                </p>
+
+                <p v-if="d.adminNote" class="text-xs" style="margin:.35rem 0 0;">
+                  <span class="text-soft">{{ t('adminObituaries.docs.adminNote') || 'Note :' }}</span>
+                  {{ d.adminNote }}
+                </p>
+
+                <p class="text-xs text-soft" style="margin:.35rem 0 0;">
+                  {{ d.createdAt ? formatDateTime(d.createdAt) : '' }}
+                </p>
+              </div>
+
+              <div class="inline-row" style="gap:.5rem; flex-wrap:wrap;">
+                <a
+                  class="btn btn-ghost btn-xs"
+                  :href="d.fileUrl"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {{ t('common.open') || 'Ouvrir' }}
+                </a>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card-footer" style="display:flex; gap:.5rem; justify-content:flex-end; flex-wrap:wrap;">
+        <!-- Bonus: tu peux aussi valider/refuser DIRECTEMENT depuis le modal -->
+        <button
+          v-if="docsTarget?.verificationStatus === 'pending'"
+          type="button"
+          class="btn btn-primary btn-sm"
+          :disabled="processingId === docsTarget?.id"
+          @click="onVerifyClick(docsTarget)"
+        >
+          {{ t('adminObituaries.actions.verify') || 'Valider' }}
+        </button>
+
+        <button
+          v-if="docsTarget?.verificationStatus === 'pending'"
+          type="button"
+          class="btn btn-danger btn-sm"
+          :disabled="processingId === docsTarget?.id"
+          @click="onRejectClick(docsTarget)"
+        >
+          {{ t('adminObituaries.actions.reject') || 'Refuser' }}
+        </button>
+
+        <button type="button" class="btn btn-ghost btn-sm" @click="closeDocs">
+          {{ t('common.close') || 'Fermer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</Teleport>
+
     </section>
   </main>
 </template>
@@ -344,10 +460,88 @@ const toast = $useToast ? $useToast() : null;
 
 const confirmStore = useConfirmStore(); // 👈 AJOUT
 
+const docsModalOpen = ref(false);
+const docsLoading = ref(false);
+const docsErrorMsg = ref('');
+const docsList = ref([]);
+const docsTarget = ref(null);
+
+const openDocs = async (item) => {
+  if (!item?.slug) return;
+
+  docsTarget.value = item;
+  docsModalOpen.value = true;
+  docsLoading.value = true;
+  docsErrorMsg.value = '';
+  docsList.value = [];
+
+  try {
+    const res = await $fetch(`/api/obituaries/${item.slug}/documents`);
+    docsList.value = Array.isArray(res?.documents) ? res.documents : [];
+  } catch (err) {
+    docsErrorMsg.value =
+      err?.data?.message ||
+      err?.message ||
+      (t('adminObituaries.docs.loadError') || 'Impossible de charger les documents.');
+  } finally {
+    docsLoading.value = false;
+  }
+};
+
+const closeDocs = () => {
+  docsModalOpen.value = false;
+  docsTarget.value = null;
+  docsList.value = [];
+  docsErrorMsg.value = '';
+  docsLoading.value = false;
+};
+
+const docStatusLabel = (status) => {
+  switch (status) {
+    case 'accepted': return t('editObituary.documents.status.accepted') || 'Accepté';
+    case 'rejected': return t('editObituary.documents.status.rejected') || 'Refusé';
+    case 'under_review': return t('editObituary.documents.status.under_review') || 'En revue';
+    default: return status || '—';
+  }
+};
+
+const docStatusClass = (status) => {
+  if (status === 'accepted') return 'badge-success';
+  if (status === 'rejected') return 'badge-warning';
+  if (status === 'under_review') return 'badge-neutral';
+  return 'badge-soft';
+};
 
 // état pour désactiver les boutons pendant l'appel API
 const processingId = ref(null);
 const processingAction = ref(null);
+// Filtres "statut annonce"
+const statusOptions = [
+  { value: 'all', labelKey: 'adminObituaries.statusFilters.all' },
+  { value: 'draft', labelKey: 'adminObituaries.status.draft' },
+  { value: 'pending_review', labelKey: 'adminObituaries.status.pending_review' },
+  { value: 'published', labelKey: 'adminObituaries.status.published' },
+  { value: 'archived', labelKey: 'adminObituaries.status.archived' },
+  { value: 'expired', labelKey: 'adminObituaries.status.expired' },
+  { value: 'rejected', labelKey: 'adminObituaries.status.rejected' },
+];
+
+const initialStatus =
+  typeof route.query.status === 'string'
+    ? route.query.status
+    : 'pending_review';
+
+const statusFilter = ref(
+  statusOptions.some((o) => o.value === initialStatus)
+    ? initialStatus
+    : 'pending_review'
+);
+
+const onStatusChange = (value) => {
+  if (statusFilter.value === value) return;
+  statusFilter.value = value;
+  page.value = 1;
+};
 
 // Filtres "état de vérification"
 const verificationOptions = [
@@ -394,14 +588,13 @@ const {
     params.set('page', String(page.value));
     params.set('pageSize', '10');
     params.set('onlyPaid', 'true');
+if (statusFilter.value !== 'all') {
+  params.set('status', statusFilter.value);
+}
 
-    if (verificationFilter.value !== 'all') {
-      params.set('verification', verificationFilter.value);
-    }
-
-    if (search.value && search.value.trim().length > 1) {
-      params.set('q', search.value.trim());
-    }
+if (verificationFilter.value !== 'all') {
+  params.set('verification', verificationFilter.value);
+}
 
     if (sort.value && sort.value !== 'recent') {
       params.set('sort', sort.value);
@@ -410,10 +603,9 @@ const {
     return `/api/admin/obituaries?${params.toString()}`;
   },
   {
-    key: () =>
-      `admin-obits-${verificationFilter.value}-${page.value}-${sort.value}-${
-        search.value || ''
-      }`,
+  key: () =>
+  `admin-obits-${statusFilter.value}-${verificationFilter.value}-${page.value}-${sort.value}-${search.value || ''}`,
+
   },
 );
 
@@ -621,30 +813,26 @@ const onRejectClick = async (item) => {
 
 // Sync query string (URL partageable)
 watch(
-  [verificationFilter, page, search, sort],
-  ([newVerification, newPage, newSearch, newSort]) => {
+  [statusFilter, verificationFilter, page, search, sort],
+  ([newStatus, newVerification, newPage, newSearch, newSort]) => {
     const query = {
       ...route.query,
+      status: newStatus,
       verification: newVerification,
       page: String(newPage),
     };
 
-    if (newSearch && newSearch.trim().length > 1) {
-      query.q = newSearch.trim();
-    } else {
-      delete query.q;
-    }
+    if (newSearch && newSearch.trim().length > 1) query.q = newSearch.trim();
+    else delete query.q;
 
-    if (newSort && newSort !== 'recent') {
-      query.sort = newSort;
-    } else {
-      delete query.sort;
-    }
+    if (newSort && newSort !== 'recent') query.sort = newSort;
+    else delete query.sort;
 
     router.replace({ query });
   },
-  { immediate: false },
+  { immediate: false }
 );
+
 </script>
 
 <style scoped>
@@ -932,4 +1120,47 @@ watch(
     justify-content: flex-start;
   }
 }
+.admin-docs-modal__backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 9999;
+}
+
+.admin-docs-modal{
+  width: min(860px, 100%);
+  max-height: 85vh;
+  overflow: auto;
+}
+
+.admin-docs-modal__header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:.75rem;
+}
+
+.admin-docs-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  gap:.6rem;
+}
+
+.admin-docs-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:.75rem;
+  padding:.65rem .75rem;
+  border:1px solid var(--color-border-subtle);
+  border-radius:.75rem;
+  background: var(--color-surface-main);
+}
+
 </style>

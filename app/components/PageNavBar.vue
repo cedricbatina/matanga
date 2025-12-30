@@ -28,61 +28,73 @@
         <!-- Zone extensible à gauche si besoin -->
         <slot name="left" />
       </div>
+<div class="page-nav__right" v-if="hasRightSide">
+  <!-- Actions (slot + props) -->
+  <div
+    v-if="hasActions"
+    class="page-nav__actions"
+    role="group"
+    :aria-label="t(actionsAriaLabelKey)"
+  >
+    <!-- ✅ slot actions (prioritaire / complément) -->
+    <slot name="actions" />
 
-      <div class="page-nav__right" v-if="hasRightSide">
-        <!-- Actions additionnelles (Plans, Aide, etc.) -->
-        <div
-          v-if="actions?.length"
-          class="page-nav__actions"
-          role="group"
-          :aria-label="t(actionsAriaLabelKey)"
-        >
-          <component
-            v-for="(a, idx) in actions"
-            :key="a.key || `${a.to || a.href}-${idx}`"
-            :is="a.href ? 'a' : NuxtLink"
-            :to="a.href ? undefined : a.to"
-            :href="a.href || undefined"
-            :target="a.target || (a.href ? '_blank' : undefined)"
-            :rel="a.rel || (a.href ? 'noopener noreferrer' : undefined)"
-            :class="actionClass(a)"
-            :aria-label="a.ariaLabelKey ? t(a.ariaLabelKey) : undefined"
-            prefetch
-          >
-            <span class="action__inner">
-              <component
-                v-if="a.icon"
-                :is="a.icon"
-                class="action__icon"
-                aria-hidden="true"
-              />
-              <span class="action__label">{{ t(a.labelKey) }}</span>
-            </span>
-          </component>
-        </div>
+    <!-- actions via props -->
+    <component
+      v-for="(a, idx) in actions"
+      :key="a.key || `${a.to || a.href}-${idx}`"
+      :is="a.href ? 'a' : NuxtLink"
+      :to="a.href ? undefined : a.to"
+      :href="a.href || undefined"
+      :target="a.target || (a.href ? '_blank' : undefined)"
+      :rel="a.rel || (a.href ? 'noopener noreferrer' : undefined)"
+      :class="actionClass(a)"
+      :aria-label="a.ariaLabelKey ? t(a.ariaLabelKey) : undefined"
+      :prefetch="a.href ? undefined : true"
+    >
+      <span class="action__inner">
+        <component
+          v-if="a.icon"
+          :is="a.icon"
+          class="action__icon"
+          aria-hidden="true"
+        />
+        <span class="action__label">{{ t(a.labelKey) }}</span>
+      </span>
+    </component>
+  </div>
 
-        <!-- CTA principal (compat) -->
-        <NuxtLink
-          v-if="showCreate && createTo"
-          :to="createTo"
-          class="btn btn-secondary btn-sm page-nav__cta"
-          prefetch
-        >
-          {{ t(createLabelKey) }}
-        </NuxtLink>
+  <!-- CTA principal (compat) -->
+  <NuxtLink
+    v-if="showCreate && createTo"
+    :to="createTo"
+    class="btn btn-secondary btn-sm page-nav__cta"
+    prefetch
+  >
+    {{ t(createLabelKey) }}
+  </NuxtLink>
 
-        <!-- Zone extensible à droite si besoin -->
-        <slot name="right" />
-      </div>
+  <!-- Zone extensible à droite (hors actions) -->
+  <slot name="right" />
+</div>
+
     </div>
   </nav>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconChevronLeft from '~/components/icons/IconChevronLeft.vue';
+const slots = useSlots();
 
+const hasActions = computed(() => {
+  return (props.actions && props.actions.length) || !!slots.actions;
+});
+
+const hasRightSide = computed(() => {
+  return hasActions.value || (props.showCreate && props.createTo) || !!slots.right;
+})
 const { t } = useI18n();
 
 const props = defineProps({
@@ -114,10 +126,10 @@ const props = defineProps({
     default: 'common.quickActions',
   },
 });
-
+/*
 const hasRightSide = computed(() => {
   return (props.actions && props.actions.length) || (props.showCreate && props.createTo);
-});
+});*/
 
 // mapping de styles vers tes classes globales (respect design)
 function actionClass(a) {

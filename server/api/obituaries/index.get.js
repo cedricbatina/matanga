@@ -65,6 +65,7 @@ function mapSummaryRow(row) {
       viewCount: row.view_count,
       lastViewAt: row.last_view_at,
     },
+    pricingTier: row.pricing_tier || null,
 
     mainEvent: row.main_event_id
       ? {

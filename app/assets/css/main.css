@@ -1,5 +1,5 @@
 /* ================================
-   MATANGA DESIGN SYSTEM - GLOBAL
+   MADIZI DESIGN SYSTEM - GLOBAL
    ================================ */
 
 /* Reset très léger + box-sizing */
@@ -938,4 +938,59 @@ select.form-control {
 
 .bm-footer-meta {
   opacity: 0.85;
+}
+/* =========================
+   PLAN BANNER (Create/Confirm/Edit)
+   ========================= */
+
+.selected-plan-banner {
+  border: 1px solid var(--color-border-subtle);
+  background: radial-gradient(circle at top left, var(--color-accent-soft), transparent 55%),
+              var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-soft);
+}
+
+.selected-plan-banner__main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.selected-plan-banner__label {
+  font-family: var(--font-title);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
+
+.selected-plan-banner__price {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.selected-plan-banner__helper {
+  margin: 0.35rem 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Variante PRO (si tu veux un bandeau plus marqué) */
+.selected-plan-banner--pro {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border-subtle));
+  background: radial-gradient(circle at top left, rgba(184, 134, 11, 0.14), transparent 60%),
+              var(--color-surface);
+}
+.badge-soft {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.badge-warning {
+  background: rgba(161, 98, 7, 0.12);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 25%, var(--color-border-subtle));
 }

@@ -75,6 +75,10 @@ function mapBasePlan(plan, defaults = {}) {
     isFree: !!plan.isFree,
     pricingTier: plan.pricingTier || null,
     currency: plan.currency || null,
+    isPublic: plan.isPublic !== false,
+    isRecommended: !!plan.isRecommended,
+    sortOrder: Number.isFinite(plan.sortOrder) ? plan.sortOrder : 9999,
+    aliases: Array.isArray(plan.aliases) ? plan.aliases : [],
 
     basePriceCents,
     // (optionnel, utile si un jour tu veux afficher aussi priceCents distinct)
@@ -122,6 +126,10 @@ function mapProSubscriptionPlan(plan) {
     isFree: !!plan.isFree,
     pricingTier: plan.pricingTier || null,
     currency: plan.currency || null,
+    isPublic: plan.isPublic !== false,
+    isRecommended: !!plan.isRecommended,
+    sortOrder: Number.isFinite(plan.sortOrder) ? plan.sortOrder : 9999,
+    aliases: Array.isArray(plan.aliases) ? plan.aliases : [],
 
     // abonnement : prix par période
     basePriceCents: priceCents,
@@ -149,22 +157,29 @@ export default defineEventHandler(async (event) => {
   }
   void session;
 
-  // ----- Individual -----
-  const individualObituary = Object.values(INDIVIDUAL_PLANS).map((p) =>
+
+const sortByOrder = (a, b) => (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999);
+
+const individualObituary = Object.values(INDIVIDUAL_PLANS)
+  .map((p) =>
     mapBasePlan(p, {
       accountType: "individual",
       scope: "obituary",
       billingType: "oneoff",
     })
-  );
+  )
+  .sort(sortByOrder);
 
-  const individualMemorial = Object.values(INDIVIDUAL_MEMORIAL_PLANS).map((p) =>
+const individualMemorial = Object.values(INDIVIDUAL_MEMORIAL_PLANS)
+  .map((p) =>
     mapBasePlan(p, {
       accountType: "individual",
       scope: "memorial",
       billingType: "oneoff",
     })
-  );
+  )
+  .sort(sortByOrder);
+
 
   // ----- Pro (oneoff) -----
   const proOneOffAll = Object.values(PRO_PLANS).map((p) =>
@@ -175,9 +190,9 @@ export default defineEventHandler(async (event) => {
   const proMemorialOneOff = proOneOffAll.filter((p) => p.scope === "memorial");
 
   // ----- Pro (subscriptions) -----
-  const proSubscriptions = Object.values(PRO_SUBSCRIPTION_PLANS).map((p) =>
-    mapProSubscriptionPlan(p)
-  );
+const proSubscriptions = Object.values(PRO_SUBSCRIPTION_PLANS)
+  .map(mapProSubscriptionPlan)
+  .sort(sortByOrder);
 
   return {
     ok: true,
