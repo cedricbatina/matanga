@@ -1,175 +1,22 @@
 {
-  "app": {
-    "brand": "Batina Media"
-  },
-  "layout": {
-    "skipToContent": "Aller au contenu principal",
-    "theme": {
-      "switchToDark": "Activer le thème sombre",
-      "switchToLight": "Activer le thème clair"
+  "adminObituaries": {
+    "statusFilters": {
+      "all": "Tous statuts"
     },
-    "footer": {
-      "tagline": "Studio d’ingénierie des savoirs, plateformes, produits digitaux et contenus structurés."
-    }
-  },
-  "nav": {
-    "home": "Accueil",
-    "solutions": "Solutions",
-    "projects": "Projets",
-    "studio": "Studio",
-    "contact": "Contact"
-  },
-  "home": {
-    "seo": {
-      "title": "Batina Media · Studio d’ingénierie des savoirs & solutions digitales",
-      "description": "Batina Media conçoit des plateformes, produits digitaux, jeux, livres et apps à partir de vos savoirs, données, langues et patrimoines."
+    "filters": {
+      "all": "Tous documents",
+      "pending": "À vérifier",
+      "verified": "Vérifiées",
+      "rejected": "Refusées"
     },
-
-    "hero": {
-      "pill": "Studio d’ingénierie des savoirs & du digital",
-      "title": {
-        "highlight": "Nous structurons vos savoirs",
-        "rest": "en plateformes, jeux, livres et apps"
-      },
-      "subtitle": "Bases de données, langues, archives, contenus d’auteurs, cours, recherches : nous les transformons en produits numériques cohérents, pédagogiques et durables.",
-      "primaryCta": "Parler de votre projet",
-      "secondaryCta": "Voir des exemples concrets",
-      "meta": "Écoles, chercheurs, auteurs, éditeurs, PME, associations et projets culturels ou panafricains : nous vous aidons à passer de l’idée au système numérique, du prototype aux écosystèmes durables.",
-      "aside": {
-        "label": "En pratique",
-        "title": "Produits, plateformes et contenus ancrés dans le réel",
-        "items": {
-          "platforms": {
-            "label": "Plateformes & outils",
-            "value": "Portails pédagogiques, lexiques en ligne, espaces membres, outils métiers et apps web."
-          },
-          "solutions": {
-            "label": "Solutions digitales",
-            "value": "Sites avancés, web-apps, back-offices éditoriaux, API et automatisations autour de vos données."
-          },
-          "audience": {
-            "label": "Publics accompagnés",
-            "value": "Écoles, chercheurs, auteurs, éditeurs, PME, associations, ONG et initiatives panafricaines."
-          }
-        }
-      }
+    "empty": {
+      "pendingPaid": "Aucune annonce payée à vérifier pour le moment.",
+      "verifiedPaid": "Aucune annonce payée avec documents déjà vérifiés.",
+      "rejectedPaid": "Aucune annonce payée avec documents refusés.",
+      "default": "Aucune annonce pour ces filtres."
     },
-
-    "domains": {
-      "label": "Domaines / offres",
-      "title": "De vos contenus aux systèmes numériques",
-      "subtitle": "Nous relions vos savoirs, vos publics et des formats adaptés : produits de savoirs, plateformes & outils digitaux, jeux & éditions.",
-      "knowledge": {
-        "title": "Produits de savoirs",
-        "subtitle": "Langues, écritures, corpus, archives, documentations métiers.",
-        "items": {
-          "0": "Conception de modèles de données pour lexiques, corpus, contenus pédagogiques ou fonds de recherche.",
-          "1": "Mise en forme de patrimoines et savoirs endogènes (langues africaines, écritures comme le Natikongo ou le Mandombé, traditions orales).",
-          "2": "Interfaces de consultation et de navigation adaptées aux chercheurs, aux apprenants et au grand public."
-        }
-      },
-      "platforms": {
-        "title": "Plateformes & outils digitaux",
-        "subtitle": "Sites, web-apps et portails construits comme des systèmes, pas de simples vitrines.",
-        "items": {
-          "0": "Sites et plateformes sur mesure pour écoles, laboratoires, éditeurs, associations ou PME.",
-          "1": "Portails pédagogiques, espaces membres, back-offices éditoriaux et outils internes de gestion de contenus.",
-          "2": "Architectures extensibles prêtes à alimenter d’autres interfaces (API, apps mobiles, tableaux de bord, outils métiers)."
-        }
-      },
-      "gamesPublishing": {
-        "title": "Jeux, puzzles & édition",
-        "subtitle": "Du JSON aux jeux, livres et cahiers d’activités.",
-        "items": {
-          "0": "Génération de jeux de lettres (mots mêlés, mots croisés, scrabble-like, quiz) à partir de bases de données structurées.",
-          "1": "Scripts et pipelines vers InDesign / édition pour produire des livres, cahiers d’exercices et recueils d’articles.",
-          "2": "Collections imprimées et numériques autour de langues, savoirs, cultures ou disciplines spécifiques."
-        }
-      }
-    },
-
-    "pipeline": {
-      "label": "Notre façon de travailler",
-      "title": "Un pipeline complet : données → systèmes → jeux & livres → apps",
-      "subtitle": "Nous concevons un socle unique qui sert vos plateformes, vos éditions, vos jeux et vos futures applications mobiles, plutôt qu’une série de projets isolés.",
-      "steps": {
-        "0": {
-          "index": "01",
-          "title": "Cartographier vos contenus et vos données",
-          "body": "Nous partons de ce que vous avez déjà : bases de données, fichiers, notes de terrain, manuscrits, enregistrements, archives ou contenus métier. Nous clarifions les structures, les usages et les publics."
-        },
-        "1": {
-          "index": "02",
-          "title": "Concevoir un modèle exploitable à long terme",
-          "body": "Nous dessinons des schémas de données réutilisables (lexiques, corpus, fiches, contenus pédagogiques) et les mettons dans une base ou un format maîtrisable (MySQL, SQL, JSON, API…)."
-        },
-        "2": {
-          "index": "03",
-          "title": "Construire la plateforme et les outils",
-          "body": "Nous développons la plateforme principale (site, portail, application web en Nuxt ou autres stacks) ainsi que les outils internes nécessaires : publication de contenus, gestion de catalogues, exports, espaces utilisateurs."
-        },
-        "3": {
-          "index": "04",
-          "title": "Décliner en jeux, livres, apps & autres supports",
-          "body": "À partir des mêmes données, nous générons jeux de lettres et quiz, livres et cahiers (via JSON + scripts InDesign JSX), ainsi que des apps mobiles et outils interactifs, en nous adaptant à vos contraintes techniques (Java, Node, C++, etc.)."
-        }
-      }
-    },
-
-    "projects": {
-      "label": "Écosystèmes signature",
-      "title": "Quelques fondations déjà en place",
-      "subtitle": "Des socles de données qui nourrissent plateformes, ressources pédagogiques, éditions et futures apps.",
-      "items": {
-        "0": {
-          "tag": "Plateforme · Cours & e-boutique éducative",
-          "name": "Longoka",
-          "description": "Une app de cours, d’articles, de livres, de papeterie et d’objets éducatifs — de la tradition à la tech — autour des langues, écritures et savoirs africains.",
-          "meta": "Relie contenus pédagogiques, e-boutique, événements et communautés dans une même expérience."
-        },
-        "1": {
-          "tag": "Produit de savoirs · Lexique",
-          "name": "Lexikongo",
-          "description": "Plateforme lexicale centrée sur le Kikongo, conçue comme base multilingue et extensible.",
-          "meta": "Montre comment structurer un lexique pour alimenter interfaces web, supports pédagogiques, jeux et éditions papier."
-        },
-        "2": {
-          "tag": "Produit de savoirs · Lexique",
-          "name": "Lexilingala",
-          "description": "Plateforme sœur dédiée au Lingala, bâtie sur le même socle conceptuel que Lexikongo.",
-          "meta": "Exemple de localisation rapide d’un produit lexical vers une nouvelle langue en réutilisant le même design de données."
-        },
-        "3": {
-          "tag": "Plateforme · Annonces nécrologiques",
-          "name": "Madizi",
-          "description": "App d’annonces nécrologiques pour familles et professionnels : avis de décès, hommages, cérémonies et informations pratiques.",
-          "meta": "Illustre la façon dont nous articulons données sensibles, parcours utilisateurs clairs et diffusion multicanale (web, impressions, partages)."
-        }
-      }
-    },
-
-    "audience": {
-      "label": "Pour qui travaillons-nous ?",
-      "title": "Des savoirs locaux aux systèmes globaux",
-      "subtitle": "Nous accompagnons celles et ceux qui portent des savoirs, une mémoire, une langue, une expertise ou une mission à transmettre, et qui cherchent une vraie ingénierie digitale pour les mettre en forme.",
-      "items": {
-        "0": {
-          "title": "Écoles, enseignants & projets pédagogiques",
-          "body": "Plateformes de cours, exercices, jeux de langue et ressources imprimables pour les élèves et les formateurs, en présentiel ou à distance."
-        },
-        "1": {
-          "title": "Chercheurs, anthropologues & laboratoires",
-          "body": "Valorisation de recherches, corpus de terrain et archives (audio, vidéo, textes) via des plateformes consultables, outils de navigation et supports de diffusion."
-        },
-        "2": {
-          "title": "Auteurs, éditeurs & maisons d’édition",
-          "body": "Structuration de contenus, pipelines vers livres et collections, cahiers d’activités, recueils d’articles, et déclinaisons numériques autour de vos catalogues."
-        },
-        "3": {
-          "title": "PME, associations, ONG & initiatives panafricaines",
-          "body": "Sites et plateformes centrés sur vos activités, vos communautés et vos savoirs métiers, avec des outils concrets pour vos équipes et vos publics – du monde noir et au-delà."
-        }
-      }
+    "actions": {
+      "moderateDocs": "Modérer (docs)"
     }
   }
 }

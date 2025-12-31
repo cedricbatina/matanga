@@ -345,7 +345,10 @@
       "delete": "Supprimer",
       "archive": "Retirer du site",
       "open": "Ouvrir"
-    }
+    },
+      "close": "Fermer",
+    "loading": "Chargement…"
+  
 },
 
 "createObituary": {
@@ -1551,11 +1554,23 @@
     "title": "Modération des annonces",
     "description": "Espace réservé aux administrateurs et modérateurs pour vérifier les annonces payées."
   },
+  "filterGroups": {
+      "statusTitle": "Statut de l’annonce",
+      "verificationTitle": "Vérification des documents"
+    },
   "filters": {
     "all": "Toutes",
     "pending": "À vérifier",
     "verified": "Vérifiées",
-    "rejected": "Refusées"
+    "rejected": "Refusées",
+     "statusFilters": { "all": "Tous statuts" },
+    "verificationFilters": { "all": "Toutes vérifications" }
+  },
+  "docs": {
+ "title": "Documents",
+      "empty": "Aucun document.",
+      "loadError": "Impossible de charger les documents.",
+      "adminNote": "Note :"
   },
   "searchLabel": "Rechercher une annonce",
   "searchPlaceholder": "Nom du défunt, titre ou email famille…",
@@ -1568,7 +1583,12 @@
   "error": "Une erreur est survenue lors du chargement des annonces.",
   "errorForbidden": "Cet espace est réservé aux administrateurs et modérateurs.",
   "retry": "Réessayer",
-  "empty": "Aucune annonce payée à vérifier pour le moment.",
+ "empty": {
+      "pendingPaid": "Aucune annonce payée à vérifier pour le moment.",
+      "verifiedPaid": "Aucune annonce payée avec documents déjà vérifiés.",
+      "rejectedPaid": "Aucune annonce payée avec documents refusés.",
+      "default": "Aucune annonce pour ces filtres."
+    },
   "familyLabel": "Famille / compte :",
   "createdAt": "Créée le {date}",
   "publishedAt": "Publiée le {date}",
@@ -1598,7 +1618,10 @@
      "verify": "Valider les documents",
     "verifyLoading": "Validation en cours…",
     "reject": "Refuser les documents",
-    "rejectLoading": "Refus en cours…"
+    "rejectLoading": "Refus en cours…",
+      "moderateDocs": "Modérer (docs)",
+      "viewDocs": "Consultation (docs)"
+
   },
   "pagination": {
     "aria": "Pagination des annonces à vérifier"

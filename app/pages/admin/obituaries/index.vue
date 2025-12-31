@@ -19,84 +19,54 @@
         </p>
       </header>
 
-      <!-- Barre de filtres / recherche -->
-      <div class="adminobits-toolbar">
-        <!-- Filtres statut vérification -->
-       <!-- ✅ Filtres statut annonce -->
-  <nav class="adminobits-filters" aria-label="Filtrer les annonces par statut">
-    <button
-      v-for="opt in statusOptions"
-      :key="opt.value"
-      type="button"
-      class="adminobits-filter-chip"
-      :class="{ 'adminobits-filter-chip--active': opt.value === statusFilter }"
-      :aria-pressed="opt.value === statusFilter"
-      @click="onStatusChange(opt.value)"
-    >
-      <span class="adminobits-filter-label">{{ t(opt.labelKey) }}</span>
-    </button>
-  </nav>
+<div class="adminobits-filter-groups">
+  <!-- Groupe 1: statut annonce -->
+  <section class="adminobits-filter-group adminobits-filter-group--status">
+    <p class="adminobits-filter-title">
+      {{ tr('adminObituaries.filterGroups.statusTitle', 'Statut de l’annonce') }}
+    </p>
 
-  <!-- ✅ Filtres vérification docs -->
-  <nav class="adminobits-filters" aria-label="Filtrer les annonces par état de vérification">
-    <button
-      v-for="option in verificationOptions"
-      :key="option.value"
-      type="button"
-      class="adminobits-filter-chip"
-      :class="{ 'adminobits-filter-chip--active': option.value === verificationFilter }"
-      :aria-pressed="option.value === verificationFilter"
-      @click="onVerificationChange(option.value)"
-    >
-      <span class="adminobits-filter-label">{{ t(option.labelKey) }}</span>
-    </button>
-  </nav>
+    <nav class="adminobits-filters" aria-label="Filtrer les annonces par statut">
+      <button
+        v-for="opt in statusOptions"
+        :key="opt.value"
+        type="button"
+        class="adminobits-filter-chip"
+        :class="{ 'adminobits-filter-chip--active': opt.value === statusFilter }"
+        :aria-pressed="opt.value === statusFilter"
+        @click="onStatusChange(opt.value)"
+      >
+        <span class="adminobits-filter-label">
+          {{ tr(opt.labelKey, opt.fallbackLabel) }}
+        </span>
+      </button>
+    </nav>
+  </section>
 
-        <!-- Recherche + tri -->
-        <div class="adminobits-controls">
-          <!-- Recherche -->
-          <label class="adminobits-search">
-            <span class="sr-only">
-              {{ t('adminObituaries.searchLabel') }}
-            </span>
-            <span class="adminobits-search__icon" aria-hidden="true">
-              <i class="fa-regular fa-magnifying-glass" />
-            </span>
-            <input
-              v-model="search"
-              type="search"
-              class="adminobits-search__input"
-              :placeholder="t('adminObituaries.searchPlaceholder')"
-            >
-          </label>
+  <!-- Groupe 2: vérification docs -->
+  <section class="adminobits-filter-group adminobits-filter-group--verification">
+    <p class="adminobits-filter-title">
+      {{ tr('adminObituaries.filterGroups.verificationTitle', 'Vérification des documents') }}
+    </p>
 
-          <!-- Tri -->
-          <label class="adminobits-sort">
-            <span class="adminobits-sort__label">
-              {{ t('adminObituaries.sortLabel') }}
-            </span>
-            <div class="adminobits-sort__control">
-              <select
-                v-model="sort"
-                class="adminobits-sort__select"
-              >
-                <option value="recent">
-                  {{ t('adminObituaries.sort.recent') }}
-                </option>
-                <option value="oldest">
-                  {{ t('adminObituaries.sort.oldest') }}
-                </option>
-                <option value="popular">
-                  {{ t('adminObituaries.sort.popular') }}
-                </option>
-              </select>
-              <span class="adminobits-sort__icon" aria-hidden="true">
-                <i class="fa-regular fa-arrow-up-wide-short" />
-              </span>
-            </div>
-          </label>
-        </div>
-      </div>
+    <nav class="adminobits-filters" aria-label="Filtrer les annonces par état de vérification">
+      <button
+        v-for="option in verificationOptions"
+        :key="option.value"
+        type="button"
+        class="adminobits-filter-chip"
+        :class="{ 'adminobits-filter-chip--active': option.value === verificationFilter }"
+        :aria-pressed="option.value === verificationFilter"
+        @click="onVerificationChange(option.value)"
+      >
+        <span class="adminobits-filter-label">
+          {{ tr(option.labelKey, option.fallbackLabel) }}
+        </span>
+      </button>
+    </nav>
+  </section>
+</div>
+
 
       <!-- Loading -->
       <div v-if="pending" class="adminobits-loading">
@@ -132,9 +102,10 @@
         v-else-if="!items.length"
         class="adminobits-empty"
       >
-        <p class="adminobits-empty__text">
-          {{ t('adminObituaries.empty') }}
-        </p>
+<p class="adminobits-empty__text">
+  {{ emptyLabel }}
+</p>
+
       </div>
 
       <!-- Liste d'annonces -->
@@ -274,14 +245,14 @@
 >
   {{ t('adminObituaries.actions.viewDocs') || 'Voir documents' }}
 </button>
-<NuxtLink :to="`/admin/obituaries/${item.slug}`" class="btn btn-ghost btn-sm">
+<NuxtLink :to="`/admin/obituary/${item.slug}`" class="btn btn-ghost btn-sm">
   Modérer (docs)
 </NuxtLink>
 
 
               <!-- Valider les documents -->
               <button
-                v-if="item.verificationStatus !== 'pending'"
+                v-if="item.verificationStatus === 'pending'"
                 type="button"
                 class="btn btn-primary btn-sm"
                 :disabled="processingId === item.id"
@@ -297,7 +268,7 @@
 
               <!-- Refuser les documents -->
               <button
-                v-if="item.verificationStatus !== 'pending'"
+                v-if="item.verificationStatus === 'pending'"
                 type="button"
                 class="btn btn-danger btn-sm"
                 :disabled="processingId === item.id"
@@ -347,7 +318,8 @@
           </div>
 
           <button type="button" class="btn btn-ghost btn-sm" @click="closeDocs">
-            {{ t('common.close') || 'Fermer' }}
+          {{ tr('common.close', 'Fermer') }}
+
           </button>
         </header>
 
@@ -425,7 +397,8 @@
         </button>
 
         <button type="button" class="btn btn-ghost btn-sm" @click="closeDocs">
-          {{ t('common.close') || 'Fermer' }}
+        {{ tr('common.close', 'Fermer') }}
+
         </button>
       </div>
     </div>
@@ -469,6 +442,10 @@ const docsLoading = ref(false);
 const docsErrorMsg = ref('');
 const docsList = ref([]);
 const docsTarget = ref(null);
+const tr = (key, fallback, params) => {
+  const v = t(key, params || {});
+  return v === key ? fallback : v;
+};
 
 const openDocs = async (item) => {
   if (!item?.slug) return;
@@ -521,14 +498,24 @@ const processingId = ref(null);
 const processingAction = ref(null);
 // Filtres "statut annonce"
 const statusOptions = [
-  { value: 'all', labelKey: 'adminObituaries.statusFilters.all' },
-  { value: 'draft', labelKey: 'adminObituaries.status.draft' },
-  { value: 'pending_review', labelKey: 'adminObituaries.status.pending_review' },
-  { value: 'published', labelKey: 'adminObituaries.status.published' },
-  { value: 'archived', labelKey: 'adminObituaries.status.archived' },
-  { value: 'expired', labelKey: 'adminObituaries.status.expired' },
-  { value: 'rejected', labelKey: 'adminObituaries.status.rejected' },
+   { value: 'all', labelKey: 'adminObituaries.statusFilters.all', fallbackLabel: 'Tous statuts' },
+  
+  { value: 'draft', labelKey: 'adminObituaries.status.draft', fallbackLabel: 'Brouillon' },
+  { value: 'pending_review', labelKey: 'adminObituaries.status.pending_review', fallbackLabel: 'En attente' },
+  { value: 'published', labelKey: 'adminObituaries.status.published', fallbackLabel: 'Publiée' },
+  { value: 'archived', labelKey: 'adminObituaries.status.archived', fallbackLabel: 'Archivée' },
+  { value: 'expired', labelKey: 'adminObituaries.status.expired', fallbackLabel: 'Expirée' },
+  { value: 'rejected', labelKey: 'adminObituaries.status.rejected', fallbackLabel: 'Refusée' },
 ];
+
+const verificationOptions = [
+  { value: 'all', labelKey: 'adminObituaries.filters.all', fallbackLabel: 'Toutes' },
+  { value: 'pending', labelKey: 'adminObituaries.filters.pending', fallbackLabel: 'À vérifier' },
+  { value: 'verified', labelKey: 'adminObituaries.filters.verified', fallbackLabel: 'Vérifiées' },
+  { value: 'rejected', labelKey: 'adminObituaries.filters.rejected', fallbackLabel: 'Refusées' },
+];
+
+
 
 const initialStatus =
   typeof route.query.status === 'string'
@@ -547,13 +534,6 @@ const onStatusChange = (value) => {
   page.value = 1;
 };
 
-// Filtres "état de vérification"
-const verificationOptions = [
-  { value: 'all', labelKey: 'adminObituaries.filters.all' },
-  { value: 'pending', labelKey: 'adminObituaries.filters.pending' },
-  { value: 'verified', labelKey: 'adminObituaries.filters.verified' },
-  { value: 'rejected', labelKey: 'adminObituaries.filters.rejected' },
-];
 
 const initialVerification =
   typeof route.query.verification === 'string'
@@ -579,8 +559,10 @@ const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
 const sort = ref(
   typeof route.query.sort === 'string' ? route.query.sort : 'recent',
 );
-
-// Appel API admin
+const effectiveQ = computed(() => {
+  const s = (search.value || '').trim();
+  return s.length > 1 ? s : '';
+});
 const {
   data,
   pending,
@@ -592,14 +574,22 @@ const {
     params.set('page', String(page.value));
     params.set('pageSize', '10');
     params.set('onlyPaid', 'true');
-if (statusFilter.value !== 'all') {
-  params.set('status', statusFilter.value);
+
+    // ✅ status
+    if (statusFilter.value !== 'all') {
+      params.set('status', statusFilter.value);
+    }
+
+    // ✅ verification
+    if (verificationFilter.value !== 'all') {
+      params.set('verification', verificationFilter.value);
+    }
+if (effectiveQ.value) {
+  params.set('q', effectiveQ.value);
 }
 
-if (verificationFilter.value !== 'all') {
-  params.set('verification', verificationFilter.value);
-}
-
+ 
+    // ✅ sort
     if (sort.value && sort.value !== 'recent') {
       params.set('sort', sort.value);
     }
@@ -607,11 +597,12 @@ if (verificationFilter.value !== 'all') {
     return `/api/admin/obituaries?${params.toString()}`;
   },
   {
-  key: () =>
-  `admin-obits-${statusFilter.value}-${verificationFilter.value}-${page.value}-${sort.value}-${search.value || ''}`,
+    key: () =>
+  `admin-obits-${statusFilter.value}-${verificationFilter.value}-${page.value}-${sort.value}-${effectiveQ.value}`,
 
   },
 );
+
 
 const result = computed(
   () => data.value || { ok: false, items: [], pagination: null },
@@ -826,8 +817,9 @@ watch(
       page: String(newPage),
     };
 
-    if (newSearch && newSearch.trim().length > 1) query.q = newSearch.trim();
-    else delete query.q;
+if (effectiveQ.value) query.q = effectiveQ.value;
+else delete query.q;
+
 
     if (newSort && newSort !== 'recent') query.sort = newSort;
     else delete query.sort;
@@ -836,6 +828,15 @@ watch(
   },
   { immediate: false }
 );
+const emptyLabelKey = computed(() => {
+  if (verificationFilter.value === 'pending') return 'adminObituaries.empty.pendingPaid';
+  if (verificationFilter.value === 'verified') return 'adminObituaries.empty.verifiedPaid';
+  if (verificationFilter.value === 'rejected') return 'adminObituaries.empty.rejectedPaid';
+  return 'adminObituaries.empty.default';
+});
+
+const emptyLabel = computed(() => tr(emptyLabelKey.value, 'Aucune annonce pour ces filtres.'));
+
 
 </script>
 
@@ -1165,6 +1166,33 @@ watch(
   border:1px solid var(--color-border-subtle);
   border-radius:.75rem;
   background: var(--color-surface-main);
+}
+.adminobits-filter-groups{
+  display:grid;
+  gap:.75rem;
+  margin-top:.75rem;
+}
+
+.adminobits-filter-group{
+  padding:.75rem;
+  border:1px solid var(--border, rgba(0,0,0,.08));
+  border-radius:14px;
+  background: var(--card, rgba(255,255,255,.6));
+}
+
+.adminobits-filter-group--status{
+  border-left:4px solid var(--primary, #3b82f6);
+}
+
+.adminobits-filter-group--verification{
+  border-left:4px solid var(--warning, #f59e0b);
+}
+
+.adminobits-filter-title{
+  margin:0 0 .5rem;
+  font-size:.85rem;
+  font-weight:700;
+  color: var(--text-soft, rgba(0,0,0,.65));
 }
 
 </style>
