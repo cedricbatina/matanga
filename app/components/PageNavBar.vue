@@ -85,7 +85,7 @@
 <script setup>
 import { computed, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
-import IconChevronLeft from './icons/IconChevronLeft.vue';
+import IconChevronLeft from "~/components/icons/IconChevronLeft.vue";
 const slots = useSlots();
 
 const hasActions = computed(() => {
