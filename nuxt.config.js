@@ -189,4 +189,12 @@ export default defineNuxtConfig({
         "Madizi — annonces nécrologiques, veillées et programmes d’obsèques en ligne. Tout le programme des obsèques sur une seule page.",
     },
   },
+  runtimeConfig: {
+    public: {
+      siteUrl:
+        process.env.SITE_URL ||
+        process.env.NUXT_PUBLIC_SITE_URL || process.env.BASE_URL || process.env.APP_URL || 
+        "https://madizi.com",
+    },
+  },
 });
