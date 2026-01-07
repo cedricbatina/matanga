@@ -19,11 +19,7 @@ export default defineNuxtConfig({
   },
 
   css: ["~/assets/css/main.css"],
- plugins: [
- 
-    { src: "~/plugins/toast.client.js" },
- 
-  ],
+  plugins: [{ src: "~/plugins/toast.client.js" }],
 
   modules: [
     "@pinia/nuxt",
@@ -64,7 +60,7 @@ export default defineNuxtConfig({
 
     workbox: {
       globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
-
+      globIgnores: ["**/uploads/**"],
       runtimeCaching: [
         // 1) HTML / navigation (pages)
         {
