@@ -12,10 +12,10 @@
       <!-- Header -->
       <header class="section-header">
         <h1 class="section-title">
-          {{ t('adminObituaries.title') }}
+          {{ tr('adminObituaries.title') }}
         </h1>
         <p class="section-subtitle">
-          {{ t('adminObituaries.subtitle') }}
+          {{ tr('adminObituaries.subtitle') }}
         </p>
       </header>
 
@@ -82,10 +82,10 @@
       >
         <p class="adminobits-error__text">
           <span v-if="errorStatus === 403">
-            {{ t('adminObituaries.errorForbidden') }}
+            {{ tr('adminObituaries.errorForbidden') }}
           </span>
           <span v-else>
-            {{ t('adminObituaries.error') }}
+            {{ tr('adminObituaries.error') }}
           </span>
         </p>
         <button
@@ -93,7 +93,7 @@
           class="btn btn-ghost btn-sm"
           @click="refresh"
         >
-          {{ t('adminObituaries.retry') }}
+          {{ tr('adminObituaries.retry') }}
         </button>
       </div>
 
@@ -134,7 +134,8 @@
                 <span
                   class="adminobits-pill adminobits-pill--verification"
                 >
-                  {{ formatVerification(item.verificationStatus) }}
+                  {{ formatVerification(item.verificationStatus, item) }}
+
                 </span>
 
                 <!-- Paiement -->
@@ -173,7 +174,7 @@
 
             <!-- Infos famille -->
             <p class="adminobits-meta-small">
-              {{ t('adminObituaries.familyLabel') }}
+              {{ tr('adminObituaries.familyLabel') }}
               <strong>{{ item.user?.email }}</strong>
               <span v-if="item.user?.city || item.user?.country">
                 ·
@@ -190,10 +191,10 @@
 
             <!-- Dates -->
             <p class="adminobits-meta-small">
-              {{ t('adminObituaries.createdAt', { date: formatDateTime(item.createdAt) }) }}
+              {{ tr('adminObituaries.createdAt', { date: formatDateTime(item.createdAt) }) }}
               <span v-if="item.publishedAt">
                 ·
-                {{ t('adminObituaries.publishedAt', { date: formatDateTime(item.publishedAt) }) }}
+                {{ tr('adminObituaries.publishedAt', { date: formatDateTime(item.publishedAt) }) }}
               </span>
             </p>
 
@@ -202,10 +203,10 @@
               v-if="item.monetization?.pricingTier"
               class="adminobits-plan"
             >
-              {{ t('adminObituaries.plan') }}
+              {{ tr('adminObituaries.plan') }}
               <strong> {{ formatPlan(item.monetization.pricingTier) }}</strong>
               <span v-if="item.monetization?.isFree">
-                · {{ t('adminObituaries.planFree') }}
+                · {{ tr('adminObituaries.planFree') }}
               </span>
             </p>
 
@@ -226,7 +227,7 @@
                 class="btn btn-ghost btn-sm"
                 target="_blank"
               >
-                {{ t('adminObituaries.actions.viewPublic') }}
+                {{ tr('adminObituaries.actions.viewPublic') }}
               </NuxtLink>
 
               <!-- Voir récap côté famille -->
@@ -235,7 +236,7 @@
                 class="btn btn-ghost btn-sm"
                 target="_blank"
               >
-                {{ t('adminObituaries.actions.viewConfirm') }}
+                {{ tr('adminObituaries.actions.viewConfirm') }}
               </NuxtLink>
 <!-- Voir documents (preview avant validation) -->
 <button
@@ -243,44 +244,56 @@
   class="btn btn-ghost btn-sm"
   @click="openDocs(item)"
 >
-  {{ t('adminObituaries.actions.viewDocs') || 'Voir documents' }}
+ {{ tr('adminObituaries.actions.viewDocs', 'Voir documents') }}
+
 </button>
 <NuxtLink :to="`/admin/obituary/${item.slug}`" class="btn btn-ghost btn-sm">
-  Modérer (docs)
+  {{ tr('adminObituaries.actions.moderateDocs', 'Modérer (docs)') }}
+
 </NuxtLink>
 
 
-              <!-- Valider les documents -->
-              <button
-                v-if="item.verificationStatus === 'pending'"
-                type="button"
-                class="btn btn-primary btn-sm"
-                :disabled="processingId === item.id"
-                @click="onVerifyClick(item)"
-              >
-                <span v-if="processingId === item.id && processingAction === 'verify'">
-                  {{ t('adminObituaries.actions.verifyLoading') }}
-                </span>
-                <span v-else>
-                  {{ t('adminObituaries.actions.verify') }}
-                </span>
-              </button>
+          <!-- Valider les documents -->
+<button
+  v-if="item.verificationStatus === 'pending' && hasDocs(item)"
+  type="button"
+  class="btn btn-primary btn-sm"
+  :disabled="processingId === item.id"
+  @click="onVerifyClick(item)"
+>
+  <span v-if="processingId === item.id && processingAction === 'verify'">
+    {{ tr('adminObituaries.actions.verifyLoading') }}
+  </span>
+  <span v-else>
+    {{ tr('adminObituaries.actions.verify') }}
+  </span>
+</button>
 
-              <!-- Refuser les documents -->
-              <button
-                v-if="item.verificationStatus === 'pending'"
-                type="button"
-                class="btn btn-danger btn-sm"
-                :disabled="processingId === item.id"
-                @click="onRejectClick(item)"
-              >
-                <span v-if="processingId === item.id && processingAction === 'reject'">
-                  {{ t('adminObituaries.actions.rejectLoading') }}
-                </span>
-                <span v-else>
-                  {{ t('adminObituaries.actions.reject') }}
-                </span>
-              </button>
+<!-- Refuser les documents -->
+<button
+  v-if="item.verificationStatus === 'pending' && hasDocs(item)"
+  type="button"
+  class="btn btn-danger btn-sm"
+  :disabled="processingId === item.id"
+  @click="onRejectClick(item)"
+>
+  <span v-if="processingId === item.id && processingAction === 'reject'">
+    {{ tr('adminObituaries.actions.rejectLoading') }}
+  </span>
+  <span v-else>
+    {{ tr('adminObituaries.actions.reject') }}
+  </span>
+</button>
+
+<!-- pending mais aucun doc -->
+<p
+  v-else-if="item.verificationStatus === 'pending' && !hasDocs(item)"
+  class="text-xs text-soft"
+  style="margin:.25rem 0 0;"
+>
+  {{ tr('adminObituaries.docs.missingHint', 'Aucun document fourni pour le moment.') }}
+</p>
+
             </div>
 
           </div>
@@ -310,7 +323,7 @@
         <header class="admin-docs-modal__header">
           <div>
             <h3 style="margin:0;">
-              {{ t('adminObituaries.docs.title') || 'Documents' }}
+              {{ tr('adminObituaries.docs.title') || 'Documents' }}
             </h3>
             <p class="text-xs text-soft" style="margin:.25rem 0 0;">
               {{ docsTarget?.deceased?.fullName || docsTarget?.content?.title || docsTarget?.slug || '' }}
@@ -324,7 +337,7 @@
         </header>
 
         <div v-if="docsLoading" class="text-sm text-soft" style="margin-top:.75rem;">
-          {{ t('common.loading') || 'Chargement…' }}
+          {{ tr('common.loading') || 'Chargement…' }}
         </div>
 
         <div v-else-if="docsErrorMsg" class="text-sm text-danger" style="margin-top:.75rem;">
@@ -333,7 +346,7 @@
 
         <div v-else style="margin-top:.75rem;">
           <p v-if="!docsList.length" class="text-sm text-soft">
-            {{ t('adminObituaries.docs.empty') || 'Aucun document.' }}
+            {{ tr('adminObituaries.docs.empty') || 'Aucun document.' }}
           </p>
 
           <ul v-else class="admin-docs-list">
@@ -350,7 +363,7 @@
                 </p>
 
                 <p v-if="d.adminNote" class="text-xs" style="margin:.35rem 0 0;">
-                  <span class="text-soft">{{ t('adminObituaries.docs.adminNote') || 'Note :' }}</span>
+                  <span class="text-soft">{{ tr('adminObituaries.docs.adminNote') || 'Note :' }}</span>
                   {{ d.adminNote }}
                 </p>
 
@@ -366,7 +379,7 @@
                   target="_blank"
                   rel="noopener"
                 >
-                  {{ t('common.open') || 'Ouvrir' }}
+                  {{ tr('common.open') || 'Ouvrir' }}
                 </a>
               </div>
             </li>
@@ -376,25 +389,26 @@
 
       <div class="card-footer" style="display:flex; gap:.5rem; justify-content:flex-end; flex-wrap:wrap;">
         <!-- Bonus: tu peux aussi valider/refuser DIRECTEMENT depuis le modal -->
-        <button
-          v-if="docsTarget?.verificationStatus === 'pending'"
-          type="button"
-          class="btn btn-primary btn-sm"
-          :disabled="processingId === docsTarget?.id"
-          @click="onVerifyClick(docsTarget)"
-        >
-          {{ t('adminObituaries.actions.verify') || 'Valider' }}
-        </button>
+    <button
+  v-if="docsTarget?.verificationStatus === 'pending' && docsList.length"
+  type="button"
+  class="btn btn-primary btn-sm"
+  :disabled="processingId === docsTarget?.id"
+  @click="onVerifyClick(docsTarget)"
+>
+  {{ tr('adminObituaries.actions.verify', 'Valider') }}
+</button>
 
-        <button
-          v-if="docsTarget?.verificationStatus === 'pending'"
-          type="button"
-          class="btn btn-danger btn-sm"
-          :disabled="processingId === docsTarget?.id"
-          @click="onRejectClick(docsTarget)"
-        >
-          {{ t('adminObituaries.actions.reject') || 'Refuser' }}
-        </button>
+<button
+  v-if="docsTarget?.verificationStatus === 'pending' && docsList.length"
+  type="button"
+  class="btn btn-danger btn-sm"
+  :disabled="processingId === docsTarget?.id"
+  @click="onRejectClick(docsTarget)"
+>
+  {{ tr('adminObituaries.actions.reject', 'Refuser') }}
+</button>
+
 
         <button type="button" class="btn btn-ghost btn-sm" @click="closeDocs">
         {{ tr('common.close', 'Fermer') }}
@@ -442,10 +456,15 @@ const docsLoading = ref(false);
 const docsErrorMsg = ref('');
 const docsList = ref([]);
 const docsTarget = ref(null);
-const tr = (key, fallback, params) => {
-  const v = t(key, params || {});
-  return v === key ? fallback : v;
+const tr = (key, a, b) => {
+  const fallback = typeof a === 'string' ? a : null;
+  const params = typeof a === 'object' && a && !Array.isArray(a) ? a : (b || {});
+  const v = t(key, params);
+  return v === key ? (fallback ?? key) : v;
 };
+
+const docsCount = (item) => Number(item?.documents?.count || 0);
+const hasDocs = (item) => docsCount(item) > 0;
 
 const openDocs = async (item) => {
   if (!item?.slug) return;
@@ -482,9 +501,11 @@ const docStatusLabel = (status) => {
     case 'accepted': return t('editObituary.documents.status.accepted') || 'Accepté';
     case 'rejected': return t('editObituary.documents.status.rejected') || 'Refusé';
     case 'under_review': return t('editObituary.documents.status.under_review') || 'En revue';
+    case 'uploaded': return t('editObituary.documents.status.uploaded') || 'Reçu'; // ✅
     default: return status || '—';
   }
 };
+
 
 const docStatusClass = (status) => {
   if (status === 'accepted') return 'badge-success';
@@ -573,7 +594,7 @@ const {
     const params = new URLSearchParams();
     params.set('page', String(page.value));
     params.set('pageSize', '10');
-    params.set('onlyPaid', 'true');
+    //params.set('onlyPaid', 'true');
 
     // ✅ status
     if (statusFilter.value !== 'all') {
@@ -663,20 +684,27 @@ const formatStatus = (status) => {
   }
 };
 
-const formatVerification = (vs) => {
+const formatVerification = (vs, item) => {
+  // pending mais aucun doc => différent de "à vérifier"
+  if (vs === 'pending' && !hasDocs(item)) {
+    return tr('adminObituaries.verification.missingDocs', 'Documents manquants');
+  }
+
   switch (vs) {
     case 'not_required':
-      return t('adminObituaries.verification.not_required');
+      // on va éliminer ce cas, mais fallback propre si jamais
+      return tr('adminObituaries.verification.pending', 'À vérifier');
     case 'pending':
-      return t('adminObituaries.verification.pending');
+      return tr('adminObituaries.verification.pending', 'À vérifier');
     case 'verified':
-      return t('adminObituaries.verification.verified');
+      return tr('adminObituaries.verification.verified', 'Vérifiées');
     case 'rejected':
-      return t('adminObituaries.verification.rejected');
+      return tr('adminObituaries.verification.rejected', 'Refusées');
     default:
-      return vs || '';
+      return vs || '—';
   }
 };
+
 
 const formatPlan = (pricingTier) => {
   if (!pricingTier) return t('adminObituaries.planUnknown');
@@ -715,16 +743,27 @@ const callVerificationAction = async (itemId, action, note) => {
     }
 
     await refresh();
-  } catch (err) {
-    console.error('Admin verification action error', err);
+ } catch (err) {
+  console.error('Admin verification action error', err);
 
-    if (toast) {
-      const msg =
-        err?.data?.statusMessage ||
-        err?.data?.message ||
-        t('adminObituaries.toasts.actionError');
-      toast.error(msg);
+  const apiCode =
+    err?.data?.data?.code ||  // ✅ createError({ data: { code } })
+    err?.data?.code ||        // fallback
+    null;
+
+  if (toast) {
+    if (apiCode === 'payment_required') {
+      toast.error(t('adminObituaries.toasts.paymentRequired'));
+      return;
     }
+
+    const msg =
+      err?.data?.statusMessage ||
+      err?.data?.message ||
+      t('adminObituaries.toasts.actionError');
+
+    toast.error(msg);
+  }
   } finally {
     processingId.value = null;
     processingAction.value = null;

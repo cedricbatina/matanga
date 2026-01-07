@@ -108,10 +108,7 @@
   {{ t('home.search.country.hint') }}
 </p>
 
-            <p class="form-hint">
-              {{ t('home.search.country.hint') }}
-            </p>
-          </div>
+ </div>
 
           <div class="form-field">
             <label class="form-label" for="city">
@@ -557,7 +554,7 @@ watch(
 .obituary-card__content {
   padding: var(--space-4);
 }
-/* CTA hero : stable sur mobile/tablette/desktop */
+/* CTA hero : mobile + tablette = empilé */
 .hero-ctas {
   display: grid;
   grid-template-columns: 1fr;
@@ -571,7 +568,12 @@ watch(
   justify-content: center;
   gap: 0.55rem;
   width: 100%;
-  white-space: nowrap; /* évite le “bouton en boule” */
+  min-width: 0;
+
+  /* IMPORTANT: éviter le débordement */
+  white-space: normal;
+  flex-wrap: wrap;
+  text-align: center;
 }
 
 .hero-cta__icon {
@@ -580,28 +582,28 @@ watch(
   flex: 0 0 auto;
 }
 
-.hero-cta--light {
-  justify-content: flex-start;
+.hero-cta__text {
+  min-width: 0;
+  overflow-wrap: anywhere; /* au cas où */
 }
 
-/* Tablette+ : 2 CTA principaux en ligne, et le 3e en dessous */
-@media (min-width: 600px) {
+/* Desktop uniquement : 2 CTA principaux en ligne, le 3e dessous */
+@media (min-width: 1024px) {
   .hero-ctas {
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
+
   .hero-cta--light {
     grid-column: 1 / -1;
-    width: auto;
     justify-content: flex-start;
+    width: auto;
   }
-}
 
-/* Desktop : on garde propre et pas trop “long” */
-@media (min-width: 1024px) {
   .hero-ctas {
     max-width: 520px;
   }
 }
+
 
 </style>

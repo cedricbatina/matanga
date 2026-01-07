@@ -32,7 +32,7 @@ function parseStatusFilter(raw) {
 
 function parseVerificationFilter(raw) {
   if (!raw) return null;
-  const allowed = ["not_required", "pending", "verified", "rejected"];
+  const allowed = [ "pending", "verified", "rejected"];
 
   const parts = String(raw)
     .split(",")
@@ -103,8 +103,11 @@ function mapAdminObituaryRow(row) {
       city: row.user_city,
       country: row.user_country,
     },
-  };
-}
+    documents: {
+  count: Number(row.docs_count || 0),
+},
+
+}}
 
 export default defineEventHandler(async (event) => {
   // ⚠️ réservé admin / modérateur
@@ -133,7 +136,8 @@ export default defineEventHandler(async (event) => {
   const sort = q.sort || "recent"; // recent | oldest | popular
 
   // Par défaut : on ne montre que les annonces avec paiement
-  const onlyPaid = q.onlyPaid === "false" ? false : true;
+  // Par défaut : on NE filtre PAS sur "payé"
+  const onlyPaid = q.onlyPaid === "true";
 
   logInfo("Admin list obituaries", {
     adminId: session.userId,
@@ -201,6 +205,12 @@ export default defineEventHandler(async (event) => {
       SELECT COUNT(*) AS total
       FROM obituaries o
       JOIN users u ON u.id = o.user_id
+      LEFT JOIN (
+  SELECT obituary_id, COUNT(*) AS docs_count
+  FROM obituary_documents
+  GROUP BY obituary_id
+) odc ON odc.obituary_id = o.id
+
       ${whereSql}
     `,
       params,
@@ -265,12 +275,19 @@ export default defineEventHandler(async (event) => {
         o.archived_at,
         o.created_at,
         o.updated_at,
+        COALESCE(odc.docs_count, 0) AS docs_count,
+
         CASE
           WHEN LENGTH(o.body) <= 240 THEN o.body
           ELSE CONCAT(SUBSTRING(o.body, 1, 240), '…')
         END AS body_excerpt
       FROM obituaries o
       JOIN users u ON u.id = o.user_id
+      LEFT JOIN (
+   SELECT obituary_id, COUNT(*) AS docs_count
+   FROM obituary_documents
+   GROUP BY obituary_id
+ ) odc ON odc.obituary_id = o.id
       ${whereSql}
       ${orderSql}
       LIMIT ?

@@ -337,3 +337,89 @@ on recense les statuts existants (DB + API)
 on définit une table de mapping unique
 
 on patch la page + endpoint(s) si besoin
+Journal de dev — 31/12/2025 (Admin / Obituaries)
+✅ Avancées (fait)
+
+Page admin “Annonces à vérifier” : refactor UI des filtres en 2 groupes distincts :
+
+Groupe Statut de l’annonce
+
+Groupe Vérification des documents
+
+Ajout d’un style “pro” pour bien différencier les deux filtres :
+
+.adminobits-filter-groups en grid
+
+.adminobits-filter-group--status bordure gauche primary
+
+.adminobits-filter-group--verification bordure gauche warning
+
+Correction du bug des labels dans les v-for :
+
+statusOptions utilise opt
+
+verificationOptions utilise option
+
+fonction utilitaire tr(key, fallback) utilisée pour fallback si clé i18n manquante
+
+Debug & correction des erreurs de build / runtime :
+
+erreur labelKey undefined venait d’un mauvais nom de variable dans le template
+
+erreur ... dans statusOptions cassait le JS
+
+erreur “Missing initializer in const declaration” : venait d’une ligne cassée type const processingId sans = ref(null) (à surveiller si ça réapparaît)
+
+API admin list vérifiée : GET /api/admin/obituaries
+
+filtres supportés : status, verification, q, sort, pagination
+
+onlyPaid=true par défaut côté API
+
+✅ Nettoyage DB (fait)
+
+Objectif : détecter / supprimer les plans obsolètes.
+
+Vérif SQL : pricing_tier NOT IN (...) → résultat vide ✅
+
+Conclusion : il ne reste aucun plan inconnu en DB.
+
+Vérif migration plan :
+
+SELECT COUNT(*) FROM obituaries WHERE pricing_tier='indiv_basic_21' → 0 ✅
+
+Conclusion : migration indiv_basic_21 déjà faite, rien à refaire.
+
+⚠️ Points à régler (reste à faire)
+
+Cohérence “Vérification non requise”
+
+Décision produit : même les annonces gratuites doivent être vérifiées (CNI à la création + certificat sous 7 jours).
+
+Donc :
+
+soit on supprime verification_status='not_required' et on met tout en pending si docs attendus,
+
+soit on garde not_required uniquement pour un cas précis (à définir), mais aujourd’hui ça crée de la confusion.
+
+Traductions manquantes / clés brutes
+
+Dans l’UI : certains pricing_tier s’affichent encore brut (ex: indiv_essentiel_45) quand plans.codes.<tier> n’est pas défini.
+
+Dans le modal docs : quelques textes utilisent encore t('...') || 'fallback' au lieu de tr(...) (à homogénéiser).
+
+Action : compléter fr.json pour :
+
+plans.codes.*
+
+adminObituaries.statusFilters.all (ou aligner sur adminObituaries.filters.all pour éviter doublons)
+
+clés adminObituaries.filterGroups.*
+
+clés adminObituaries.docs.* + common.open/common.loading/common.close
+
+🔍 Notes / observations
+
+Vue SSR : des warnings/hydration mismatches sont apparus pendant les erreurs JS (probablement liés aux crashes en setup).
+
+Build Vercel : erreurs d’import d’icônes (IconChevronLeft.vue) à cause de chemins / casse (Windows vs Linux) → à vérifier et uniformiser.

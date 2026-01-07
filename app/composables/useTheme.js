@@ -1,50 +1,55 @@
 // composables/useTheme.js
+import { watch } from "vue";
+import { useCookie, useHead, useState } from "#imports";
+
 export function useTheme() {
-  const theme = useState("matanga-theme", () => "light");
+  const themeCookie = useCookie("matanga-theme", {
+    sameSite: "lax",
+    path: "/",
+  });
+
+  const theme = useState("matanga-theme", () => {
+    const v = themeCookie.value;
+    return v === "dark" || v === "light" ? v : "light";
+  });
 
   const applyThemeToDocument = (value) => {
     if (process.client) {
-      const root = document.documentElement;
-      root.dataset.theme = value;
+      document.documentElement.dataset.theme = value;
     }
   };
 
   const setTheme = (value) => {
-    theme.value = value;
-    if (process.client) {
-      localStorage.setItem("matanga-theme", value);
-    }
-    applyThemeToDocument(value);
+    const next = value === "dark" ? "dark" : "light";
+    theme.value = next;
+    themeCookie.value = next; // ✅ SSR + client
+    if (process.client) localStorage.setItem("matanga-theme", next);
+    applyThemeToDocument(next);
   };
 
   const toggleTheme = () => {
     setTheme(theme.value === "dark" ? "light" : "dark");
   };
 
-  onMounted(() => {
-    if (!process.client) return;
+  // ✅ SSR : injecte data-theme dans <html>
+  useHead(() => ({
+    htmlAttrs: {
+      "data-theme": theme.value,
+    },
+  }));
 
-    // 1. LocalStorage
+  // ✅ Client : sync localStorage => state + dataset
+  if (process.client) {
     const stored = localStorage.getItem("matanga-theme");
-    if (stored === "light" || stored === "dark") {
+    if (stored === "dark" || stored === "light") {
       theme.value = stored;
-      applyThemeToDocument(stored);
-      return;
+      themeCookie.value = stored;
     }
+    applyThemeToDocument(theme.value);
+  }
 
-    // 2. Sinon, préférence système
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
+  // Si on change via toggle => applique
+  watch(theme, (v) => applyThemeToDocument(v), { immediate: true });
 
-    const initial = prefersDark ? "dark" : "light";
-    theme.value = initial;
-    applyThemeToDocument(initial);
-  });
-
-  return {
-    theme,
-    setTheme,
-    toggleTheme,
-  };
+  return { theme, setTheme, toggleTheme };
 }

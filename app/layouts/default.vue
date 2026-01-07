@@ -1,6 +1,6 @@
 <template>
   <div class="app-shell">
-    <!-- Skip link pour les lecteurs d'écran / clavier -->
+    <!-- Skip link pour accessibilité -->
     <a href="#main-content" class="skip-link">
       {{ $t('layout.skipLink') }}
     </a>
@@ -8,87 +8,88 @@
     <!-- HEADER -->
     <header class="app-header" role="banner">
       <div class="app-header-inner">
-        <NuxtLink
-          to="/"
-          class="app-logo"
-          :aria-label="$t('layout.logoAria')"
-        >
-          <!-- Logo image -->
-          <img
-            src="/images/logo-madizi.png"
-            :alt="$t('layout.logoAlt')"
-            class="app-logo-mark"
-          />
+<NuxtLink
+  to="/"
+  class="app-brand"
+  :aria-label="$t('layout.logoAria')"
+>
+  <img
+    src="/images/logo-madizi.png"
+    :alt="$t('layout.logoAlt')"
+    class="app-brand__mark"
+  />
 
-          <!-- Texte logo -->
-          <span class="app-logo-text">
-            <span class="app-logo-name">
-              {{ $t('layout.logoName') }}
-            </span>
-            <span class="app-logo-tagline">
-              {{ $t('layout.logoTagline') }}
-            </span>
-          </span>
-        </NuxtLink>
+  <span class="app-brand__text">
+    <span class="app-brand__name">
+      {{ $t('layout.logoName') }}
+    </span>
+    <span class="app-brand__tagline">
+      {{ $t('layout.logoTagline') }}
+    </span>
+  </span>
+</NuxtLink>
 
-        <nav
-          class="app-nav-actions"
-          :aria-label="$t('layout.navMain')"
-        >
-          <!-- Toggle thème accessible -->
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            @click="toggleTheme"
-            :aria-pressed="theme === 'dark'"
-            :aria-label="
-              theme === 'dark'
-                ? $t('layout.themeToggleToLight')
-                : $t('layout.themeToggleToDark')
-            "
-          >
-            <i
-              v-if="theme === 'dark'"
-              class="fa-regular fa-sun theme-toggle-icon"
-              aria-hidden="true"
-            ></i>
-            <i
-              v-else
-              class="fa-regular fa-moon theme-toggle-icon"
-              aria-hidden="true"
-            ></i>
+<nav class="app-nav-actions" :aria-label="$t('layout.navMain')">
+  <button
+    type="button"
+    class="btn btn-sm theme-toggle-btn"
+    @click="toggleTheme"
+    :aria-pressed="theme === 'dark'"
+    :aria-label="theme === 'dark' ? $t('layout.themeToggleToLight') : $t('layout.themeToggleToDark')"
+  >
+    <!-- SVG inline = couleur fiable -->
+    <svg
+      v-if="theme === 'dark'"
+      class="theme-toggle-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <!-- sun -->
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+    </svg>
 
-            <span class="theme-toggle-label">
-              <span v-if="theme === 'dark'">
-                {{ $t('layout.themeLabelLight') }}
-              </span>
-              <span v-else>
-                {{ $t('layout.themeLabelDark') }}
-              </span>
-            </span>
-          </button>
+    <svg
+      v-else
+      class="theme-toggle-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <!-- moon -->
+      <path d="M21 12.8A8.5 8.5 0 0 1 11.2 3a6.8 6.8 0 1 0 9.8 9.8Z"></path>
+    </svg>
 
-          <!-- Plus tard : login / profil dans la nav principale si tu veux -->
-          <!--
-          <NuxtLink to="/login" class="btn btn-secondary btn-sm">
-            {{ $t('auth.login') }}
-          </NuxtLink>
-          -->
-        </nav>
+    <span class="theme-toggle-label">
+      <span v-if="theme === 'dark'">{{ $t('layout.themeLabelLight') }}</span>
+      <span v-else>{{ $t('layout.themeLabelDark') }}</span>
+    </span>
+  </button>
+</nav>
+
       </div>
     </header>
 
-    <!-- BANDEAU UTILISATEUR SOUS LA NAV -->
+    <!-- BANDEAU UTILISATEUR -->
     <section class="app-header-user" aria-label="État du compte">
       <div class="app-header-user-inner">
         <UserInlineCard
           :user="user"
           :is-authenticated="isAuthenticated"
           @go-dashboard="onGoToProfile"
-            @go-obituaries="onGoToObituaries"
-             @go-admin-obituaries="onGoToAdminObituaries"
-  @go-moderator-obituaries="onGoToModeratorObituaries"
-   @go-notifications="onGoToNotifications"
+          @go-obituaries="onGoToObituaries"
+          @go-admin-obituaries="onGoToAdminObituaries"
+          @go-moderator-obituaries="onGoToModeratorObituaries"
+          @go-notifications="onGoToNotifications"
           @logout="onLogout"
           @login="onLogin"
           @register="onRegister"
@@ -96,7 +97,6 @@
       </div>
     </section>
 
-    <!-- CONTENU PRINCIPAL -->
     <main id="main-content" class="app-main" role="main">
       <slot />
     </main>
@@ -117,8 +117,6 @@ import LkConfirmModal from '~/components/LkConfirmModal.vue';
 const { theme, toggleTheme } = useTheme();
 const authStore = useAuthStore();
 const router = useRouter();
-
-// initialise i18n dans le layout (utile pour le composant enfant)
 useI18n();
 
 const user = computed(() => authStore.user);
@@ -128,9 +126,11 @@ onMounted(() => {
   authStore.ensureAuthLoaded();
 });
 
-const onGoToProfile = () => {
-  router.push('/profile'); // adapte si ton espace client a un autre chemin
-};
+const onGoToProfile = () => router.push('/profile');
+const onGoToObituaries = () => router.push('/profile/obituaries');
+const onGoToAdminObituaries = () => router.push('/admin/obituaries');
+const onGoToModeratorObituaries = () => router.push('/moderator/obituaries');
+const onGoToNotifications = () => router.push('/notifications');
 
 const onLogout = async () => {
   try {
@@ -140,44 +140,101 @@ const onLogout = async () => {
   }
 };
 
-const onLogin = () => {
-  router.push('/login');
-};
-
-const onGoToObituaries = () => {
-  router.push('/profile/obituaries')
-}
-const onRegister = () => {
-  router.push('/register');
-};
-const onGoToAdminObituaries = () => {
-  router.push('/admin/obituaries');
-};
-const onGoToNotifications = () => {
-  router.push('/notifications');
-};
-
-const onGoToModeratorObituaries = () => {
-  router.push('/moderator/obituaries');
-};
+const onLogin = () => router.push('/login');
+const onRegister = () => router.push('/register');
 </script>
 
 <style scoped>
-/* Bandeau utilisateur sous le header principal */
-.app-header-user {
-  border-bottom: 1px solid var(--color-border-subtle, #e5e7eb);
-  background: var(--color-surface-muted, #f9fafb);
+/* Helpers accessibilité */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.app-header-user-inner {
+/* Header pro : léger, net, stable */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--color-border-subtle, rgba(0,0,0,.08));
+  background: var(--color-surface, rgba(255,255,255,.82));
+  backdrop-filter: blur(10px);
+}
+
+.app-header-inner {
   max-width: var(--max-width-page, 1120px);
   margin: 0 auto;
-  padding: 0.3rem var(--space-4, 1.25rem) 0.4rem;
+  padding: 0.75rem var(--space-4, 1.25rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.app-brand__mark {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+
+.app-brand__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.app-brand__name {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-main);
+}
+
+.app-brand__tagline {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted); /* ✅ lisible en dark */
+}
+
+/* Toggle thème : pill contrasté (au lieu de ghost) */
+.theme-toggle-btn {
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-soft);
+}
+
+.theme-toggle-btn:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+  transform: translateY(-1px);
+}
+
+.theme-toggle-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
 }
 
 .theme-toggle-icon {
-  font-size: 0.95rem;
-  margin-right: 0.35rem;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .theme-toggle-label {
@@ -185,45 +242,59 @@ const onGoToModeratorObituaries = () => {
   align-items: center;
 }
 
-/* Optionnel : sur mobile, on peut afficher seulement l'icône */
+/* Sur mobile : garder juste l’icône */
 @media (max-width: 480px) {
   .theme-toggle-label {
     display: none;
   }
 }
 
-/* Logo Madizi */
-.app-logo {
+
+
+/* Actions */
+.app-header-actions {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  text-decoration: none;
+  gap: 0.5rem;
 }
 
-.app-logo-mark {
-  height: 32px;
-  width: auto;
-  display: block;
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  width: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-subtle, rgba(0,0,0,.10));
+  background: transparent;
+  cursor: pointer;
 }
 
-.app-logo-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
+.icon-btn:hover {
+  background: rgba(0,0,0,.04);
 }
 
-.app-logo-name {
-  font-weight: 700;
-  font-size: 1.1rem;
+.icon {
+  width: 18px;
+  height: 18px;
 }
 
-.app-logo-tagline {
-  font-size: 0.8rem;
-  opacity: 0.85;
-}
-.btn[aria-pressed="true"] .theme-toggle-icon {
-  transform: rotate(180deg);
-  transition: transform 0.2s ease;
+/* Bandeau utilisateur : plus “pro”, moins “grisâtre” */
+.app-header-user {
+  border-bottom: 1px solid var(--color-border-subtle, rgba(0,0,0,.08));
+  background: var(--color-surface-muted, rgba(250,250,250,.85));
 }
 
+.app-header-user-inner {
+  max-width: var(--max-width-page, 1120px);
+  margin: 0 auto;
+  padding: 0.35rem var(--space-4, 1.25rem) 0.45rem;
+}
+
+/* Mobile : réduire la tagline */
+@media (max-width: 560px) {
+  .app-brand__tagline {
+    display: none;
+  }
+}
 </style>

@@ -723,6 +723,7 @@
       "indiv_free_7": "Annonce découverte · 14 jours",
       "indiv_basic_21": "Formule Basic 21 jours",
       "indiv_essentiel_30": "Pack Essentiel 30 jours + rappel",
+      "indiv_essentiel_45": "Formule Essentiel 45 jours",
       "indiv_prestige_60": "Pack Prestige 60 jours",
       "indiv_memorial_6m": "Mémoriel 6 mois",
       "indiv_memorial_1y": "Mémoriel 1 an",
@@ -1027,7 +1028,9 @@
       }
     },
       "toasts": {
-    "updated": "Annonce mise à jour."
+    "updated": "Annonce mise à jour.",
+     "paymentRequired": "Paiement requis : cette annonce payante ne peut pas être publiée tant qu’elle n’est pas réglée.",
+      "actionError": "Une erreur est survenue."
   },
   "errors": {
     "notFound": "Annonce introuvable.",
@@ -1058,6 +1061,7 @@
         "rejected": "Refusé",
         "missing": "Non envoyé"
       },
+    
       "type": {
          "upload": {
         "label": "Ajouter un document"
@@ -1221,10 +1225,12 @@
   "obituary": {
     "publishFreeSuccess": "Annonce publiée avec succès.",
     "publishFreeError": "La publication de l’annonce a échoué. Merci de réessayer.",
-          "published": "L’annonce a été publiée avec succès.",
-      "publishError": "Impossible de publier l’annonce pour le moment. Veuillez réessayer.",
+    "published": "L’annonce a été publiée avec succès.",
+     "publishError": "Impossible de publier l’annonce pour le moment. Veuillez réessayer.",
       "paymentTodo": "Le paiement en ligne arrive bientôt. Pour l’instant, merci de suivre les instructions de règlement.",
-      "publishFreeTodo": "Publication gratuite simulée (à brancher sur l’API)."
+      "publishFreeTodo": "Publication gratuite simulée (à brancher sur l’API).",
+       "paymentRequired": "Paiement requis : cette annonce payante ne peut pas être publiée tant qu’elle n’est pas réglée.",
+      "actionError": "Une erreur est survenue."
   }
 },
 "obituaryDelete": {

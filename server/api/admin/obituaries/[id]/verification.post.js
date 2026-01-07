@@ -4,6 +4,24 @@ import { query } from "../../../../utils/db.js";
 import { logInfo, logError } from "../../../../utils/logger.js";
 import { createNotification } from "../../../../utils/notifications.js";
 
+// ✅ Payé si : gratuit OU payment_provider présent OU amount_paid > 0
+function isPaidOk(obituary) {
+  if (!obituary) return false;
+
+  const isFree = obituary.is_free === 1 || obituary.is_free === true;
+
+  const amount = Number(obituary.amount_paid);
+  const hasAmount = Number.isFinite(amount) && amount > 0;
+
+  const provider =
+    typeof obituary.payment_provider === "string"
+      ? obituary.payment_provider.trim()
+      : "";
+  const hasProvider = provider.length > 0;
+
+  return isFree || hasProvider || hasAmount;
+}
+
 export default defineEventHandler(async (event) => {
   // 🔐 Admin / modérateur uniquement
   const session = await requireAuth(event, {
@@ -74,6 +92,16 @@ export default defineEventHandler(async (event) => {
     }
 
     if (action === "verify") {
+      // 🚫 Bloquer publication si annonce payante non payée
+      if (!isPaidOk(obituary)) {
+        throw createError({
+          statusCode: 409,
+          statusMessage:
+            "Paiement requis : impossible de publier une annonce payante non payée.",
+          data: { code: "payment_required" },
+        });
+      }
+
       // ✅ Valider les docs + publier + rendre public si besoin
       await query(
         `
@@ -122,6 +150,21 @@ export default defineEventHandler(async (event) => {
         { requestId }
       );
 
+      // ✅ Mettre les documents en "accepted" (si uploadés / en revue)
+      await query(
+        `
+        UPDATE obituary_documents
+        SET
+          status = 'accepted',
+          admin_note = COALESCE(?, admin_note),
+          updated_at = NOW()
+        WHERE obituary_id = ?
+          AND status IN ('uploaded', 'under_review')
+      `,
+        [note || null, obituaryId],
+        { requestId }
+      );
+
       // 🔔 Notification "documents vérifiés"
       await createNotification(
         {
@@ -157,6 +200,21 @@ export default defineEventHandler(async (event) => {
         { requestId }
       );
 
+      // ✅ Mettre les documents en "rejected" (si uploadés / en revue)
+      await query(
+        `
+        UPDATE obituary_documents
+        SET
+          status = 'rejected',
+          admin_note = COALESCE(?, admin_note),
+          updated_at = NOW()
+        WHERE obituary_id = ?
+          AND status IN ('uploaded', 'under_review')
+      `,
+        [note || null, obituaryId],
+        { requestId }
+      );
+
       await createNotification(
         {
           recipientId: obituary.user_id,
@@ -179,7 +237,6 @@ export default defineEventHandler(async (event) => {
       );
     }
 
-    // 3) Réponse simple, le front fera un refresh()
     return {
       ok: true,
       action,

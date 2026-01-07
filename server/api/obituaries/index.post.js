@@ -541,7 +541,7 @@ export default defineEventHandler(async (event) => {
           visibilityValue,
           statusValue,
 
-          "not_required",
+          "pending",
           "clean",
 
           formatDateTime(publishAtValue),
