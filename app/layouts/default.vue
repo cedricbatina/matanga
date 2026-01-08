@@ -8,74 +8,88 @@
     <!-- HEADER -->
     <header class="app-header" role="banner">
       <div class="app-header-inner">
-<NuxtLink
-  to="/"
-  class="app-brand"
-  :aria-label="$t('layout.logoAria')"
->
-  <img
-    src="/images/logo-madizi.png"
-    :alt="$t('layout.logoAlt')"
-    class="app-brand__mark"
-  />
+        <NuxtLink
+          :to="localePath('/')"
+          class="app-brand"
+          :aria-label="$t('layout.logoAria')"
+        >
+          <img
+            src="/images/logo-madizi.png"
+            :alt="$t('layout.logoAlt')"
+            class="app-brand__mark"
+          />
 
-  <span class="app-brand__text">
-    <span class="app-brand__name">
-      {{ $t('layout.logoName') }}
-    </span>
-    <span class="app-brand__tagline">
-      {{ $t('layout.logoTagline') }}
-    </span>
-  </span>
-</NuxtLink>
+          <span class="app-brand__text">
+            <span class="app-brand__name">{{ $t('layout.logoName') }}</span>
+            <span class="app-brand__tagline">{{ $t('layout.logoTagline') }}</span>
+          </span>
+        </NuxtLink>
 
-<nav class="app-nav-actions" :aria-label="$t('layout.navMain')">
-  <button
-    type="button"
-    class="btn btn-sm theme-toggle-btn"
-    @click="toggleTheme"
-    :aria-pressed="theme === 'dark'"
-    :aria-label="theme === 'dark' ? $t('layout.themeToggleToLight') : $t('layout.themeToggleToDark')"
-  >
-    <!-- SVG inline = couleur fiable -->
-    <svg
-      v-if="theme === 'dark'"
-      class="theme-toggle-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      <!-- sun -->
-      <circle cx="12" cy="12" r="4"></circle>
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
-    </svg>
+        <nav class="app-nav-actions" :aria-label="$t('layout.navMain')">
+          <!-- ✅ Language switch (pills) -->
+          <div class="lang-switch" aria-label="Language">
+            <NuxtLink
+              v-for="l in langOptions"
+              :key="l.code"
+              :to="switchLocalePath(l.code)"
+              class="btn btn-sm"
+              :class="locale === l.code ? 'btn-secondary' : 'btn-ghost'"
+              :aria-current="locale === l.code ? 'page' : undefined"
+              prefetch
+            >
+              {{ l.label }}
+            </NuxtLink>
+          </div>
 
-    <svg
-      v-else
-      class="theme-toggle-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      <!-- moon -->
-      <path d="M21 12.8A8.5 8.5 0 0 1 11.2 3a6.8 6.8 0 1 0 9.8 9.8Z"></path>
-    </svg>
+          <!-- Theme toggle -->
+          <button
+            type="button"
+            class="btn btn-sm theme-toggle-btn"
+            @click="toggleTheme"
+            :aria-pressed="theme === 'dark'"
+            :aria-label="
+              theme === 'dark'
+                ? $t('layout.themeToggleToLight')
+                : $t('layout.themeToggleToDark')
+            "
+          >
+            <svg
+              v-if="theme === 'dark'"
+              class="theme-toggle-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg>
 
-    <span class="theme-toggle-label">
-      <span v-if="theme === 'dark'">{{ $t('layout.themeLabelLight') }}</span>
-      <span v-else>{{ $t('layout.themeLabelDark') }}</span>
-    </span>
-  </button>
-</nav>
+            <svg
+              v-else
+              class="theme-toggle-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12.8A8.5 8.5 0 0 1 11.2 3a6.8 6.8 0 1 0 9.8 9.8Z"></path>
+            </svg>
 
+            <span class="theme-toggle-label">
+              <span v-if="theme === 'dark'">{{ $t('layout.themeLabelLight') }}</span>
+              <span v-else>{{ $t('layout.themeLabelDark') }}</span>
+            </span>
+          </button>
+        </nav>
       </div>
     </header>
 
@@ -106,43 +120,76 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
-import { useRouter } from '#imports';
-import { useI18n } from 'vue-i18n';
-import { useTheme } from '~/composables/useTheme';
-import { useAuthStore } from '~/stores/auth';
-import UserInlineCard from '~/components/UserInlineCard.vue';
-import LkConfirmModal from '~/components/LkConfirmModal.vue';
+import { computed, onMounted } from 'vue'
+import { useRouter } from '#imports'
+import { useI18n } from 'vue-i18n'
+import { useTheme } from '~/composables/useTheme'
+import { useAuthStore } from '~/stores/auth'
+import UserInlineCard from '~/components/UserInlineCard.vue'
+import LkConfirmModal from '~/components/LkConfirmModal.vue'
 
-const { theme, toggleTheme } = useTheme();
-const authStore = useAuthStore();
-const router = useRouter();
-useI18n();
+const { theme, toggleTheme } = useTheme()
+const authStore = useAuthStore()
+const router = useRouter()
 
-const user = computed(() => authStore.user);
-const isAuthenticated = computed(() => authStore.isAuthenticated);
+// ✅ nuxt-i18n helpers
+const localePath = useLocalePath()
+const switchLocalePath = useSwitchLocalePath()
+const { locale: i18nLocale, locales } = useI18n()
+
+const user = computed(() => authStore.user)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 onMounted(() => {
-  authStore.ensureAuthLoaded();
-});
+  authStore.ensureAuthLoaded()
+})
 
-const onGoToProfile = () => router.push('/profile');
-const onGoToObituaries = () => router.push('/profile/obituaries');
-const onGoToAdminObituaries = () => router.push('/admin/obituaries');
-const onGoToModeratorObituaries = () => router.push('/moderator/obituaries');
-const onGoToNotifications = () => router.push('/notifications');
+// locale en string simple pour le template
+const locale = computed(() => String(i18nLocale.value || 'fr'))
+
+// options “premium” FR/EN/PT/ES (filtrées si la locale n’existe pas côté config)
+const langOptions = computed(() => {
+  const available = new Set(
+    (Array.isArray(locales.value) ? locales.value : [])
+      .map((l) => (typeof l === 'string' ? l : l?.code))
+      .filter(Boolean)
+  )
+
+  const wanted = [
+    { code: 'fr', label: 'FR' },
+    { code: 'en', label: 'EN' },
+    { code: 'pt', label: 'PT' },
+    { code: 'es', label: 'ES' },
+  ]
+
+  // si locales n’est pas renseigné, on affiche quand même “wanted”
+  if (available.size === 0) return wanted
+  return wanted.filter((l) => available.has(l.code))
+})
+
+// ✅ helper navigation interne (toujours locale-aware)
+const go = (path) => router.push(localePath(path))
+
+const onGoToProfile = () => go('/profile')
+const onGoToObituaries = () => go('/profile/obituaries')
+const onGoToAdminObituaries = () => go('/admin/obituaries')
+const onGoToModeratorObituaries = () => go('/moderator/obituaries')
+const onGoToNotifications = () => go('/notifications')
+
+const onLogin = () => go('/login')
+const onRegister = () => go('/register')
 
 const onLogout = async () => {
   try {
-    await authStore.logout();
+    await authStore.logout()
   } finally {
-    router.push('/');
+    go('/')
   }
-};
-
-const onLogin = () => router.push('/login');
-const onRegister = () => router.push('/register');
+}
 </script>
+
+
+
 
 <style scoped>
 /* Helpers accessibilité */
@@ -297,4 +344,13 @@ const onRegister = () => router.push('/register');
     display: none;
   }
 }
+
+/* Petit polish, sans casser ton design */
+.lang-switch {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-right: 0.5rem;
+}
+
 </style>

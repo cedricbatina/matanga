@@ -22,19 +22,19 @@
 
 <div class="hero-ctas" role="group" :aria-label="t('home.hero.ctaGroupAria')">
   <!-- Publier une annonce -->
-  <NuxtLink to="/obituary/create" class="btn btn-primary btn-lg hero-cta">
+  <NuxtLink :to="localePath('/obituary/create')" class="btn btn-primary btn-lg hero-cta">
     <IconPlus class="hero-cta__icon" aria-hidden="true" />
     <span class="hero-cta__text">{{ t('home.hero.primaryCta') }}</span>
   </NuxtLink>
 
   <!-- Voir les plans (PUBLIC) -->
-  <NuxtLink to="/plans" class="btn btn-secondary btn-lg hero-cta">
+ <NuxtLink :to="localePath('/plans')" class="btn btn-secondary btn-lg hero-cta">
     <IconCreditCard class="hero-cta__icon" aria-hidden="true" />
     <span class="hero-cta__text">{{ t('home.hero.viewPlansCta') }}</span>
   </NuxtLink>
 
   <!-- Voir les annonces -->
-  <NuxtLink to="/obituaries" class="btn btn-secondary btn-sm hero-cta hero-cta--light">
+<NuxtLink :to="localePath('/obituaries')" class="btn btn-secondary btn-sm hero-cta hero-cta--light">
     <IconList class="hero-cta__icon" aria-hidden="true" />
     <span class="hero-cta__text">{{ t('home.hero.secondaryCta') }}</span>
   </NuxtLink>
@@ -384,6 +384,7 @@ const canonicalUrl = computed(() => `${siteUrl.value}${route.path}`);
 // SEO localisé
 const seoTitle = computed(() => t('home.meta.title'));
 const seoDescription = computed(() => t('home.meta.description'));
+const localePath = useLocalePath()
 
 useSeoMeta({
   title: seoTitle,
@@ -400,7 +401,7 @@ const jsonLd = computed(() => {
   const itemList = (obituaries.items || []).slice(0, 12).map((item, idx) => ({
     '@type': 'ListItem',
     position: idx + 1,
-    url: `${siteUrl.value}/obituary/${item.slug}`,
+  url: `${siteUrl.value}${localePath(`/obituary/${item.slug}`)}`,
     name: item.content?.title || item.deceased?.fullName || `Annonce ${idx + 1}`,
   }));
 
@@ -421,7 +422,7 @@ const jsonLd = computed(() => {
         inLanguage: locale.value,
         potentialAction: {
           '@type': 'SearchAction',
-          target: `${siteUrl.value}/obituaries?q={search_term_string}`,
+          target: `${siteUrl.value}${localePath('/obituaries')}?q={search_term_string}`,
           'query-input': 'required name=search_term_string',
         },
       },
@@ -465,7 +466,8 @@ const localFilters = reactive({
   sort: obituaries.filters.sort || 'recent',
 });
 
-const obituaryPath = (item) => `/obituary/${item.slug}`;
+const obituaryPath = (item) => localePath(`/obituary/${item.slug}`)
+
 
 // Miniature : on anticipe un champ future "thumbnailUrl" ou similaire.
 // Fallback sur une image de placeholder (à adapter dans ton projet).

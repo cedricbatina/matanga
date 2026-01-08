@@ -6,7 +6,7 @@
         <!-- Retour à l'accueil -->
         <NuxtLink
           v-if="showBackHome"
-          :to="backHomeTo"
+          :to="backHomeResolved"
           class="link-back"
           prefetch
         >
@@ -17,7 +17,7 @@
         <!-- Retour à la liste -->
         <NuxtLink
           v-if="showBackList && backListTo"
-          :to="backListTo"
+          :to="backListResolved"
           class="link-back link-back--secondary"
           prefetch
         >
@@ -41,11 +41,11 @@
 
     <!-- actions via props -->
     <component
-      v-for="(a, idx) in actions"
-      :key="a.key || `${a.to || a.href}-${idx}`"
-      :is="a.href ? 'a' : NuxtLink"
-      :to="a.href ? undefined : a.to"
-      :href="a.href || undefined"
+     v-for="(a, idx) in actions"
+  :key="a.key || `${a.to || a.href}-${idx}`"
+  :is="a.href ? 'a' : NuxtLink"
+  :to="a.href ? undefined : resolveTo(a.to)"
+  :href="a.href || undefined"
       :target="a.target || (a.href ? '_blank' : undefined)"
       :rel="a.rel || (a.href ? 'noopener noreferrer' : undefined)"
       :class="actionClass(a)"
@@ -65,14 +65,14 @@
   </div>
 
   <!-- CTA principal (compat) -->
-  <NuxtLink
-    v-if="showCreate && createTo"
-    :to="createTo"
-    class="btn btn-secondary btn-sm page-nav__cta"
-    prefetch
-  >
-    {{ t(createLabelKey) }}
-  </NuxtLink>
+<NuxtLink
+  v-if="showCreate && createTo"
+  :to="createResolved"
+  class="btn btn-secondary btn-sm page-nav__cta"
+  prefetch
+>
+  {{ t(createLabelKey) }}
+</NuxtLink>
 
   <!-- Zone extensible à droite (hors actions) -->
   <slot name="right" />
@@ -86,16 +86,10 @@
 import { computed, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconChevronLeft from "~/components/IconChevronLeft.vue";
+
+const { t, locale, availableLocales } = useI18n();
+const localePath = useLocalePath();
 const slots = useSlots();
-
-const hasActions = computed(() => {
-  return (props.actions && props.actions.length) || !!slots.actions;
-});
-
-const hasRightSide = computed(() => {
-  return hasActions.value || (props.showCreate && props.createTo) || !!slots.right;
-})
-const { t } = useI18n();
 
 const props = defineProps({
   ariaLabel: { type: String, default: 'Navigation' },
@@ -112,35 +106,58 @@ const props = defineProps({
   createTo: { type: String, default: '' },
   createLabelKey: { type: String, default: 'home.hero.primaryCta' },
 
-  /**
-   * actions: [{ to, href, labelKey, kind, key, icon, ariaLabelKey, target, rel }]
-   * - icon: composant Vue (SVG) ex: IconSparkles
-   */
-  actions: {
-    type: Array,
-    default: () => [],
-  },
+  actions: { type: Array, default: () => [] },
 
-  actionsAriaLabelKey: {
-    type: String,
-    default: 'common.quickActions',
-  },
+  actionsAriaLabelKey: { type: String, default: 'common.quickActions' },
 });
-/*
-const hasRightSide = computed(() => {
-  return (props.actions && props.actions.length) || (props.showCreate && props.createTo);
-});*/
 
-// mapping de styles vers tes classes globales (respect design)
+// --- helpers locale-aware ---
+const hasLocalePrefix = (p) => {
+  if (typeof p !== 'string') return false;
+  const locs = Array.isArray(availableLocales) ? availableLocales : [];
+  return locs.some((l) => p === `/${l}` || p.startsWith(`/${l}/`));
+};
+
+const resolveTo = (to) => {
+  if (!to) return to;
+  // objets de route => localePath les gère
+  if (typeof to !== 'string') return localePath(to);
+
+  // liens externes => ne pas toucher
+  if (/^(https?:)?\/\//.test(to) || to.startsWith('mailto:') || to.startsWith('tel:')) {
+    return to;
+  }
+
+  // déjà préfixé => ne pas double-préfixer
+  if (hasLocalePrefix(to)) return to;
+
+  return localePath(to);
+};
+
+const backHomeResolved = computed(() => resolveTo(props.backHomeTo));
+const backListResolved = computed(() => resolveTo(props.backListTo));
+const createResolved = computed(() => resolveTo(props.createTo));
+
+// --- existing computed ---
+const hasActions = computed(() => {
+  return (props.actions && props.actions.length) || !!slots.actions;
+});
+
+const hasRightSide = computed(() => {
+  return hasActions.value || (props.showCreate && props.createTo) || !!slots.right;
+});
+
+// mapping classes
 function actionClass(a) {
   const base = 'btn btn-sm';
-  const kind = a.kind || 'ghost'; // 'primary' | 'secondary' | 'ghost' | 'link'
+  const kind = a.kind || 'ghost';
   if (kind === 'primary') return `${base} btn-primary`;
   if (kind === 'secondary') return `${base} btn-secondary`;
   if (kind === 'link') return `link-action`;
   return `${base} btn-ghost`;
 }
 </script>
+
 
 <style scoped>
 .page-nav {
