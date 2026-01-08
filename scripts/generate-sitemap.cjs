@@ -35,6 +35,17 @@ async function getDbConnection() {
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
   });
 }
+function safeIsoDate(value) {
+  if (!value) return new Date().toISOString();
+
+  // mysql2 peut renvoyer Date ou string ou number
+  const d = value instanceof Date ? value : new Date(value);
+
+  // Date invalide -> fallback
+  if (Number.isNaN(d.getTime())) return new Date().toISOString();
+
+  return d.toISOString();
+}
 
 async function generateSitemapEntries() {
   const connection = await getDbConnection();
@@ -62,19 +73,20 @@ async function generateSitemapEntries() {
     `
   );
 
-  for (const row of rows) {
-    const loc = `/obituary/${row.slug}`;
-    if (!shouldInclude(loc)) continue;
+for (const row of rows) {
+  const loc = `/obituary/${row.slug}`;
+  if (!shouldInclude(loc)) continue;
 
-    entries.push({
-      loc,
-      lastmod: (row.updated_at || row.created_at || new Date()).toISOString
-        ? (row.updated_at || row.created_at).toISOString?.()
-        : new Date().toISOString(),
-      changefreq: "daily",
-      priority: 0.9,
-    });
-  }
+  const dt = row.updated_at || row.created_at; // peut être Date ou string
+
+  entries.push({
+    loc,
+    lastmod: safeIsoDate(dt),
+    changefreq: "daily",
+    priority: 0.9,
+  });
+}
+
 
   await connection.end();
 

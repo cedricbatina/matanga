@@ -1,5 +1,17 @@
 // composables/useDateUtils.js
+import { useI18n } from "vue-i18n";
+
 export function useDateUtils() {
+  // ✅ locale dynamique (en/fr/...)
+  let i18n = null;
+  try {
+    i18n = useI18n();
+  } catch {
+    i18n = null;
+  }
+
+  const getLocale = () => i18n?.locale?.value || "fr";
+
   const safeDate = (dateStr) => {
     if (!dateStr) return null;
     const d = new Date(dateStr);
@@ -9,35 +21,38 @@ export function useDateUtils() {
   const formatDate = (dateStr) => {
     const d = safeDate(dateStr);
     if (!d) return "";
-    const options = { day: "2-digit", month: "long", year: "numeric" };
-    return d.toLocaleDateString("fr-FR", options);
+    return d.toLocaleDateString(getLocale(), {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
   };
 
   const formattedDate = (dateStr) => {
     const d = safeDate(dateStr);
     if (!d) return "";
-    const options = {
+    return d.toLocaleString(getLocale(), {
       day: "2-digit",
       month: "long",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    };
-    return d.toLocaleString("fr-FR", options);
+    });
   };
 
   const formattedDateTimeWithSeconds = (dateStr) => {
     const d = safeDate(dateStr);
     if (!d) return "";
-    const dateOptions = { day: "2-digit", month: "long", year: "numeric" };
-    const timeOptions = {
+    // ✅ en-US => “January 8, 2026 at …”
+    // ✅ fr => “8 janvier 2026 à …”
+    return d.toLocaleString(getLocale(), {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-    };
-    const datePart = d.toLocaleDateString("fr-FR", dateOptions);
-    const timePart = d.toLocaleTimeString("fr-FR", timeOptions);
-    return `${datePart} à ${timePart}`;
+    });
   };
 
   const formatDateISO = (date) => {
@@ -52,7 +67,7 @@ export function useDateUtils() {
   const formattedHourMinute = (dateStr) => {
     const d = safeDate(dateStr);
     if (!d) return "";
-    return d.toLocaleTimeString("fr-FR", {
+    return d.toLocaleTimeString(getLocale(), {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -89,51 +104,31 @@ export function useDateUtils() {
   const shortDate = (dateStr) => {
     const d = safeDate(dateStr);
     if (!d) return "";
-    return d.toLocaleDateString("fr-FR", {
+    return d.toLocaleDateString(getLocale(), {
       day: "2-digit",
       month: "2-digit",
       year: "2-digit",
     });
   };
 
-  // 🔹 Helpers pour les champs <input type="date"> et <input type="datetime-local">
-
-  /**
-   * Normalise une valeur de date (ISO, string, Date…) vers "YYYY-MM-DD"
-   * pour <input type="date">
-   */
+  // tes helpers input/date restent OK
   const toDateInput = (value) => {
     if (!value) return "";
-    // Déjà au bon format
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      return value;
-    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
 
     const d = safeDate(value);
-    if (!d) {
-      // Fallback : on prend les 10 premiers caractères si c'est une string
-      return String(value).slice(0, 10);
-    }
+    if (!d) return String(value).slice(0, 10);
 
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
-
     return `${year}-${month}-${day}`;
   };
 
-  /**
-   * Transforme une valeur de backend vers "YYYY-MM-DDTHH:mm"
-   * pour <input type="datetime-local">, en utilisant l'heure locale.
-   * Gère :
-   *  - ISO "2025-01-06T13:30:00.000Z"
-   *  - "2025-01-06 13:30:00"
-   */
   const toDateTimeLocalInput = (value) => {
     if (!value) return "";
 
     const d = safeDate(
-      // on remplace " " par "T" pour les vieux formats "YYYY-MM-DD HH:mm:ss"
       typeof value === "string" ? value.replace(" ", "T") : value
     );
     if (!d) return "";
@@ -143,16 +138,9 @@ export function useDateUtils() {
     const day = String(d.getDate()).padStart(2, "0");
     const hours = String(d.getHours()).padStart(2, "0");
     const minutes = String(d.getMinutes()).padStart(2, "0");
-
-    // 👉 Heure locale : plus de 14:30 qui redevient 13:30
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  /**
-   * Transforme une valeur d'<input type="datetime-local">
-   * ("YYYY-MM-DDTHH:mm" ou "YYYY-MM-DDTHH:mm:ss")
-   * en string "YYYY-MM-DD HH:mm:ss" pour le backend.
-   */
   const normalizeDateTimeLocal = (value) => {
     if (!value) return null;
     const [date, time] = value.split("T");
@@ -170,8 +158,6 @@ export function useDateUtils() {
     getCountdownString,
     formattedHourMinute,
     formattedDateTimeWithSeconds,
-
-    // nouveaux helpers
     safeDate,
     toDateInput,
     toDateTimeLocalInput,

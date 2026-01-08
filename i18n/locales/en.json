@@ -1,1 +1,1611 @@
-{}
+{
+  "auth": {
+    "register": {
+      "title": "Create an account",
+      "subtitle": "Join Madizi to publish obituaries and vigil announcements with dignity.",
+      "account_type": {
+        "label": "Account type",
+        "individual": "Individual",
+        "pro": "Professional"
+      },
+      "fields": {
+        "email": "Email",
+        "password": "Password",
+        "confirm_password": "Confirm password",
+        "first_name": "First name",
+        "last_name": "Last name",
+        "organization_name": "Organization name",
+        "organization_type": "Organization type",
+        "city": "City",
+        "country": "Country",
+        "phone": "Phone",
+        "address": "Organization address",
+        "website_url": "Website (optional)",
+        "preferred_locale": "Preferred language"
+      },
+      "organization_types": {
+        "funeral_home": "Funeral home",
+        "church": "Church",
+        "mosque": "Mosque",
+        "association": "Association",
+        "other": "Other"
+      },
+      "placeholders": {
+        "email": "Your Email",
+        "password": "Minimum 8 characters",
+        "confirm_password": "Repeat the password",
+        "first_name": "Your first name",
+        "last_name": "Your last name",
+        "organization_name": "e.g. Lumière Funeral Home",
+        "city": "e.g. Brazzaville",
+        "country": "e.g. Congo, France…",
+        "phone": "e.g. 00242 …",
+        "address": "Full address",
+        "website_url": "https://..."
+      },
+      "actions": {
+        "submit": "Create my account",
+        "submitting": "Creating account...",
+        "already_have_account": "Already have an account?",
+        "login_link": "Sign in",
+        "show_password": "Show",
+        "hide_password": "Hide"
+      },
+      "messages": {
+        "check_email": "Account created. Check your email to activate your account."
+      },
+      "errors": {
+        "email_invalid": "Invalid email",
+        "password_short": "Password is too short (min 8 characters).",
+        "confirm_mismatch": "Confirmation doesn't match the password.",
+        "city_required": "City is required.",
+        "first_name_required": "First name is required.",
+        "last_name_required": "Last name is required.",
+        "org_name_required": "Organization name is required.",
+        "org_type_invalid": "Invalid organization type.",
+        "fix_fields": "Please fix the highlighted errors.",
+        "generic": "Unable to create the account at the moment."
+      },
+      "hints": {
+        "phone": "Used only for verification or if needed regarding your announcements.",
+        "terms": "By creating an account, you confirm you provide accurate information and accept our terms of use. Madizi is a private, moderated space dedicated to obituaries and vigils."
+      },
+      "resend": {
+        "help": "Didn't receive the confirmation email? Check your spam folder or resend the email.",
+        "actions": {
+          "cta": "Resend confirmation email",
+          "loading": "Sending..."
+        },
+        "messages": {
+          "sent": "If an account exists and isn't verified yet, a new email has been sent."
+        },
+        "errors": {
+          "email_missing": "Please enter your email to resend the confirmation email.",
+          "generic": "Unable to resend the confirmation email at the moment."
+        }
+      }
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Access your Madizi space to manage your obituaries and vigils.",
+      "fields": {
+        "email": "Email",
+        "password": "Password"
+      },
+      "placeholders": {
+        "email": "Your Email",
+        "password": "Your password"
+      },
+      "actions": {
+        "submit": "Sign in",
+        "submitting": "Signing in...",
+        "forgot_prefix": "Forgot your password?",
+        "forgot_link": "Reset",
+        "no_account_prefix": "Don't have an account yet?",
+        "register_link": "Create an account",
+        "show_password": "Show",
+        "hide_password": "Hide"
+      },
+      "errors": {
+        "email_invalid": "Invalid email",
+        "password_required": "Password is required.",
+        "fix_fields": "Please fix the highlighted fields.",
+        "generic": "Unable to sign you in at the moment."
+      },
+      "resend": {
+        "help": "Didn't receive the confirmation email or your link expired?",
+        "actions": {
+          "cta": "Resend confirmation email",
+          "loading": "Sending..."
+        },
+        "messages": {
+          "sent": "If an account exists and isn't verified yet, a new email has been sent."
+        },
+        "errors": {
+          "email_missing": "Please enter your email before resending the link.",
+          "generic": "Unable to resend the confirmation email at the moment."
+        }
+      }
+    },
+    "verify": {
+      "title": "Email verification",
+      "subtitle": "We are verifying your confirmation link to activate your Madizi account.",
+      "loading": "Verification in progress... Please wait a moment.",
+      "messages": {
+        "success": "Your email has been verified successfully. Your account is now active."
+      },
+      "errors": {
+        "missing_token": "The verification link is incomplete or invalid.",
+        "invalid_or_expired": "This verification link is invalid or has expired.",
+        "generic": "An error occurred while verifying your email."
+      },
+      "actions": {
+        "go_login": "Sign in",
+        "go_home": "Back to home"
+      },
+      "hints": {
+        "contact": "If the problem persists, you can request a new confirmation link from the sign-in page or contact Madizi support."
+      },
+      "footer_info": "For your security, the links of verification expire after a certain deadline."
+    },
+    "messages": {
+      "loginRequiredForObituary": "Please sign in or create an account to continue creating your obituary."
+    }
+  },
+"home": {
+  "meta": {
+    "title": "Madizi – Online obituaries & death notices",
+    "description": "Publish an obituary in minutes, and share vigils and funeral schedules with family, loved ones, and the diaspora."
+  },
+  "hero": {
+    "title": "Announce a death and inform everyone—without leaving anyone out.",
+    "subtitle": "Madizi helps families and the diaspora share clear, reliable information.",
+    "body": "Create a structured obituary, add vigils, a service, burial details, and easily share the link via WhatsApp, SMS, or social networks.",
+    "ctaGroupAria": "Primary actions",
+    "helperText": "A service designed for Africa and its diaspora, with time zones and online events in mind.",
+    "primaryCta": "Publish an obituary",
+    "secondaryCta": "All obituaries",
+    "viewPlansCta": "Plans & Options"
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "subtitle": "3 simple steps to inform everyone.",
+    "step1": "Fill in the deceased person’s details (name, dates, city, country…).",
+    "step2": "Add events: vigils, services, burial, including online options (Zoom, Facebook Live…).",
+    "step3": "Share the unique obituary link with family, friends, and the community."
+  },
+  "search": {
+    "title": "Search an obituary",
+    "subtitle": "Filter by country, city, or name to find an obituary.",
+    "country": {
+      "label": "Country (code)",
+      "placeholder": "e.g. CD, FR, GN…",
+      "hint": "Use the 2-letter ISO country code (CD, FR, GN, GA…)."
+    },
+    "city": {
+      "label": "City",
+      "placeholder": "e.g. Kinshasa, Paris, Conakry…"
+    },
+    "q": {
+      "label": "Name or title",
+      "placeholder": "Search by name or obituary title…",
+      "hint": "e.g. Uncle Jean-Baptiste, Aunt Béatrice, Sister Aïssatou…"
+    },
+    "sort": {
+      "label": "Sort by",
+      "options": {
+        "recent": "Most recent",
+        "oldest": "Oldest",
+        "popular": "Most viewed"
+      }
+    },
+    "reset": "Reset",
+    "submit": "Apply filters",
+    "loading": "Loading obituaries…"
+  },
+  "list": {
+    "title": "Recent obituaries",
+    "subtitle": "A few announcements recently published on the platform.",
+    "loading": "Loading obituaries…",
+    "error": "An error occurred while loading obituaries.",
+    "empty": "No obituaries match these criteria at the moment.",
+    "card": {
+      "dateOfDeath": "Died on {date}",
+      "badgeFree": "Free listing",
+      "badgePaid": "Plan {tier}",
+      "views": "{count} view(s)",
+      "mainEvent": "{type} on {date}",
+      "viewDetails": "View details"
+    }
+  },
+  "eventTypes": {
+    "wake": "Vigil",
+    "funeral": "Funeral",
+    "burial": "Burial",
+    "cremation": "Cremation",
+    "memorial": "Memorial mass",
+    "memorial_mass": "Memorial mass",
+    "other": "Event"
+  }
+},
+
+  "pagination": {
+    "ariaLabel": "Obituaries pagination",
+    "prev": "Previous",
+    "next": "Next",
+    "summaryOne": "{start}–{end} of {total} result",
+    "summaryMany": "{start}–{end} of {total} results",
+    "gotoLabel": "Page",
+    "gotoTotal": "/ {totalPages}",
+    "gotoAria": "Go to page (1 to {totalPages})"
+  },
+"obituary": {
+  "meta": {
+    "titlePattern": "{name} – Obituary",
+    "descriptionPattern": "Obituary for {name}{locationSuffix}."
+  },
+  "backToList": "Back to listings",
+  "notFound": "This obituary is no longer available or does not exist.",
+  "summary": {
+    "title": "Summary",
+    "deathDate": "Died on {date}",
+    "deathDateLabel": "Date of death",
+    "age": "Aged {age}",
+    "ageLabel": "Age",
+    "location": "Main city",
+    "announcementType": "Announcement type",
+    "plan": "Plan",
+    "freePlan": "Free plan",
+    "paidPlan": "Plan {tier}",
+    "views": "{count} view(s)",
+    "viewsLabel": "Views",
+    "publishedAt": "Published on {date}",
+    "draftBadge": "Draft (not published)",
+    "privateBadge": "Private"
+  },
+  "actions": {
+    "edit": "Edit this obituary"
+  },
+  "sections": {
+    "about": {
+      "title": "About",
+      "noBody": "The detailed text for this obituary is not available at the moment."
+    },
+    "timeline": {
+      "title": "Ceremony schedule",
+      "empty": "No events have been added to this obituary yet."
+    },
+    "contacts": {
+      "title": "Family / organization contacts",
+      "empty": "No contacts have been added yet.",
+      "phone": "Phone",
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "region": "Region"
+    },
+    "media": {
+      "title": "Memories & documents",
+      "empty": "No media has been added yet.",
+      "open": "Open"
+    }
+  },
+  "event": {
+    "online": "Online",
+    "venue": "Venue",
+    "address": "Address",
+    "stream": "Streaming link",
+    "notes": "Details",
+    "at": "at {time}"
+  },
+  "announcementTypes": {
+    "death": "Obituary",
+    "anniversary": "Death anniversary",
+    "memorial": "Memorial service",
+    "other": "Announcement"
+  }
+},
+
+"share": {
+  "obituary": {
+    "defaultName": "the deceased person",
+    "titlePattern": "Obituary – {name}",
+    "textPattern": "The family is sharing this obituary for {name}. Find ceremony details and contact information on Madizi.",
+    "shareButton": "Share obituary",
+    "clipboardSuccess": "The obituary link has been copied to the clipboard.",
+    "clipboardError": "Couldn't copy the link. You can copy it manually from the address bar.",
+    "nativeError": "Sharing couldn't be completed on this device."
+  }
+,
+
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "facebook": "Facebook",
+      "x": "X (formerly Twitter)",
+      "linkedin": "LinkedIn",
+      "telegram": "Telegram",
+      "link": "Copy link"
+    }
+  },
+  "common": {
+    "backToHome": "Back to home",
+    "archive": "Remove",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "open": "Open",
+    "actions": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "archive": "Remove from site",
+      "open": "Open"
+    },
+    "close": "Close",
+    "loading": "Loading…"
+  },
+"createObituary": {
+  "meta": {
+    "title": "Create an obituary",
+    "description": "Create an obituary, choose a plan, and prepare the information before submission."
+  },
+  "title": "Create an obituary",
+  "subtitle": "Fill in the main details about the deceased person, the obituary text, and the first ceremony.",
+  "actions": {
+    "cancel": "Cancel",
+    "submit": "Publish the obituary",
+    "submitting": "Publishing…"
+  },
+  "sections": {
+    "organization": {
+      "title": "Organization information",
+      "subtitle": "This information may be used for display and billing (optional for now)."
+    },
+    "deceased": {
+      "title": "Deceased person",
+      "subtitle": "Name, dates, main city, religion…",
+      "description": "Enter the key information, the obituary text, and the ceremony schedule to publish an obituary online.",
+      "publish": {
+        "title": "Publication",
+        "selectedPlan": "You are preparing this obituary with the “{plan}” plan ({days} days featured).",
+        "changePlanCta": "Change plan or view details"
+      }
+    },
+    "content": {
+      "title": "Obituary text",
+      "subtitle": "This text will appear at the top of the page and be visible to everyone."
+    },
+    "mainEvent": {
+      "title": "Event",
+      "subtitle": "Vigil, service, funeral… you can add more events later."
+    },
+    "familyContact": {
+      "title": "Family / organization contact",
+      "subtitle": "A person to contact for practical questions."
+    },
+    "publish": {
+      "title": "Photo & publication",
+      "subtitleFree": "Your free obituary will be published for {days} days.",
+      "legal": "By submitting this obituary, you confirm that you have the necessary rights to publish this information.",
+      "selectedPlan": "Selected plan: {plan} (published for {days} days).",
+      "changePlanCta": "Change option",
+      "subtitle": "Fill in the main details about the deceased person, the obituary text, and the first ceremony."
+    }
+  },
+  "fields": {
+    "deceasedFullName": {
+      "label": "Full name of the deceased",
+      "placeholder": "e.g. Father André MABIALA",
+      "orgName": {
+        "label": "Organization name",
+        "placeholder": "e.g. Dupont Funeral Home"
+      },
+      "orgType": {
+        "label": "Type"
+      },
+      "orgContactName": {
+        "label": "Contact person",
+        "placeholder": "Contact name"
+      },
+      "orgEmail": {
+        "label": "Email",
+        "placeholder": "Your professional email"
+      },
+      "orgPhone": {
+        "label": "Phone",
+        "placeholder": "+33…"
+      },
+      "orgAddress": {
+        "label": "Address",
+        "placeholder": "Organization address (optional)"
+      },
+      "orgWebsite": {
+        "label": "Website",
+        "placeholder": "https://..."
+      }
+    },
+    "gender": {
+      "label": "Gender",
+      "hint": "Optional, but helps adapt some wording.",
+      "options": {
+        "male": "Male",
+        "female": "Female"
+      }
+    },
+    "orgTypes": {
+      "none": "—",
+      "funeral_home": "Funeral home",
+      "church": "Church / parish",
+      "mosque": "Mosque",
+      "association": "Association",
+      "other": "Other"
+    },
+    "identityStatus": {
+      "label": "Identification level",
+      "hint": "Useful if the identity is not fully known.",
+      "options": {
+        "known": "Full identity known",
+        "partial": "Partially known identity",
+        "unknown": "Unknown identity"
+      }
+    },
+    "dateOfBirth": {
+      "label": "Date of birth",
+      "hint": "Optional—used to calculate age at death."
+    },
+    "dateOfDeath": {
+      "label": "Date of death",
+      "hint": "The exact date of death, if known."
+    },
+    "ageDisplay": {
+      "label": "Displayed age",
+      "placeholder": "e.g. 76 years old, 54 years…",
+      "hint": "Optional free text for the displayed age."
+    },
+    "religion": {
+      "label": "Religion",
+      "hint": "Helps adapt vocabulary (service, mass, etc.).",
+      "options": {
+        "none": "Prefer not to say",
+        "christian": "Christian",
+        "muslim": "Muslim",
+        "other": "Other / traditional"
+      }
+    },
+    "denomination": {
+      "label": "Denomination / parish",
+      "placeholder": "e.g. Catholic, Revival church, Central mosque…",
+      "hint": "Optional—useful to specify the church, community, or mosque."
+    },
+    "city": {
+      "label": "Main city",
+      "placeholder": "e.g. Kinshasa, Paris, Abidjan…"
+    },
+    "region": {
+      "label": "Region / province",
+      "placeholder": "e.g. Île-de-France, Haut-Katanga…"
+    },
+    "country": {
+      "label": "Country",
+      "placeholder": "e.g. Democratic Republic of the Congo"
+    },
+    "countryCode": {
+      "label": "Country code (2 letters)",
+      "placeholder": "e.g. CD, FR, CI…",
+      "hint": "2-letter ISO code (CD, FR, CI, SN…)."
+    },
+    "isRuralArea": {
+      "label": "Obituary for a rural area or village",
+      "hint": "Helps adapt some wording and filters."
+    },
+    "title": {
+      "label": "Obituary title",
+      "placeholder": "e.g. Obituary – Father André MABIALA",
+      "hint": "Shown in the list and at the top of the page."
+    },
+    "body": {
+      "label": "Obituary text",
+      "placeholder": "e.g. The MABIALA family is deeply saddened to announce the passing of Father André MABIALA, who died on…",
+      "hint": "Minimum 40 characters. You can keep a formal tone or a more personal one depending on the family."
+    },
+    "eventType": {
+      "label": "Main event type"
+    },
+    "eventStartsAt": {
+      "label": "Date & time of the main event",
+      "hint": "Local time of the ceremony (vigil, service, funeral…)."
+    },
+    "eventVenueName": {
+      "label": "Venue / church / mosque",
+      "placeholder": "e.g. Saint-Paul Parish, Central Mosque…"
+    },
+    "eventVenueAddress": {
+      "label": "Venue address",
+      "placeholder": "Street, district, area…"
+    },
+    "familyContactName": {
+      "label": "Contact person’s name",
+      "placeholder": "e.g. Mrs. MABIALA Chantal"
+    },
+    "familyContactPhone": {
+      "label": "Main phone number",
+      "placeholder": "Local or international number"
+    },
+    "familyContactWhatsapp": {
+      "label": "WhatsApp number",
+      "placeholder": "WhatsApp number with country code"
+    },
+    "familyContactEmail": {
+      "label": "Email",
+      "placeholder": "Your email"
+    },
+    "coverImageUrl": {
+      "label": "Main photo (URL)",
+      "placeholder": "https://...",
+      "hint": "Paste a link to a photo already hosted (Google Drive, a website, etc.)."
+    }
+  },
+  "pro": {
+    "banner": {
+      "label": "Professional mode",
+      "helper": "You are creating the obituary on behalf of an organization."
+    },
+    "sections": {
+      "organization": {
+        "title": "Organization information",
+        "subtitle": "Enter the details of the organization publishing the obituary."
+      }
+    },
+    "fields": {
+      "orgName": {
+        "label": "Organization name",
+        "placeholder": "e.g. Dupont Funeral Home"
+      },
+      "orgType": {
+        "label": "Type",
+        "placeholder": "—",
+        "options": {
+          "funeral_home": "Funeral home",
+          "church": "Church / parish",
+          "mosque": "Mosque",
+          "association": "Association",
+          "other": "Other"
+        }
+      },
+      "orgContactName": {
+        "label": "Contact person",
+        "placeholder": "Contact name"
+      },
+      "orgEmail": {
+        "label": "Email",
+        "placeholder": "Your professional email"
+      },
+      "orgPhone": {
+        "label": "Phone",
+        "placeholder": "+33…"
+      },
+      "orgAddress": {
+        "label": "Address",
+        "placeholder": "Organization address (optional)"
+      },
+      "orgWebsite": {
+        "label": "Website",
+        "placeholder": "https://..."
+      }
+    },
+    "hint": "(For now, these fields don’t affect publication. We’ll enable them on the API side later.)"
+  }
+},
+
+  "defaults": {
+    "familyContactLabel": "Family"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "submit": "Publish the obituary",
+    "submitting": "Publishing in progress...",
+    "viewPublic": "View obituary"
+  },
+  "errors": {
+    "deceasedFullNameRequired": "The name complet of the deceased is required.",
+    "titleRequired": "The title of the obituary is required (to the less 8 characters).",
+    "bodyTooShort": "The text of the obituary is too court (to the less 40 characters).",
+    "eventStartsAtRequired": "The date and the time of the event primary are required.",
+    "submitFailed": "Unable to create the obituary at the moment. Thank you of retry more later."
+  },
+  "layout": {
+    "skipLink": "Skip to main content",
+    "logoAria": "Back to Madizi home page",
+    "logoAlt": "Madizi logo",
+    "logoName": "Madizi",
+    "logoTagline": "Obituaries & vigils",
+    "navMain": "Main navigation",
+   
+  "themeToggleToLight": "Switch to light theme",
+  "themeToggleToDark": "Switch to dark theme",
+
+    "themeLabelLight": "Light theme",
+    "themeLabelDark": "Dark theme"
+  },
+"userInline": {
+  "guestLabel": "Guest — you’re not signed in yet",
+  "guestHelper": "Sign in or create an account to publish and manage your obituaries.",
+  "login": "Sign in",
+  "register": "Create an account",
+  "dashboard": "My dashboard",
+  "myObituaries": "My obituaries",
+  "notifications": "Notifications",
+  "logout": "Sign out",
+  "status": {
+    "online": "Signed in",
+    "offline": "Offline"
+  },
+  "role": {
+    "individual": "Individual account",
+    "pro": "Professional account",
+    "generic": "Madizi account",
+    "admin": "Administrator",
+    "moderator": "Moderator"
+  },
+  "todayLabel": "Today: {date}"
+}
+,
+"plans": {
+  "meta": {
+    "title": "Plans and options for your obituaries",
+    "description": "Choose the plan that fits your needs: a free listing, a simple plan, or the Essential pack—then add memorial options if needed."
+  },
+  "title": "Plans and options for your obituaries",
+  "subtitle": "Choose the plan that best matches the tribute you want to share.",
+  "helper": "Each plan applies to a single obituary. You can add memorial options (candles, guestbook, long-term memorial page) later.",
+  "error": "Unable to load plans at the moment.",
+  "retry": "Try again",
+  "audience": {
+    "individual": "Families / individuals",
+    "pro": "Funeral professionals",
+    "proSoon": "Pro area"
+  },
+  "badges": {
+    "free": "Free",
+    "recommended": "Recommended"
+  },
+  "price": {
+    "free": "Free",
+    "paid": "{amount} € incl. VAT",
+    "onetime": "One-time payment"
+  },
+  "features": {
+    "duration": {
+      "label": "Duration online",
+      "value": "{days} days of visibility"
+    },
+    "visibility": {
+      "label": "Visibility",
+      "value": "{primary} days featured, then {secondary} days in a discreet listing"
+    },
+    "events": {
+      "label": "Events",
+      "value": "Up to {count} event(s)"
+    },
+    "media": {
+      "label": "Media",
+      "value": "Up to {photos} photo(s) and {videos} video(s)"
+    },
+    "contacts": {
+      "label": "Family contacts",
+      "value": "Up to {count} contact(s) displayed"
+    },
+    "online": {
+      "label": "Online ceremonies",
+      "value": "Up to {count} online event(s) (streaming link)"
+    }
+  },
+  "notes": {
+    "free": "Ideal for a first simple obituary, focused on the essentials.",
+    "essentiel": "The Essential pack gives you more flexibility on duration, events, and media."
+  },
+  "cta": {
+    "startFree": "Start with the free plan",
+    "startPaid": "Choose this plan",
+    "startRecommended": "Choose this recommended plan"
+  },
+  "legal": {
+    "reminder": "Each plan applies to a single obituary. Memorial options (candles, guestbook, long-term memorial page) will be added in a later step."
+  },
+  "codes": {
+    "indiv_free_7": "Discovery obituary · 14 days",
+    "indiv_basic_21": "Basic plan · 21 days",
+    "indiv_essentiel_30": "Essential pack · 30 days + reminder",
+    "indiv_essentiel_45": "Essential plan · 45 days",
+    "indiv_prestige_60": "Prestige pack · 60 days",
+    "indiv_memorial_6m": "Memorial · 6 months",
+    "indiv_memorial_1y": "Memorial · 1 year",
+    "indiv_memorial_10y": "Memorial · 10 years",
+    "pro_basic_30": "Pro Standard obituary · 30 days",
+    "pro_essentiel_60": "Pro Essential obituary · 60 days",
+    "pro_premium_90": "Pro Premium obituary · 90 days",
+    "pro_sub_start": "Pro Start subscription",
+    "pro_sub_studio": "Pro Studio subscription",
+    "pro_sub_network": "Pro Network subscription"
+  },
+  "sections": {
+    "individualObituary": "Families / individuals – obituaries",
+    "individualObituaryHint": "These plans cover the main obituary publication.",
+    "individualMemorial": "Memorial options (tribute page)",
+    "individualMemorialHint": "Extend the tribute with a dedicated page and a condolence wall.",
+    "proObituary": "Funeral professionals – obituaries",
+    "proObituaryHint": "Single-obituary plans for funeral homes, parishes, associations, etc.",
+    "proMemorial": "Long-term memorials for pros",
+    "proMemorialHint": "Tribute pages managed by your organization (10 years, renewable)."
+  },
+  "pro": {
+    "badgeSoon": "Pro area",
+    "title": "Solutions for funeral professionals",
+    "subtitle": "Centralize your obituaries online, save time, and offer families a modern experience.",
+    "features": {
+      "bundle": "Manage multiple obituaries per month with centralized tracking.",
+      "visibility": "Stronger visibility and featuring adapted to your service area.",
+      "billing": "Clear billing tailored to your activity (monthly or pay-as-you-go).",
+      "maxActive": {
+        "label": "Active obituaries",
+        "value": "Up to {count} active obituary(ies)"
+      }
+    },
+    "comingSoon": {
+      "badge": "On request",
+      "note": "The Madizi Pro area will open soon for funeral service providers. Contact us to be notified when it launches."
+    },
+    "banner": {
+      "label": "Professional mode",
+      "helper": "You are creating this obituary on behalf of an organization."
+    },
+    "fields": {
+      "orgName": {
+        "label": "Organization name",
+        "placeholder": "e.g. XYZ Funeral Home"
+      }
+    },
+    "organization": {
+      "title": "Organization information",
+      "subtitle": "Enter the details of the organization publishing the obituary."
+    },
+    "contact": "Get notified",
+    "ctaDisabled": "On request",
+    "helper": "The Madizi Pro area will open soon for funeral service providers. Contact us to be notified when it launches."
+  }
+}
+,
+ "obituaryReview": {
+  "title": "Review your obituary",
+  "subtitle": "Review all information before confirming publication or payment.",
+  "meta": {
+    "title": "Obituary summary",
+    "description": "Review your obituary details before final confirmation."
+  },
+  "planMeta": "Published for {days} days",
+  "error": "Unable to load the obituary summary. Please try again.",
+  "retry": "Try again",
+  "fields": {
+    "dates": "Birth and death dates",
+    "dateOfBirth": "Born on {date}",
+    "dateOfDeath": "Died on {date}",
+    "location": "Main location",
+    "countryCode": "Country code",
+    "ruralYes": "Obituary for a rural area or village",
+    "ruralNo": "Obituary for a city or urban area"
+  },
+  "documents": {
+    "title": "Supporting documents",
+    "subtitle": "These documents are reviewed confidentially by our team.",
+    "idCardTitle": "Publisher ID document",
+    "idCardHelp": "National ID card, passport, or valid residence permit.",
+    "deathCertOverdue": "Deadline exceeded by {overdueDays} day(s). Please add the certificate (deadline: {date}).",
+    "deathCertDueIn": "To be provided within {days} day(s) (before {date}).",
+    "deathCertTitle": "Death certificate",
+    "deathCertHelp": "Death certificate issued by the competent authorities (subject to applicable laws and regulations).",
+    "uploadIdCard": "Upload ID document",
+    "uploadDeathCert": "Upload death certificate",
+    "uploading": "Uploading…",
+    "alreadyUploaded": "A document has already been submitted for this obituary.",
+    "uploadSuccess": "Document submitted. Thank you.",
+    "uploadError": "Unable to upload the document at the moment.",
+    "selectFileFirst": "Please choose a file first.",
+    "missingWarning": "Please upload the ID document and the death certificate before proceeding to payment.",
+    "sideHint": "For legal reasons, we must review your documents before publishing your obituary.",
+    "obituaryReview.documents.openFile": "Open the document"
+  },
+  "codes": {
+    "indiv_free_7": "Discovery obituary · 14 days",
+    "indiv_basic_21": "Basic plan · 21 days",
+    "indiv_essentiel_30": "Essential pack · 30 days + reminder",
+    "indiv_prestige_60": "Prestige pack · 60 days",
+    "indiv_memorial_10y": "Memorial · 10 years",
+    "pro_essentiel_60": "Pro Essential obituary · 60 days",
+    "pro_premium_90": "Pro Premium obituary · 90 days",
+    "pro_sub_studio": "Pro Studio subscription",
+    "indiv_free_14": "Discovery obituary · 14 days",
+    "indiv_basic_30": "Essential plan · 30 days",
+    "indiv_essentiel_45": "Comfort plan · 45 days",
+    "indiv_prestige_90": "Prestige plan · 90 days",
+    "indiv_memorial_6m": "Memorial · 6 months",
+    "indiv_memorial_1y": "Memorial · 1 year",
+    "indiv_memorial_lifetime": "Memorial · lifetime (10 years, renewable)",
+    "pro_basic_30": "Pro Standard obituary · 30 days",
+    "pro_essentiel_90": "Pro Essential obituary · 90 days",
+    "pro_prestige_365": "Pro Prestige obituary · 365 days",
+    "pro_memorial_lifetime": "Pro memorial · 10 years (renewable)",
+    "pro_sub_start": "Pro Start subscription",
+    "pro_sub_standard": "Pro Standard subscription",
+    "pro_sub_network": "Pro Network subscription"
+  },
+  "sections": {
+    "documents": {
+      "title": "Supporting documents",
+      "subtitle": "These documents are reviewed confidentially by our team.",
+      "idCardTitle": "Publisher ID document",
+      "idCardHelp": "Required to publish your first obituary (ID card, passport, residence permit, etc.).",
+      "openFile": "Open file",
+      "chooseFile": "Choose a file",
+      "deathCertTitle": "Death certificate",
+      "deathCertHelp": "Please provide this as soon as possible. The obituary may be published first, but this certificate will still be required shortly after.",
+      "alreadyUploaded": "A document has already been submitted for this obituary.",
+      "missingWarning": "At this time, only the ID document is required to publish. The death certificate will be requested in the coming days.",
+      "sideHint": "You can continue and pay as soon as the ID document is submitted. Remember to come back and add the death certificate.",
+      "deathCertOverdue": "The death certificate has still not been submitted. For security reasons, this obituary may be removed or made invisible if the document is not added promptly."
+    },
+    "deceased": {
+      "title": "Deceased information",
+      "subtitle": "Name, dates, main location, and other identity details.",
+      "documents": {
+        "title": "Supporting documents",
+        "subtitle": "These documents are reviewed confidentially by our team.",
+        "idCardTitle": "Publisher ID document",
+        "idCardHelp": "Required to publish your first obituary (ID card, passport, residence permit, etc.).",
+        "deathCertTitle": "Death certificate",
+        "deathCertHelp": "Please provide this as soon as possible. The obituary may be published first, but this certificate will still be required shortly after.",
+        "alreadyUploaded": "A document has already been submitted for this obituary.",
+        "missingWarning": "At this time, only the ID document is required to publish. The death certificate will be requested in the coming days.",
+        "sideHint": "You can continue and pay as soon as the ID document is submitted. Remember to come back and add the death certificate.",
+        "deathCertOverdue": "The death certificate has still not been submitted. For security reasons, this obituary may be removed or made invisible if the document is not added promptly."
+      }
+    },
+    "content": {
+      "title": "Obituary text",
+      "subtitle": "Review the title and text that will be visible to visitors."
+    },
+    "events": {
+      "title": "Ceremonies and events",
+      "subtitle": "Check the date, time, and venue of the main ceremony."
+    },
+    "contacts": {
+      "title": "Family / organization contacts",
+      "subtitle": "People to contact for practical information."
+    }
+  },
+  "events": {
+    "main": "Main event",
+    "datePending": "Date and time to be confirmed",
+    "none": "No events are associated with this obituary at the moment."
+  },
+  "contacts": {
+    "primary": "Primary contact",
+    "none": "No contacts are associated with this obituary."
+  },
+  "side": {
+    "title": "Before publishing",
+    "subtitle": "Check the selected plan and publication duration.",
+    "plan": "Plan",
+    "duration": "Duration",
+    "price": "Amount",
+    "planUnknown": "Not provided",
+    "alreadyPaid": "Payment for this obituary has already been recorded.",
+    "statusFree": "Free plan: your obituary will be sent to the Madizi team for review before it is published online.",
+    "statusPayment": "Paid plan: you will be redirected to the payment step to complete publication.",
+    "legal": "By confirming, you certify that the information provided is accurate and that you have the right to publish it. The Madizi team may remove the obituary in case of reports or violations of the rules.",
+    "statusPaid": "Paid plan: payment for this obituary has already been recorded.",
+    "titlePaid": "Obituary already paid",
+    "subtitlePaid": "You can still edit certain elements. In case of major changes, moderation may review the obituary again."
+  },
+  "delete": {
+    "softTitle": "Remove this obituary from the site?",
+    "softMessage": "The obituary will no longer be publicly visible, but you will still be able to find it in your account.",
+    "hardTitle": "Permanently delete this obituary?",
+    "hardMessage": "This action is irreversible. All information associated with this obituary will be permanently deleted."
+  },
+  "actions": {
+    "edit": "Edit obituary",
+    "publishFree": "Confirm and send for review",
+    "publishing": "Publishing…",
+    "confirmAndPay": "Confirm and pay",
+    "redirectingToPayment": "Redirecting to payment…",
+    "archive": "Remove obituary from the site",
+    "hardDelete": "Delete permanently"
+  },
+  "features": {
+    "events": {
+      "value": "Up to {count} event(s)"
+    },
+    "media": {
+      "value": "Up to {photos} photo(s) and {videos} video(s)"
+    },
+    "contacts": {
+      "value": "Up to {count} contact(s) displayed"
+    }
+  },
+  "common": {
+    "actions": {
+      "archive": "Remove",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "open": "Open"
+    }
+  },
+  "toasts": {
+    "obituary": {
+      "published": "Your obituary has been sent for review / publication.",
+      "publishError": "Unable to publish this obituary at the moment."
+    }
+  },
+  "payments": {
+    "toasts": {
+      "checkoutCreated": "Your order has been created. Redirecting to the payment page…",
+      "checkoutError": "Unable to create the payment order for this obituary.",
+      "payment": {
+        "redirecting": "Redirecting to the payment page…",
+        "missingId": "Unable to create the payment transaction.",
+        "checkoutError": "An error occurred while starting the payment.",
+        "flowTodo": "The real payment flow (Stripe, PayPal, bank transfer, or mobile money) will be integrated here."
+      }
+    }
+  }
+}
+,
+  "editObituary": {
+  "title": "Edit the obituary",
+  "subtitle": "Update the information, events, contacts, and memories.",
+  "aria": {
+    "nav": "Obituary editing navigation"
+  },
+  "common": {
+    "archive": "Remove",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "open": "Open"
+  },
+  "sections": {
+    "documents": {
+      "title": "Verification documents (private)",
+      "subtitle": "These documents (ID, death certificate) are reserved for owners/admins. They are not displayed on the public page.",
+      "subtitle_before": "These documents (ID, death certificate) are reserved for owners/admins. They are",
+      "subtitle_strong": "not",
+      "subtitle_after": "displayed on the public page."
+    },
+    "extraEvents": {
+      "title": "Other related ceremonies (optional)",
+      "subtitle": "Add a vigil, burial, mass, etc."
+    },
+    "media": {
+      "title": "Memories (photos / videos)",
+      "subtitle_before": "Memories are",
+      "subtitle_strong": "public",
+      "subtitle_after": "and visible on the obituary page. Files are uploaded to S3 (Infomaniak), and we only store the URL here.",
+      "confirmDelete": {
+        "title": "Delete this memory?",
+        "message": "It will no longer be visible on the obituary after you save."
+      }
+    }
+  },
+  "toasts": {
+    "updated": "Obituary updated.",
+    "paymentRequired": "Payment required: this paid obituary cannot be published until it is paid.",
+    "actionError": "An error occurred."
+  },
+  "errors": {
+    "notFound": "Obituary not found.",
+    "forbidden": "Access denied.",
+    "generic": "An error occurred."
+  },
+  "meta": {
+    "title": "Edit the obituary",
+    "description": "Edit your obituary."
+  },
+  "planBanner": {
+    "helper": "Your plan limits: {photos} photo(s), {videos} video(s), {contacts} contact(s), {events} event(s).",
+    "upgradeCta": "Change / upgrade my plan"
+  },
+  "confirmReplace": {
+    "title": "Replace the document?",
+    "message": "A document already exists for “{type}”. Do you want to replace it?",
+    "confirm": "Replace"
+  },
+  "inline": {
+    "uploadedOk": "Document “{type}” uploaded successfully."
+  },
+  "documents": {
+    "status": {
+      "uploaded": "Uploaded",
+      "under_review": "Under review",
+      "accepted": "Approved",
+      "rejected": "Rejected",
+      "missing": "Not submitted"
+    },
+    "type": {
+      "upload": {
+        "label": "Add a document"
+      },
+      "label": "Document type",
+      "options": {
+        "id_card": "ID / proof of identity",
+        "death_certificate": "Death certificate",
+        "other": "Other"
+      },
+      "labels": {
+        "id_card": "Proof of identity",
+        "death_certificate": "Death certificate",
+        "other": "Other"
+      }
+    },
+    "upload": {
+      "label": "Upload a document (S3)",
+      "uploading": "Uploading..."
+    },
+    "list": {
+      "loading": "Loading documents...",
+      "error": "Unable to load documents.",
+      "empty": "No documents uploaded."
+    },
+    "adminNoteLabel": "Admin note:",
+    "confirmDelete": {
+      "title": "Delete this document?",
+      "message": "It will no longer be available after deletion."
+    },
+    "toasts": {
+      "uploaded": "Document uploaded.",
+      "deleted": "Document deleted."
+    },
+    "errors": {
+      "uploadFailed": "Document upload failed."
+    }
+  },
+  "coverImage": {
+    "label": "Cover image (URL)",
+    "placeholder": "https://... or /api/media/...",
+    "help": "Optional. Used as the main image on the public page. You can also click “Set as cover” on a memory.",
+    "previewLabel": "Preview:",
+    "previewAlt": "Cover image preview",
+    "errors": {
+      "imagesOnly": "Only images are allowed for the cover.",
+      "uploadFailed": "Cover upload failed."
+    }
+  },
+  "extraEvents": {
+    "fields": {
+      "type": "Event type",
+      "datetime": "Date and time",
+      "venueName": "Venue / hall",
+      "venueAddress": "Address"
+    },
+    "actions": {
+      "remove": "Delete this event",
+      "add": "Add another event"
+    }
+  },
+  "actions": {
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving...",
+    "viewPublic": "View obituary"
+  },
+  "contacts": {
+    "labels": {
+      "primary": "Primary contact",
+      "secondary": "Contact {n}"
+    },
+    "actions": {
+      "remove": "Delete this contact",
+      "add": "Add another contact",
+      "retry": "Try again",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "save": "Save",
+      "saving": "Saving..."
+    }
+  },
+  "coverPreview": {
+    "title": "Cover image",
+    "subtitle": "This image will be displayed at the top of the public page.",
+    "alt": "Cover image"
+  },
+  "media": {
+    "addFiles": {
+      "label": "Add files (S3)",
+      "uploading": "Uploading..."
+    },
+    "addLink": {
+      "label": "Add a link (YouTube/Vimeo/etc.)",
+      "placeholder": "https://...",
+      "actions": {
+        "add": "Add"
+      },
+      "tip": "Tip: for YouTube/Vimeo, paste the link. The provider will be “other” for now."
+    },
+    "list": {
+      "empty": "No memories yet.",
+      "pendingSave": "Media changes pending: don’t forget to click “Save”."
+    },
+    "actions": {
+      "openVideo": "Open video ({provider})",
+      "openFile": "Open file",
+      "setCover": "Set as cover",
+      "markMain": "Mark as main",
+      "unmarkMain": "Unmark as main",
+      "remove": "Delete",
+      "retry": "Try again",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "fields": {
+      "title": {
+        "label": "Title (optional)",
+        "placeholder": "e.g. Memorial photo"
+      },
+      "description": {
+        "label": "Description (optional)",
+        "placeholder": "..."
+      }
+    },
+    "confirmDelete": {
+      "title": "Delete this memory?",
+      "message": "It will no longer be visible on the obituary after you save."
+    },
+    "errors": {
+      "invalidLink": "Invalid link. Paste a full URL that starts with http:// or https://",
+      "videosUploadForbidden": "Video uploads are not allowed. Please add a link instead (YouTube/Vimeo/…).",
+      "uploadFailed": "Media upload failed.",
+      "saveFailed": "Error while saving media."
+    },
+    "toasts": {
+      "saved": "Media saved."
+    }
+  },
+  "limits": {
+    "contactsReached": "Limit reached: {max} contact(s) maximum for this plan.",
+    "eventsReached": "Limit reached: {max} event(s) maximum for this plan.",
+    "photosReached": "Limit reached: {max} photo(s) maximum for this plan.",
+    "videosReached": "Limit reached: {max} video(s) maximum for this plan.",
+    "photosSomeIgnored": "{ignored} photo(s) ignored: this plan is limited to {max} photo(s).",
+    "textTooLong": "Text too long: {max} characters maximum for this plan.",
+    "tooManyContacts": "Too many contacts: {max} maximum for this plan. Delete some or change plan.",
+    "tooManyPhotos": "Too many photos: {max} maximum for this plan. Delete some or change plan.",
+    "tooManyVideos": "Too many videos: {max} maximum for this plan. Delete some or change plan.",
+    "tooManyEvents": "Too many events: {max} maximum for this plan. Delete some or change plan.",
+    "photosCounter": "Photos: {used}/{max}",
+    "videosCounter": "Videos: {used}/{max}"
+  }
+}
+,
+  "toasts": {
+  "obituary": {
+    "publishFreeSuccess": "Obituary submitted successfully.",
+    "publishFreeError": "Failed to submit the obituary. Please try again.",
+    "published": "The obituary was published successfully.",
+    "publishError": "Unable to publish the obituary at the moment. Please try again.",
+    "paymentTodo": "Online payments are coming soon. For now, please follow the payment instructions.",
+    "publishFreeTodo": "Free publishing simulated (to be wired to the API).",
+    "paymentRequired": "Payment required: this paid obituary cannot be published until it is paid.",
+    "actionError": "An error occurred."
+  }
+},
+"obituaryDelete": {
+  "confirmTitle": "Delete the obituary for {name}?",
+  "confirmMessage": "This action will archive the obituary and make it private. You will be able to restore it later by contacting support.",
+  "confirmLabel": "Yes, delete",
+  "cancelLabel": "Cancel",
+  "toasts": {
+    "archived": "The obituary was archived successfully.",
+    "error": "An error occurred while deleting the obituary."
+  }
+}
+,
+  "checkoutObituary": {
+  "title": "Complete publication",
+  "subtitle": "Choose a payment method to confirm the online publication of this obituary.",
+  "error": "Unable to load obituary information.",
+  "retry": "Try again",
+  "meta": {
+    "title": "Obituary payment",
+    "description": "Summary and secure payment for publishing the death notice."
+  },
+  "methods": {
+    "title": "Payment method",
+    "subtitle": "Select the method that works best for you.",
+    "processing": "Initializing payment...",
+    "cardStripe": "Credit card (Stripe)",
+    "paypal": "PayPal",
+    "bankTransfer": "Bank transfer",
+    "notConfigured": "This payment method is not yet available.",
+    "error": "An error occurred while initializing the payment."
+  },
+  "bank": {
+    "title": "Pay by bank transfer",
+    "intro": "Make a bank transfer using the details below. The obituary will be published as soon as the payment is confirmed.",
+    "holder": "Account holder",
+    "reference": "Reference to include",
+    "amount": "Amount to pay",
+    "note": "Please include the exact reference so we can match the payment to your obituary.",
+    "toastSuccess": "Transfer instructions generated. You can now make the transfer."
+  },
+  "toast": {
+    "coverUploadSuccess": "Image saved successfully!",
+    "coverUploadFail": "Unable to upload the photo.",
+    "obituaryCreateSuccess": "Obituary created successfully!",
+    "obituaryCreateFail": "Error while creating the obituary."
+  },
+  "plans": {
+    "price": {
+      "free": "Free",
+      "paid": "{amount} €"
+    }
+  }
+},
+"checkoutPayment": {
+  "meta": {
+    "title": "Obituary payment",
+    "description": "Complete the payment and publish your obituary on Madizi."
+  },
+  "title": "Complete payment",
+  "subtitle": "Review your order summary before proceeding to secure payment.",
+  "sections": {
+    "obituary": {
+      "title": "Obituary",
+      "subtitle": "You are about to pay for the online publication of this obituary."
+    },
+    "plan": {
+      "title": "Plan details"
+    }
+  },
+  "fields": {
+    "deceasedName": "Deceased person",
+    "obituaryTitle": "Obituary title",
+    "obituaryStatus": "Current status",
+    "planType": "Plan type",
+    "planTypeFallback": "Paid plan",
+    "publishDuration": "Publication duration"
+  },
+  "publishDurationDays": "Published for {days} days",
+  "side": {
+    "status": "Secure payment",
+    "title": "Amount to pay",
+    "methodPrefix": "Selected payment method:",
+    "hint": "Payment will be processed by a secure payment provider (Stripe, PayPal, bank transfer, or mobile money depending on your choice).",
+    "legal": "By clicking “Proceed to payment”, you will be redirected to a secure payment page. No card data is stored on Madizi."
+  },
+  "methods": {
+    "card": "Credit card (Stripe)",
+    "paypal": "PayPal",
+    "bank_transfer": "Bank transfer",
+    "mobile_money": "Mobile money"
+  },
+  "obituaryStatus": {
+    "draft": "Draft (not published)",
+    "pending_review": "Pending review",
+    "published": "Published",
+    "archived": "Archived",
+    "mismatch": {
+      "text": "A draft exists for another plan. Do you want to restore it?",
+      "restore": "Restore draft",
+      "clear": "Discard draft"
+    }
+  },
+  "actions": {
+    "retry": "Try again",
+    "backToReview": "Back to summary",
+    "proceed": "Proceed to payment",
+    "processing": "Initializing payment..."
+  },
+  "errors": {
+    "generic": "An error occurred while loading the payment."
+  },
+  "ok": false,
+  "notConfigured": true,
+  "message": "This payment method is not yet configured..."
+}
+,
+"payments": {
+  "providers": {
+    "stripe": "Stripe",
+    "paypal": "PayPal",
+    "bankTransfer": "Bank transfer",
+    "generic": "the payment provider"
+  },
+  "return": {
+    "title": "Payment received",
+    "subtitle": "Your payment has been received. Thank you for your trust.",
+    "successTitle": "Payment confirmed via {provider}",
+    "successText": "We will review your obituary. You will receive a notification as soon as it is published.",
+    "hint": "You can already go back to your obituary list.",
+    "goToObituaries": "View my obituaries",
+    "goHome": "Back to home",
+    "meta": {
+      "title": "Payment confirmed",
+      "description": "Confirmation of your payment for an obituary."
+    }
+  },
+  "cancel": {
+    "title": "Payment cancelled",
+    "subtitle": "The payment was not completed.",
+    "infoTitle": "Payment interrupted on {provider}",
+    "infoText": "No amount was charged. You can try again later or choose another payment method.",
+    "hint": "If the problem persists, you can contact us for help.",
+    "backToCheckout": "Back to payment",
+    "goToObituaries": "Back to my obituaries",
+    "meta": {
+      "title": "Payment cancelled",
+      "description": "Return after cancelling an obituary payment."
+    }
+  },
+  "paymentsReturn": {
+    "meta": {
+      "title": "Payment confirmation",
+      "description": "Your payment has been received. Your obituary will be reviewed by a moderator before publication."
+    },
+    "title": "Thank you — your payment has been recorded",
+    "subtitle": "Your payment has been received. Publication is still subject to review.",
+    "status": {
+      "waitingModeration": "Waiting for review by our team",
+      "explainer": "We received your payment via {provider}. We will review your obituary before making it public.",
+      "slugHint": "Obituary: {slug}",
+      "moderationNote": "A moderator will review the content (identity, tone, and compliance with our guidelines) before publishing the obituary. You will then be able to share it with others."
+    },
+    "providers": {
+      "stripe": "Stripe (credit card)",
+      "paypal": "PayPal",
+      "bankTransfer": "Bank transfer",
+      "other": "this payment method"
+    },
+    "buttons": {
+      "viewObituary": "View obituary",
+      "backToList": "Back to listings"
+    }
+  }
+},
+"checkoutStripeSuccess": {
+  "meta": {
+    "title": "Payment confirmed",
+    "description": "Your payment was confirmed by Stripe."
+  },
+  "title": "Payment confirmed",
+  "subtitle": "Thank you — your payment has been received.",
+  "loading": "Verifying your payment…",
+  "errorTitle": "Unable to confirm the payment",
+  "errorText": "We couldn’t confirm this payment. If the problem persists, contact support and include the Stripe transaction reference.",
+  "paidBadge": "Payment confirmed",
+  "successTitle": "Thank you for your trust",
+  "successText": "Your payment was approved by our Stripe partner. Your obituary will be processed according to the options you selected.",
+  "amount": "Amount paid",
+  "obituary": "Obituary",
+  "paymentId": "Internal reference",
+  "viewObituary": "View obituary",
+  "backToList": "Back to listings"
+}
+,
+
+  "checkoutStripeCancel": {
+    "meta": {
+      "title": "Payment cancelled",
+      "description": "You cancelled the Stripe payment for this obituary."
+    },
+    "title": "Payment cancelled",
+    "subtitle": "The Stripe payment was not completed.",
+    "badge": "Payment cancelled",
+    "text": "No amount was charged. You can try again or go back to the obituary list.",
+    "retry": "Try payment again",
+    "backToList": "Back to listings"
+  },
+  "checkoutPaypalSuccess": {
+    "title": "PayPal payment",
+    "subtitle": "Back on Madizi after your PayPal payment.",
+    "loading": "We’re verifying your PayPal payment…",
+    "errorTitle": "Unable to confirm the payment",
+    "errorText": "We couldn’t confirm this payment. If the problem persists, contact support and include the PayPal reference.",
+    "backToList": "Back to listings",
+    "paidBadge": "Payment confirmed",
+    "successTitle": "Thank you for your trust",
+    "successText": "Your payment was approved by our PayPal partner. Your obituary will be processed according to the options you selected.",
+    "amount": "Amount paid",
+    "obituary": "Obituary",
+    "paymentId": "Internal reference",
+    "viewObituary": "View obituary",
+    "meta": {
+      "title": "PayPal payment confirmed",
+      "description": "Confirmation of your PayPal payment for publishing an obituary on Madizi."
+    }
+  },
+  "myObituaries": {
+    "title": "My obituaries",
+    "subtitle": "View and manage the obituaries you have created on Madizi.",
+    "meta": {
+      "title": "My obituaries – Madizi",
+      "description": "Find all your obituaries, track their status, and continue editing your drafts."
+    },
+    "error": "Unable to load your obituaries at the moment.",
+    "retry": "Try again",
+    "empty": "You don't have any obituaries in this category right now.",
+    "createFirst": "Create your first obituary",
+    "searchLabel": "Search your obituaries",
+    "searchPlaceholder": "Deceased person’s name, obituary title…",
+    "sortLabel": "Sort obituaries",
+    "sort": {
+      "recent": "Most recent first",
+      "oldest": "Oldest first",
+      "popular": "Most viewed"
+    },
+    "filters": {
+      "all": "All",
+      "draft": "Drafts",
+      "pending": "Pending",
+      "published": "Published",
+      "archived": "Archived",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending_review": "Pending review",
+      "draftPaid": "Paid – pending review",
+      "published": "Published",
+      "archived": "Archived",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "verification": {
+      "not_required": "Supporting documents not requested",
+      "pending": "Supporting documents under review",
+      "verified": "Supporting documents verified",
+      "rejected": "Supporting documents to correct"
+    },
+    "createdAt": "Created on {date}",
+    "publishedAt": "Published on {date}",
+    "plan": "Plan:",
+    "planFree": "free",
+    "planUnknown": "Unknown plan",
+    "payment": {
+      "paid": "Payment confirmed ({amount} {currency})"
+    },
+    "actions": {
+      "continueDraft": "Continue this draft",
+      "viewPublic": "View public page",
+      "viewAfterPayment": "Track paid obituary",
+      "edit": "Edit obituary",
+      "review": "Review and confirm"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "info": "Page {page} of {pageCount}"
+    }
+  },
+  "adminObituaries": {
+    "title": "Obituaries to review",
+    "subtitle": "Validate the documents provided by families before publication.",
+    "meta": {
+      "title": "Obituary moderation",
+      "description": "Area reserved for administrators and moderators to review paid obituaries."
+    },
+    "filterGroups": {
+      "statusTitle": "Obituary status",
+      "verificationTitle": "Document verification"
+    },
+    "filters": {
+      "all": "All",
+      "pending": "To review",
+      "verified": "Verified",
+      "rejected": "Rejected",
+      "statusFilters": {
+        "all": "All statuses"
+      },
+      "verificationFilters": {
+        "all": "All verifications"
+      }
+    },
+    "docs": {
+      "title": "Documents",
+      "empty": "No documents.",
+      "loadError": "Unable to load documents.",
+      "adminNote": "Note:"
+    },
+    "searchLabel": "Search an obituary",
+    "searchPlaceholder": "Deceased person’s name, title, or family email…",
+    "sortLabel": "Sort obituaries",
+    "sort": {
+      "recent": "Most recent first",
+      "oldest": "Oldest first",
+      "popular": "Most viewed"
+    },
+    "error": "An error occurred while loading obituaries.",
+    "errorForbidden": "This area is reserved for administrators and moderators.",
+    "retry": "Try again",
+    "empty": {
+      "pendingPaid": "No paid obituaries to review at the moment.",
+      "verifiedPaid": "No paid obituaries with documents already verified.",
+      "rejectedPaid": "No paid obituaries with rejected documents.",
+      "default": "No obituaries match these filters."
+    },
+    "familyLabel": "Family / account:",
+    "createdAt": "Created on {date}",
+    "publishedAt": "Published on {date}",
+    "plan": "Plan:",
+    "planFree": "free",
+    "planUnknown": "Unknown plan",
+    "payment": {
+      "paid": "{amount} {currency} paid"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending_review": "Pending publication",
+      "published": "Published",
+      "archived": "Archived",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "verification": {
+      "not_required": "Verification not required",
+      "pending": "To review",
+      "verified": "Documents verified",
+      "rejected": "Documents rejected"
+    },
+    "actions": {
+      "viewPublic": "View public page",
+      "viewConfirm": "View family summary",
+      "verify": "Approve documents",
+      "verifyLoading": "Approving…",
+      "reject": "Reject documents",
+      "rejectLoading": "Rejecting…",
+      "moderateDocs": "Moderate (docs)",
+      "viewDocs": "View (docs)"
+    },
+    "pagination": {
+      "aria": "Pagination for obituaries to review"
+    },
+    "confirm": {
+      "verify": "Confirm approval of the documents for “{title}”? The obituary will be published.",
+      "reject": "Confirm rejection of the documents for “{title}”? The obituary will be marked as rejected.",
+      "rejectNotePrompt": "Add a reason for the family (optional):"
+    },
+    "toasts": {
+      "verifySuccess": "Documents verified and obituary published.",
+      "rejectSuccess": "Obituary marked as rejected.",
+      "actionError": "Unable to apply this action at the moment."
+    }
+  },
+  "profileHome": {
+    "title": "My dashboard",
+    "subtitle": "Find your obituaries, your notifications, and—if needed—your administration tools.",
+    "cards": {
+      "myObituaries": {
+        "title": "My obituaries",
+        "text": "View, edit, or complete the obituaries you have created on Madizi.",
+        "cta": "View my obituaries"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "text": "View important messages about your obituaries (validation, reminders, etc.).",
+        "cta": "Go to notifications"
+      },
+      "moderation": {
+        "title": "Moderation / Administration",
+        "text": "Access tools to verify documents and follow up on paid obituaries.",
+        "adminCta": "Admin dashboard",
+        "moderatorCta": "Moderation area"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "text": "View important messages about your obituaries (validation, reminders, etc.).",
+    "cta": "Go to notifications"
+  }
+}
+

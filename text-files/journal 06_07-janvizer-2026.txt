@@ -1,0 +1,219 @@
+
+Journal de dev — Madizi (ex Matanga) — du 6 au 7 janvier 2026
+Objectif
+
+Déployer Madizi sur Vercel proprement (build OK), corriger les soucis PWA, sitemap et SEO (Google Search Console), et éviter l’indexation du domaine de preview *.vercel.app.
+
+1) Blocage déploiement Vercel : PWA / Workbox (fichiers > 2 MiB)
+Symptôme
+
+Le build Vercel échoue avec une erreur Workbox (vite-plugin-pwa / @vite-pwa/nuxt) :
+
+“default value is 2 MiB”
+
+plusieurs fichiers .png dans uploads/obituary-documents/* et uploads/obituary-covers/* dépassent 2 MiB
+
+npm run build sort avec code 1 → deploy impossible.
+
+Cause
+
+Workbox tente de pré-cacher des assets trop lourds (limite par défaut : 2 MiB).
+Le precache est déclenché par la config PWA côté Nuxt + globPatterns qui inclut png/webp.
+
+Fix appliqué
+
+Ajout d’un ignore dans pwa.workbox pour éviter de precache les uploads :
+
+globIgnores: ["**/uploads/**"]
+
+Optionnel possible (mais non nécessaire ici) : augmenter la limite maximumFileSizeToCacheInBytes.
+
+✅ Résultat : build Vercel OK, déploiement débloqué.
+
+2) Problème SEO : sitemap.xml OK en local, cassé/“vide” en prod
+Symptôme
+
+Google “trouve” le sitemap mais ne liste rien / ne le lit pas correctement.
+
+En prod, https://www.madizi.com/sitemap.xml renvoyait :
+
+<urlset ...> </urlset>
+
+
+donc sitemap vide.
+
+Cause
+
+La route sitemap en prod dépendait d’un fichier JSON généré au build :
+
+server/data/sitemapRoutes.json
+
+En environnement serverless Vercel, le fichier n’est pas garanti présent au runtime (FS), donc la route retombait sur une liste vide → sitemap vide.
+
+Fix appliqué (Phase 1)
+
+Sans changer la logique de génération :
+
+On a modifié la route sitemap pour importer le JSON (embarqué dans le bundle Nitro) plutôt que dépendre uniquement de fs.readFileSync au runtime.
+
+On garde la lecture disque en local en “override” si le fichier existe (pratique dev).
+
+✅ Résultat : sitemap.xml en prod contient bien toutes les URLs (statiques + dynamiques), et Google peut le parser.
+
+3) Amélioration du script de génération sitemap : lastmod “souple”
+Symptôme potentiel
+
+Dans scripts/generate-sitemap.cjs, la construction de lastmod était fragile :
+
+selon mysql2, created_at/updated_at peuvent être Date, string, null…
+
+le code pouvait produire undefined (ou lastmod incohérent).
+
+Fix appliqué
+
+Ajout d’une fonction robuste :
+
+safeIsoDate(value) : accepte Date/string/number/null, fallback sur new Date().toISOString() si invalide.
+
+remplacement de la logique toISOString?.() par safeIsoDate(row.updated_at || row.created_at).
+
+✅ Résultat : sitemap plus fiable, pas de dates invalides.
+
+4) robots.txt : divergence entre fichier public et route server
+Symptôme
+
+Le navigateur affichait un robots.txt correct avec Sitemap: ..., mais le fichier local montré était différent (Disallow: seul).
+
+Cause
+
+En prod, robots.txt est servi par :
+
+server/routes/robots.txt.get.js
+Donc public/robots.txt n’est pas utilisé.
+
+Fix appliqué
+
+On a “fixé” le robots dynamique pour :
+
+utiliser une base canonique stable siteUrl (runtimeConfig/env)
+
+éviter le trailing slash
+
+générer Sitemap: {siteUrl}/sitemap.xml
+
+✅ Résultat : robots en prod correct et cohérent avec le sitemap.
+
+5) Canonical domain / redirections : www vs apex + statut 307
+Constat Vercel Domains
+
+www.madizi.com → Production (OK)
+
+madizi.com → redirige vers www mais en 307 (temporaire)
+
+matanga.vercel.app → Production (risque de duplicate content)
+
+Recommandation
+
+SEO plus propre : redirection permanente apex → www (301/308 au lieu de 307)
+
+éviter contenu dupliqué via le domaine vercel.app.
+
+6) Empêcher l’indexation de matanga.vercel.app (preview domain)
+Objectif
+
+Éviter que Google indexe le domaine Vercel et le considère comme duplicate de www.madizi.com.
+
+Fix appliqué
+
+Dans server/routes/robots.txt.get.js :
+
+si host.includes("vercel.app") :
+
+renvoyer un robots strict : Disallow: /
+
+(bonus recommandé) ajouter X-Robots-Tag: noindex, nofollow
+
+Bonus proposé (idéal) :
+
+middleware Nitro global server/middleware/robots-headers.js :
+
+ajoute X-Robots-Tag: noindex, nofollow sur toutes les pages quand host = vercel.app
+
+✅ Résultat : le domaine matanga.vercel.app ne doit plus être indexé (et le crawl est découragé).
+
+État final
+
+✅ Build Vercel OK (PWA/Workbox corrigé)
+
+✅ Sitemap en prod non vide et en URLs absolues (https://www.madizi.com/...)
+
+✅ Robots.txt correct + sitemap déclaré
+
+✅ Protection SEO contre l’indexation du domaine Vercel (robots + noindex conseillé)
+MÉMO — Madizi (Nuxt 4 SSR JS) — état + prochaines étapes
+Contexte
+
+Projet : Madizi (ex Matanga), Nuxt 4 SSR (JS), déployé sur Vercel.
+
+i18n : locales/fr.json, en.json, pt.json, es.json (strategy prefix_except_default).
+
+Ce qu’on a corrigé (déploiement + SEO)
+
+Build Vercel bloqué par PWA/Workbox (limite 2 MiB)
+
+Erreur : assets uploads/...png > 2 MiB empêchent la génération du service worker.
+
+Fix : dans nuxt.config.js → pwa.workbox ajouter globIgnores: ["**/uploads/**"] (optionnel : augmenter maximumFileSizeToCacheInBytes).
+
+Sitemap OK en local mais vide en prod
+
+Cause : en serverless, lecture runtime du JSON server/data/sitemapRoutes.json pouvait renvoyer vide.
+
+Fix (phase 1) : route /sitemap.xml modifiée pour importer ../data/sitemapRoutes.json (embarqué dans bundle) + fallback lecture disque en local.
+
+Résultat vérifié : https://www.madizi.com/sitemap.xml liste bien des <url>.
+
+Robots.txt servi par route (pas par public/robots.txt)
+
+Fichier : server/routes/robots.txt.get.js
+
+Amélioration : siteUrl stable via runtimeConfig.public.siteUrl / env SITE_URL et suppression trailing slash.
+
+Ajout SEO : si host contient vercel.app → renvoyer Disallow: / + (recommandé) header X-Robots-Tag: noindex, nofollow.
+
+Bonus recommandé : middleware global server/middleware/robots-headers.js pour ajouter X-Robots-Tag sur toutes les pages quand host = vercel.app.
+
+Script de génération sitemap : rendre lastmod robuste
+
+Fichier : scripts/generate-sitemap.cjs
+
+Fix : remplacer logique fragile par helper safeIsoDate(value) qui accepte Date/string/null.
+
+Réglages Vercel à garder en tête
+
+Domaine canonique : www.madizi.com (sitemap génère des URLs en www).
+
+madizi.com redirige vers www mais actuellement vu en 307 → à passer en 301/308 si possible (SEO plus propre).
+
+Env var prod à mettre : SITE_URL=https://www.madizi.com.
+
+Prochain chat — plan d’attaque
+Étape 1 : Traduction i18n
+
+Objectif : traduire locales/fr.json vers en.json, pt.json, es.json (mêmes clés, pas de changement de structure).
+
+Règles : garder toutes les clés identiques, traduire uniquement les valeurs, conserver placeholders ({}, :, etc.), ton clair.
+
+Étape 2 : “Pro accounts” (création + pages + premium)
+
+Objectif : pages/flux “Pro” :
+
+création/édition profil pro (infos société),
+
+upload logo,
+
+rendre compte “premium”,
+
+distinguer visuellement les annonces “pro” vs “particulier” (badge, style, etc.).
+
+À définir/implémenter : champs pro, stockage logo (S3/Infomaniak), règles premium, affichage sur pages d’annonces.

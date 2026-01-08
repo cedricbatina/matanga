@@ -94,10 +94,13 @@
 
     <!-- Ligne méta / date -->
     <div class="user-inline-meta">
-      <span class="user-inline-date">
-        <i class="fa-regular fa-calendar" aria-hidden="true"></i>
-        {{ t('userInline.todayLabel', { date: formattedNow }) }}
-      </span>
+     <ClientOnly>
+  <span class="user-inline-date">
+    <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+    {{ t('userInline.todayLabel', { date: formattedNow }) }}
+  </span>
+</ClientOnly>
+
     </div>
   </div>
 </template>
