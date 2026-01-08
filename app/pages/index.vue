@@ -293,16 +293,10 @@
                   >
                     {{ t('home.list.card.badgeFree') }}
                   </span>
-                  <span
-                    v-else
-                    class="badge badge-neutral"
-                  >
-                    {{
-                      t('home.list.card.badgePaid', {
-                        tier: item.monetization.pricingTier || 'pro',
-                      })
-                    }}
-                  </span>
+               <span v-else class="badge badge-neutral">
+  {{ planLabel(item.monetization?.pricingTier || item.pricingTier) }}
+</span>
+
 
                   <span
                     v-if="item.stats.viewCount != null"
@@ -518,17 +512,43 @@ const onPageChange = (page) => {
   obituaries.fetchList();
 };
 
-// Langue & premier chargement
-obituaries.setFilters({ language: locale.value });
+// Home = on veut des annonces récentes, toutes langues
+obituaries.setFilters({
+  countryCode: '',
+  city: '',
+  q: '',
+  sort: 'recent',
+  language: null, // ✅ IMPORTANT
+});
+obituaries.setPage(1);
+// optionnel: home affiche + d'items
+obituaries.setPageSize(12);
+
 await obituaries.fetchList();
 
-watch(
+const planLabel = (code) => {
+  if (!code) return '';
+
+  // on lit dans plans.codes.*
+  const key = `plans.codes.${code}`;
+  const label = t(key);
+
+  // si la clé n'existe pas, vue-i18n renvoie souvent la clé elle-même
+  if (label === key) {
+    // fallback lisible
+    return String(code).replace(/_/g, ' ');
+  }
+
+  return label;
+};
+
+/*watch(
   () => locale.value,
   (lang) => {
     obituaries.setFilters({ language: lang });
     obituaries.fetchList();
   }
-);
+);*/
 </script>
 
 <style scoped>

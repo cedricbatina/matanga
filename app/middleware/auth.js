@@ -1,3 +1,4 @@
+// app/middleware/auth.js
 import { useAuthStore } from "~/stores/auth";
 
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -5,9 +6,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const auth = useAuthStore();
 
-  // important : en SSR, ensureAuthLoaded doit forward les cookies (voir option store plus bas)
   if (!auth.initialized) {
-    await auth.ensureAuthLoaded();
+    // ✅ auto-import Nuxt, pas d'import manuel
+    const headers = process.server ? useRequestHeaders(["cookie"]) : undefined;
+    await auth.ensureAuthLoaded({ headers });
   }
 
   if (!auth.user) {
@@ -15,4 +17,3 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(`/login?redirect=${redirectTo}&reason=auth_required`);
   }
 });
-

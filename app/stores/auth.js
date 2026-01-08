@@ -1,13 +1,12 @@
 // stores/auth.js
 import { defineStore } from "pinia";
-import { useRequestHeaders } from "#imports";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    user: null, // { id, email, accountType, roles, city, country, locale } ou null
+    user: null,
     loading: false,
     error: null,
-    initialized: false, // pour éviter de fetch plusieurs fois /me
+    initialized: false,
   }),
 
   getters: {
@@ -18,10 +17,6 @@ export const useAuthStore = defineStore("auth", {
   },
 
   actions: {
-    setUser(user) {
-      this.user = user;
-    },
-
     clear() {
       this.user = null;
       this.error = null;
@@ -29,22 +24,19 @@ export const useAuthStore = defineStore("auth", {
       this.initialized = false;
     },
 
-  async fetchMe() {
-  this.loading = true;
-  this.error = null;
+    // ✅ headers optionnels (SSR)
+    async fetchMe({ headers } = {}) {
+      this.loading = true;
+      this.error = null;
 
-  try {
-    // ✅ important en SSR : forward cookie -> /api/auth/me voit la session
-    const headers = process.server ? useRequestHeaders(["cookie"]) : undefined;
+      try {
+        const res = await $fetch("/api/auth/me", {
+          method: "GET",
+          headers, // <-- cookie forwarded si SSR
+        });
 
-    const res = await $fetch("/api/auth/me", {
-      method: "GET",
-      headers,
-    });
-
-    if (res?.ok) {
-      this.user = res.user
-        ? {
+        if (res?.ok && res.user) {
+          this.user = {
             id: res.user.userId,
             email: res.user.email,
             accountType: res.user.accountType,
@@ -56,28 +48,27 @@ export const useAuthStore = defineStore("auth", {
             lastName: res.user.lastName || null,
             organizationName: res.user.organizationName || null,
             displayName: res.user.displayName || null,
-          }
-        : null;
-    } else {
-      this.user = null;
-    }
-  } catch (err) {
-    this.error =
-      err?.data?.statusMessage ||
-      err.message ||
-      "Erreur lors de la récupération du profil";
-    this.user = null;
-  } finally {
-    this.loading = false;
-    this.initialized = true;
-  }
-}
-,
-
-    async ensureAuthLoaded() {
-      if (this.initialized) return;
-      return this.fetchMe();
+          };
+        } else {
+          this.user = null;
+        }
+      } catch (err) {
+        this.error =
+          err?.data?.statusMessage ||
+          err?.message ||
+          "Erreur lors de la récupération du profil";
+        this.user = null;
+      } finally {
+        this.loading = false;
+        this.initialized = true;
+      }
     },
+
+    async ensureAuthLoaded(opts = {}) {
+      if (this.initialized) return;
+      await this.fetchMe(opts);
+    },
+
     async login({ email, password }) {
       this.loading = true;
       this.error = null;
@@ -88,17 +79,14 @@ export const useAuthStore = defineStore("auth", {
           body: { email, password },
         });
 
-        if (!res?.ok) {
-          throw new Error(res?.message || "Erreur de connexion");
-        }
+        if (!res?.ok) throw new Error(res?.message || "Erreur de connexion");
 
-        // Les cookies sont en place, on recharge le profil complet
         this.initialized = false;
-        await this.fetchMe();
+        await this.fetchMe(); // client: cookies ok automatiquement
       } catch (err) {
         this.error =
           err?.data?.statusMessage ||
-          err.message ||
+          err?.message ||
           "Email ou mot de passe incorrect";
         this.user = null;
         throw err;
@@ -112,16 +100,13 @@ export const useAuthStore = defineStore("auth", {
       this.error = null;
 
       try {
-        await $fetch("/api/auth/logout", {
-          method: "POST",
-        });
+        await $fetch("/api/auth/logout", { method: "POST" });
       } catch (err) {
-        // Même si l'API répond en erreur, on nettoie le client
-        this.error = err?.data?.statusMessage || err.message || null;
+        this.error = err?.data?.statusMessage || err?.message || null;
       } finally {
         this.user = null;
         this.loading = false;
-        this.initialized = true; // on considère qu'on sait qu'il n'y a plus de user
+        this.initialized = true;
       }
     },
   },

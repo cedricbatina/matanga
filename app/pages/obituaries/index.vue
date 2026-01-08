@@ -7,8 +7,9 @@
   :show-back-home="true"
   :show-back-list="false"
   :show-create="true"
-  create-to="/obituary/create"
+  :create-to="localePath('/obituary/create')"
 />
+
 
 
     <section class="section">
@@ -261,12 +262,10 @@
               </div>
 
               <footer class="card-footer">
-                <NuxtLink
-                  :to="obituaryPath(item)"
-                  class="btn btn-secondary btn-sm"
-                >
-                  {{ t('home.list.card.viewDetails') }}
-                </NuxtLink>
+             <NuxtLink :to="obituaryPath(item)" class="btn btn-secondary btn-sm">
+  {{ t('home.list.card.viewDetails') }}
+</NuxtLink>
+
               </footer>
             </div>
           </article>
@@ -291,7 +290,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue';
+import { computed, reactive } from 'vue';
 import { useSeoMeta } from '#imports';
 import { useI18n } from 'vue-i18n';
 import { useObituariesStore } from '~/stores/obituaries';
@@ -299,7 +298,9 @@ import { useDateUtils } from '~/composables/useDateUtils';
 import Pagination from '~/components/Pagination.vue';
 import PageNavBar from '~/components/PageNavBar.vue';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
+const localePath = useLocalePath();
+
 const obituaries = useObituariesStore();
 const { formatDate, formattedDate, timeAgo } = useDateUtils();
 
@@ -322,9 +323,8 @@ const localFilters = reactive({
   sort: obituaries.filters.sort || 'recent',
 });
 
-const obituaryPath = (item) => `/obituary/${item.slug}`;
+const obituaryPath = (item) => localePath(`/obituary/${item.slug}`);
 
-// Miniature : coverImageUrl puis fallback éventuels.
 const thumbnailUrlFor = (item) => {
   if (item.coverImageUrl) return item.coverImageUrl;
   if (item.thumbnailUrl) return item.thumbnailUrl;
@@ -333,13 +333,13 @@ const thumbnailUrlFor = (item) => {
   return null;
 };
 
-// Appliquer les filtres au store
 const applyFiltersToStore = () => {
   obituaries.setFilters({
     countryCode: localFilters.countryCode,
     city: localFilters.city,
     q: localFilters.q,
     sort: localFilters.sort,
+    // ✅ surtout PAS language ici
   });
 };
 
@@ -362,23 +362,29 @@ const onPageChange = (page) => {
   obituaries.fetchList();
 };
 
-// Filtre langue + premier chargement
-obituaries.setFilters({ language: locale.value });
+// ✅ IMPORTANT : s'assurer qu'on n'a PAS un vieux language collé (HMR)
+obituaries.setFilters({ language: null });
 
-// ✅ évite le 2e fetch client si SSR a déjà rempli le store
-if (!obituaries.items?.length) {
-  await obituaries.fetchList();
-}
+// Premier chargement
+await obituaries.fetchList();
+const planLabel = (code) => {
+  if (!code) return '';
 
+  // on lit dans plans.codes.*
+  const key = `plans.codes.${code}`;
+  const label = t(key);
 
-watch(
-  () => locale.value,
-  (lang) => {
-    obituaries.setFilters({ language: lang });
-    obituaries.fetchList();
+  // si la clé n'existe pas, vue-i18n renvoie souvent la clé elle-même
+  if (label === key) {
+    // fallback lisible
+    return String(code).replace(/_/g, ' ');
   }
-);
+
+  return label;
+};
+
 </script>
+
 
 <style scoped>
 .obituary-card {

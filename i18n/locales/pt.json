@@ -1,1 +1,347 @@
-{}
+{
+  "auth": {
+    "register": {
+      "title": "Criar uma conta",
+      "subtitle": "Junte-se à Madizi para publicar necrológios e anúncios de velório com dignidade.",
+      "account_type": {
+        "label": "Tipo de conta",
+        "individual": "Particular",
+        "pro": "Profissional"
+      },
+      "fields": {
+        "email": "E-mail",
+        "password": "Palavra-passe",
+        "confirm_password": "Confirmar palavra-passe",
+        "first_name": "Nome",
+        "last_name": "Apelido",
+        "organization_name": "Nome da organização",
+        "organization_type": "Tipo de organização",
+        "city": "Cidade",
+        "country": "País",
+        "phone": "Telefone",
+        "address": "Morada da organização",
+        "website_url": "Website (opcional)",
+        "preferred_locale": "Idioma preferido"
+      },
+      "organization_types": {
+        "funeral_home": "Agência funerária",
+        "church": "Igreja",
+        "mosque": "Mesquita",
+        "association": "Associação",
+        "other": "Outro"
+      },
+      "placeholders": {
+        "email": "O seu e-mail",
+        "password": "Mínimo de 8 caracteres",
+        "confirm_password": "Repita a palavra-passe",
+        "first_name": "O seu nome",
+        "last_name": "O seu apelido",
+        "organization_name": "ex.: Agência Funerária Lumière",
+        "city": "ex.: Brazzaville",
+        "country": "ex.: Congo, França…",
+        "phone": "ex.: 00242 …",
+        "address": "Morada completa",
+        "website_url": "https://..."
+      },
+      "actions": {
+        "submit": "Criar a minha conta",
+        "submitting": "A criar conta...",
+        "already_have_account": "Já tem uma conta?",
+        "login_link": "Iniciar sessão",
+        "show_password": "Mostrar",
+        "hide_password": "Ocultar"
+      },
+      "messages": {
+        "check_email": "Conta criada. Verifique o seu e-mail para ativar a conta."
+      },
+      "errors": {
+        "email_invalid": "E-mail inválido",
+        "password_short": "A palavra-passe é demasiado curta (mínimo 8 caracteres).",
+        "confirm_mismatch": "A confirmação não corresponde à palavra-passe.",
+        "city_required": "A cidade é obrigatória.",
+        "first_name_required": "O nome é obrigatório.",
+        "last_name_required": "O apelido é obrigatório.",
+        "org_name_required": "O nome da organização é obrigatório.",
+        "org_type_invalid": "Tipo de organização inválido.",
+        "fix_fields": "Corrija os erros destacados.",
+        "generic": "Não foi possível criar a conta neste momento."
+      },
+      "hints": {
+        "phone": "Usado apenas para verificação ou se for necessário relativamente aos seus anúncios.",
+        "terms": "Ao criar uma conta, confirma que fornece informações corretas e aceita os nossos termos de utilização. A Madizi é um espaço privado e moderado, dedicado a necrológios e velórios."
+      },
+      "resend": {
+        "help": "Não recebeu o e-mail de confirmação? Verifique a pasta de spam ou reenvie o e-mail.",
+        "actions": {
+          "cta": "Reenviar e-mail de confirmação",
+          "loading": "A enviar..."
+        },
+        "messages": {
+          "sent": "Se existir uma conta e ainda não estiver verificada, foi enviado um novo e-mail."
+        },
+        "errors": {
+          "email_missing": "Introduza o seu e-mail para reenviar o e-mail de confirmação.",
+          "generic": "Não foi possível reenviar o e-mail de confirmação neste momento."
+        }
+      }
+    },
+    "login": {
+      "title": "Iniciar sessão",
+      "subtitle": "Aceda ao seu espaço Madizi para gerir os seus necrológios e velórios.",
+      "fields": {
+        "email": "E-mail",
+        "password": "Palavra-passe"
+      },
+      "placeholders": {
+        "email": "O seu e-mail",
+        "password": "A sua palavra-passe"
+      },
+      "actions": {
+        "submit": "Iniciar sessão",
+        "submitting": "A iniciar sessão...",
+        "forgot_prefix": "Esqueceu-se da palavra-passe?",
+        "forgot_link": "Repor",
+        "no_account_prefix": "Ainda não tem conta?",
+        "register_link": "Criar uma conta",
+        "show_password": "Mostrar",
+        "hide_password": "Ocultar"
+      },
+      "errors": {
+        "email_invalid": "E-mail inválido",
+        "password_required": "A palavra-passe é obrigatória.",
+        "fix_fields": "Corrija os campos destacados.",
+        "generic": "Não foi possível iniciar sessão neste momento."
+      },
+      "resend": {
+        "help": "Não recebeu o e-mail de confirmação ou o link expirou?",
+        "actions": {
+          "cta": "Reenviar e-mail de confirmação",
+          "loading": "A enviar..."
+        },
+        "messages": {
+          "sent": "Se existir uma conta e ainda não estiver verificada, foi enviado um novo e-mail."
+        },
+        "errors": {
+          "email_missing": "Introduza o seu e-mail antes de reenviar o link.",
+          "generic": "Não foi possível reenviar o e-mail de confirmação neste momento."
+        }
+      }
+    },
+    "verify": {
+      "title": "Verificação de e-mail",
+      "subtitle": "Estamos a verificar o seu link de confirmação para ativar a sua conta Madizi.",
+      "loading": "Verificação em curso... Aguarde um momento.",
+      "messages": {
+        "success": "O seu e-mail foi verificado com sucesso. A sua conta está agora ativa."
+      },
+      "errors": {
+        "missing_token": "O link de verificação está incompleto ou é inválido.",
+        "invalid_or_expired": "Este link de verificação é inválido ou expirou.",
+        "generic": "Ocorreu um erro ao verificar o seu e-mail."
+      },
+      "actions": {
+        "go_login": "Iniciar sessão",
+        "go_home": "Voltar ao início"
+      },
+      "hints": {
+        "contact": "Se o problema persistir, pode pedir um novo link de confirmação na página de início de sessão ou contactar o suporte da Madizi."
+      },
+      "footer_info": "Por segurança, os links de verificação expiram após um determinado prazo."
+    },
+    "messages": {
+      "loginRequiredForObituary": "Inicie sessão ou crie uma conta para continuar a criar o seu necrológio."
+    }
+  },
+
+  "home": {
+    "meta": {
+      "title": "Madizi – Necrológios e avisos de falecimento online",
+      "description": "Publique um necrológio em minutos e partilhe velórios e horários das cerimónias com a família, entes queridos e a diáspora."
+    },
+    "hero": {
+      "title": "Anuncie um falecimento e informe todos — sem deixar ninguém de fora.",
+      "subtitle": "A Madizi ajuda as famílias e a diáspora a partilhar informação clara e fiável.",
+      "body": "Crie um necrológio estruturado, adicione velórios, cerimónias, sepultamento e partilhe facilmente o link por WhatsApp, SMS ou redes sociais.",
+      "ctaGroupAria": "Ações principais",
+      "helperText": "Um serviço pensado para África e a sua diáspora, com fusos horários e eventos online em mente.",
+      "primaryCta": "Publicar um necrológio",
+      "secondaryCta": "Todos os necrológios",
+      "viewPlansCta": "Planos e opções"
+    },
+    "howItWorks": {
+      "title": "Como funciona",
+      "subtitle": "3 passos simples para informar todos.",
+      "step1": "Preencha os dados da pessoa falecida (nome, datas, cidade, país…).",
+      "step2": "Adicione eventos: velórios, cerimónias, sepultamento, incluindo opções online (Zoom, Facebook Live…).",
+      "step3": "Partilhe o link único do necrológio com a família, amigos e a comunidade."
+    },
+    "search": {
+      "title": "Pesquisar um necrológio",
+      "subtitle": "Filtre por país, cidade ou nome para encontrar um necrológio.",
+      "country": {
+        "label": "País (código)",
+        "placeholder": "ex.: CD, FR, GN…",
+        "hint": "Use o código ISO de 2 letras do país (CD, FR, GN, GA…)."
+      },
+      "city": {
+        "label": "Cidade",
+        "placeholder": "ex.: Kinshasa, Paris, Conacri…"
+      },
+      "q": {
+        "label": "Nome ou título",
+        "placeholder": "Pesquisar por nome ou título do necrológio…",
+        "hint": "ex.: Tio Jean-Baptiste, Tia Béatrice, Irmã Aïssatou…"
+      },
+      "sort": {
+        "label": "Ordenar por",
+        "options": {
+          "recent": "Mais recentes",
+          "oldest": "Mais antigos",
+          "popular": "Mais vistos"
+        }
+      },
+      "reset": "Repor",
+      "submit": "Aplicar filtros",
+      "loading": "A carregar necrológios…"
+    },
+    "list": {
+      "title": "Necrológios recentes",
+      "subtitle": "Alguns anúncios publicados recentemente na plataforma.",
+      "loading": "A carregar necrológios…",
+      "error": "Ocorreu um erro ao carregar os necrológios.",
+      "empty": "Neste momento, não há necrológios que correspondam a estes critérios.",
+      "card": {
+        "dateOfDeath": "Faleceu em {date}",
+        "badgeFree": "Publicação gratuita",
+        "badgePaid": "Plano {tier}",
+        "views": "{count} visualização(ões)",
+        "mainEvent": "{type} em {date}",
+        "viewDetails": "Ver detalhes"
+      }
+    },
+    "eventTypes": {
+      "wake": "Velório",
+      "funeral": "Funeral",
+      "burial": "Sepultamento",
+      "cremation": "Cremação",
+      "memorial": "Missa de sétimo dia",
+      "memorial_mass": "Missa de sétimo dia",
+      "other": "Evento"
+    }
+  }
+  ,
+  "pagination": {
+    "ariaLabel": "Paginação dos necrológios",
+    "prev": "Anterior",
+    "next": "Seguinte",
+    "summaryOne": "{start}–{end} de {total} resultado",
+    "summaryMany": "{start}–{end} de {total} resultados",
+    "gotoLabel": "Página",
+    "gotoTotal": "/ {totalPages}",
+    "gotoAria": "Ir para a página (1 a {totalPages})"
+  },
+
+  "obituary": {
+    "meta": {
+      "titlePattern": "{name} – Necrológio",
+      "descriptionPattern": "Necrológio de {name}{locationSuffix}."
+    },
+    "backToList": "Voltar às publicações",
+    "notFound": "Este necrológio já não está disponível ou não existe.",
+    "summary": {
+      "title": "Resumo",
+      "deathDate": "Faleceu em {date}",
+      "deathDateLabel": "Data do falecimento",
+      "age": "Com {age} anos",
+      "ageLabel": "Idade",
+      "location": "Cidade principal",
+      "announcementType": "Tipo de anúncio",
+      "plan": "Plano",
+      "freePlan": "Plano gratuito",
+      "paidPlan": "Plano {tier}",
+      "views": "{count} visualização(ões)",
+      "viewsLabel": "Visualizações",
+      "publishedAt": "Publicado em {date}",
+      "draftBadge": "Rascunho (não publicado)",
+      "privateBadge": "Privado"
+    },
+    "actions": {
+      "edit": "Editar este necrológio"
+    },
+    "sections": {
+      "about": {
+        "title": "Sobre",
+        "noBody": "O texto detalhado deste necrológio não está disponível neste momento."
+      },
+      "timeline": {
+        "title": "Programa das cerimónias",
+        "empty": "Ainda não foram adicionados eventos a este necrológio."
+      },
+      "contacts": {
+        "title": "Contactos da família / organização",
+        "empty": "Ainda não foram adicionados contactos.",
+        "phone": "Telefone",
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "region": "Região"
+      },
+      "media": {
+        "title": "Memórias e documentos",
+        "empty": "Ainda não foi adicionada multimédia.",
+        "open": "Abrir"
+      }
+    },
+    "event": {
+      "online": "Online",
+      "venue": "Local",
+      "address": "Morada",
+      "stream": "Link de transmissão",
+      "notes": "Detalhes",
+      "at": "às {time}"
+    },
+    "announcementTypes": {
+      "death": "Necrológio",
+      "anniversary": "Aniversário de falecimento",
+      "memorial": "Cerimónia memorial",
+      "other": "Anúncio"
+    }
+  },
+
+  "share": {
+    "obituary": {
+      "defaultName": "a pessoa falecida",
+      "titlePattern": "Necrológio – {name}",
+      "textPattern": "A família está a partilhar este necrológio de {name}. Encontre detalhes das cerimónias e contactos na Madizi.",
+      "shareButton": "Partilhar necrológio",
+      "clipboardSuccess": "O link do necrológio foi copiado para a área de transferência.",
+      "clipboardError": "Não foi possível copiar o link. Pode copiá-lo manualmente a partir da barra de endereço.",
+      "nativeError": "Não foi possível concluir a partilha neste dispositivo."
+    },
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "email": "E-mail",
+      "facebook": "Facebook",
+      "x": "X (antigo Twitter)",
+      "linkedin": "LinkedIn",
+      "telegram": "Telegram",
+      "link": "Copiar link"
+    }
+  },
+
+  "common": {
+    "backToHome": "Voltar ao início",
+    "archive": "Remover",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "open": "Abrir",
+    "actions": {
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "archive": "Remover do site",
+      "open": "Abrir"
+    },
+    "close": "Fechar",
+    "loading": "A carregar…"
+  }
+
+}

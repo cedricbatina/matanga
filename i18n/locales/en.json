@@ -342,6 +342,8 @@
     "close": "Close",
     "loading": "Loading…"
   },
+
+  
 "createObituary": {
   "meta": {
     "title": "Create an obituary",
@@ -719,6 +721,8 @@
     "indiv_memorial_6m": "Memorial · 6 months",
     "indiv_memorial_1y": "Memorial · 1 year",
     "indiv_memorial_10y": "Memorial · 10 years",
+    "indiv_prestige_90": "Memorial · 90 days",
+    "premium_30d" : "Premium . 30 days",
     "pro_basic_30": "Pro Standard obituary · 30 days",
     "pro_essentiel_60": "Pro Essential obituary · 60 days",
     "pro_premium_90": "Pro Premium obituary · 90 days",

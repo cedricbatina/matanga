@@ -7,11 +7,7 @@ export default defineEventHandler(async (event) => {
   try {
     await getAuthSession(event);
   } catch (err) {
-    // On log l'erreur mais on ne bloque pas toute la requête
-    logError("Auth global middleware error", {
-      error: err.message,
-    });
-    if (!event.context) event.context = {};
+    logError("Auth global middleware error", { error: err.message });
     event.context.auth = null;
   }
 });

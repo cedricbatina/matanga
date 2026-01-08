@@ -35,7 +35,7 @@ export default defineNuxtConfig({
       { code: "pt", iso: "pt-PT", file: "pt.json", name: "Português" },
       { code: "es", iso: "es-ES", file: "es.json", name: "Español" },
     ],
-    defaultLocale: "en",
+    defaultLocale: "fr",
     strategy: "prefix_except_default",
     lazy: true,
     langDir: "locales",
@@ -151,7 +151,7 @@ export default defineNuxtConfig({
       short_name: "Madizi",
       description:
         "Madizi — annonces nécrologiques, veillées et programmes d’obsèques en ligne. Tout le programme des obsèques sur une seule page.",
-      lang: "en",
+      lang: "fr",
       start_url: "/",
       scope: "/",
       display: "standalone",
